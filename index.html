@@ -1045,7 +1045,7 @@
                         ]
                     },
                     attention: {
-                        instruction: "Click only the BLUE circles as quickly as possible. Avoid clicking or hovering over RED circles.",
+                        instruction: "Click only the BLUE circles as quickly as possible. Avoid clicking RED circles.",
                         tips: [
                             "Keep your eyes centered on the screen rather than chasing targets",
                             "Use peripheral vision to detect new targets appearing",
@@ -1101,7 +1101,7 @@
                             { stimulus: 'Hydroelectric', answer: 'renewable' },
                             { stimulus: 'Petroleum', answer: 'nonrenewable' },
                             { stimulus: 'Geothermal', answer: 'renewable' },
-                            { stimulus: 'Nuclear Fission', answer: 'nonrenewable' },
+                            { stimulus: 'Diesel Fuel', answer: 'nonrenewable' },
                             { stimulus: 'Biomass', answer: 'renewable' },
                             { stimulus: 'Propane', answer: 'nonrenewable' }
                         ]
@@ -1129,7 +1129,7 @@
                 SCIENCE_FORMULAS: ['H₂O', 'CO₂', 'NaCl', 'O₂', 'N₂', 'CH₄', 'Fe₂O₃', 'CaCO₃'],
                 RECOMMENDATIONS: {
                     memory: {
-                        scienceConnection: 'Working memory is essential for following multi-step lab procedures, holding variables in mind during experiments, and connecting observations to hypotheses.',
+                        scienceConnection: 'Working memory supports following multi-step lab procedures, holding variables in mind during experiments, and connecting observations to hypotheses.',
                         tiers: {
                             strong: 'Your working memory is solid — you can handle complex lab procedures and multi-step problem solving. Keep challenging yourself with longer sequences.',
                             developing: "You're building working memory capacity. When studying science, try breaking procedures into smaller chunks and reviewing each step before moving on.",
@@ -1142,7 +1142,7 @@
                         ]
                     },
                     attention: {
-                        scienceConnection: 'Sustained attention drives careful observation — the foundation of scientific inquiry. It helps you notice patterns in data and stay focused during long experiments.',
+                        scienceConnection: 'Sustained attention supports careful observation — a key part of scientific inquiry. It can help you notice patterns in data and stay focused during long experiments.',
                         tiers: {
                             strong: "Your sustained attention is excellent — you're well-equipped for detailed observation and data collection during experiments.",
                             developing: 'Your attention skills are growing. During science activities, try removing distractions and give yourself a specific thing to watch for.',
@@ -1155,7 +1155,7 @@
                         ]
                     },
                     flexibility: {
-                        scienceConnection: 'Cognitive flexibility lets you switch between classification systems, see problems from multiple angles, and update your thinking when new evidence arrives — core scientific reasoning.',
+                        scienceConnection: 'Cognitive flexibility can help you switch between classification systems, see problems from multiple angles, and update your thinking when new evidence arrives.',
                         tiers: {
                             strong: 'Strong cognitive flexibility — you can switch between classification systems and adapt your thinking when evidence changes. This is a key scientific reasoning skill.',
                             developing: "You're building flexibility in your thinking. Practice looking at science problems from different angles — try explaining a concept using two different models.",
@@ -1164,7 +1164,7 @@
                         tips: [
                             'Practice classifying the same set of objects using different criteria (by color, then size, then material)',
                             "When learning a new concept, ask: 'How is this similar to something I already know? How is it different?'",
-                            'Review your incorrect answers — understanding why the other category was right builds flexibility'
+                            'After each round, pause and think about which classifications felt tricky — noticing your hesitation patterns builds flexibility'
                         ]
                     },
                     speed: {
@@ -1184,7 +1184,8 @@
                 STORAGE_KEY: 'neural_flow_data',
                 SETTINGS_KEY: 'neural_flow_settings',
                 MAX_TASKS: 3,
-                ADAPTIVE_THRESHOLD: 0.7, // 70% success to increase difficulty
+                ADAPTIVE_UP: 80,   // score % to increase difficulty
+                ADAPTIVE_DOWN: 50, // score % below which difficulty decreases
                 CHECKSUM_SALT: 'NF2024' // For data integrity
             },
             
@@ -1679,9 +1680,9 @@
                 // Adaptive difficulty adjustment
                 if (this.state.taskScores.length > 0) {
                     const lastScore = this.state.taskScores[this.state.taskScores.length - 1];
-                    if (lastScore >= 80) {
+                    if (lastScore >= this.CONFIG.ADAPTIVE_UP) {
                         this.state.currentDifficulty = Math.min(this.state.currentDifficulty + 1, 5);
-                    } else if (lastScore < 50) {
+                    } else if (lastScore < this.CONFIG.ADAPTIVE_DOWN) {
                         this.state.currentDifficulty = Math.max(this.state.currentDifficulty - 1, 1);
                     }
                 }
@@ -1903,7 +1904,7 @@
                     const accuracy = correct / state.length;
                     const time = Date.now() - state.startTime;
                     const timeBonus = Math.max(0, 1 - (time / (state.length * 2000)));
-                    const score = Math.round((accuracy * 80) + (timeBonus * 20));
+                    const score = Math.round((accuracy * 90) + (timeBonus * 10));
                     
                     this.state.taskScores.push(score);
                     
@@ -1968,13 +1969,6 @@
                 const targetArea = document.createElement('div');
                 targetArea.className = 'target-area';
                 targetArea.id = 'targetArea';
-                // Add hover tracking for red targets
-                targetArea.addEventListener('mouseover', (e) => {
-                    if (e.target.classList.contains('red')) {
-                        this.attentionState.falsePositives += 0.1;
-                        this.updateAttentionDisplay();
-                    }
-                });
                 
                 const stats = document.createElement('div');
                 stats.className = 'stats';
@@ -2060,8 +2054,6 @@
                 
                 if (isTarget) {
                     state.hits++;
-                    // Bonus for quick reactions
-                    if (reactionTime < 500) state.hits += 0.2;
                 } else {
                     state.falsePositives++;
                 }
@@ -2531,21 +2523,21 @@
                 const synthText = document.createElement('p');
                 if (overallTier.key === 'strong') {
                     synthText.textContent = 'Your executive function skills are well-developed across the board. ' +
-                        'You have the cognitive foundation to take on challenging science work — ' +
-                        'designing your own experiments, analyzing complex datasets, and building multi-step arguments from evidence. ' +
+                        'These cognitive skills are associated with success in challenging science work — ' +
+                        'designing experiments, analyzing datasets, and building arguments from evidence. ' +
                         'Keep training to maintain these skills.';
                 } else if (focusAreas.length > 0 && strengths.length > 0) {
-                    synthText.textContent = `Your strengths in ${strengths.join(' and ')} give you a solid foundation. ` +
-                        `To level up your science learning, focus on building ${focusAreas.join(' and ')} — ` +
-                        'use the tips above during your next science class and notice the difference.';
+                    synthText.textContent = `Your strengths in ${strengths.join(' and ')} give you a good starting point. ` +
+                        `Building ${focusAreas.join(' and ')} may further support your science learning — ` +
+                        'try the tips above during your next science class and notice what changes.';
                 } else if (focusAreas.length > 0) {
                     synthText.textContent = `The areas to focus on are ${focusAreas.join(' and ')}. ` +
-                        'These skills directly support science learning, and they improve with practice. ' +
+                        'These skills are associated with science learning, and they improve with practice. ' +
                         'Try the tips above during your next science class — small changes add up.';
                 } else {
                     synthText.textContent = 'Your executive function skills are developing well. ' +
-                        'Keep practicing, and try applying the study tips above during your next science class — ' +
-                        "you'll notice the connection between these cognitive skills and your science work.";
+                        'Keep practicing, and try the study tips above during your next science class — ' +
+                        'many students find these cognitive skills connect to their science work.';
                 }
                 synthesis.appendChild(synthText);
                 container.appendChild(synthesis);
