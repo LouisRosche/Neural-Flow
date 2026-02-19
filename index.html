@@ -712,6 +712,143 @@
         .collapsible-content.open {
             display: block;
         }
+
+        /* Recommendations */
+        .rec-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%);
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+        }
+
+        .rec-profile-score {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            line-height: 1;
+        }
+
+        .rec-profile-label {
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .rec-profile-sublabel {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .rec-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .rec-card {
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            background: white;
+        }
+
+        .rec-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .rec-card-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .rec-card-title span {
+            margin-right: 0.4rem;
+        }
+
+        .rec-tier {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .rec-tier.strong {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .rec-tier.developing {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .rec-tier.needs-focus {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .rec-connection {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .rec-feedback {
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .rec-tips {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rec-tips li {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding: 0.3rem 0 0.3rem 1.2rem;
+            position: relative;
+        }
+
+        .rec-tips li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .rec-synthesis {
+            padding: 1.25rem;
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            border-radius: var(--radius);
+        }
+
+        .rec-synthesis h4 {
+            color: #166534;
+            margin-bottom: 0.5rem;
+        }
+
+        .rec-synthesis p {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #374151;
+        }
     </style>
 </head>
 <body>
@@ -815,10 +952,7 @@
                     
                     <div class="report-scores" id="reportScores"></div>
                     
-                    <div id="recommendations" style="margin: 2rem 0; padding: 1rem; background: #fef3c7; border-radius: 10px; display: none;">
-                        <h3 style="color: #92400e;">Recommendations</h3>
-                        <p id="recommendationText"></p>
-                    </div>
+                    <div id="recommendations" style="margin-top: 2rem; display: none;"></div>
                     
                     <div style="text-align: center; margin-top: 2rem;">
                         <button id="exportBtn" class="btn">Export Data</button>
@@ -993,6 +1127,60 @@
                     }
                 ],
                 SCIENCE_FORMULAS: ['H₂O', 'CO₂', 'NaCl', 'O₂', 'N₂', 'CH₄', 'Fe₂O₃', 'CaCO₃'],
+                RECOMMENDATIONS: {
+                    memory: {
+                        scienceConnection: 'Working memory is essential for following multi-step lab procedures, holding variables in mind during experiments, and connecting observations to hypotheses.',
+                        tiers: {
+                            strong: 'Your working memory is solid — you can handle complex lab procedures and multi-step problem solving. Keep challenging yourself with longer sequences.',
+                            developing: "You're building working memory capacity. When studying science, try breaking procedures into smaller chunks and reviewing each step before moving on.",
+                            needsFocus: 'Working memory is a growth area. In science class, write down each step of a procedure before starting, and use diagrams to reduce what you need to hold in your head.'
+                        },
+                        tips: [
+                            'Before a lab, read through ALL steps first, then summarize each in your own words',
+                            'Use chunking when memorizing element groups or classification systems',
+                            'Draw concept maps to offload working memory during complex topics'
+                        ]
+                    },
+                    attention: {
+                        scienceConnection: 'Sustained attention drives careful observation — the foundation of scientific inquiry. It helps you notice patterns in data and stay focused during long experiments.',
+                        tiers: {
+                            strong: "Your sustained attention is excellent — you're well-equipped for detailed observation and data collection during experiments.",
+                            developing: 'Your attention skills are growing. During science activities, try removing distractions and give yourself a specific thing to watch for.',
+                            needsFocus: 'Building sustained attention will strengthen your science observations. Start by focusing on one variable at a time, and take brief notes to anchor your focus.'
+                        },
+                        tips: [
+                            'During observations, write down what you notice every 30 seconds to stay engaged',
+                            'When reading science texts, pause after each paragraph and summarize the key idea',
+                            'During experiments, assign yourself a specific observation role to maintain focus'
+                        ]
+                    },
+                    flexibility: {
+                        scienceConnection: 'Cognitive flexibility lets you switch between classification systems, see problems from multiple angles, and update your thinking when new evidence arrives — core scientific reasoning.',
+                        tiers: {
+                            strong: 'Strong cognitive flexibility — you can switch between classification systems and adapt your thinking when evidence changes. This is a key scientific reasoning skill.',
+                            developing: "You're building flexibility in your thinking. Practice looking at science problems from different angles — try explaining a concept using two different models.",
+                            needsFocus: "Cognitive flexibility takes practice. In science, start by explicitly naming the 'rule' you're using before switching to a new one — this makes the mental shift easier."
+                        },
+                        tips: [
+                            'Practice classifying the same set of objects using different criteria (by color, then size, then material)',
+                            "When learning a new concept, ask: 'How is this similar to something I already know? How is it different?'",
+                            'Review your incorrect answers — understanding why the other category was right builds flexibility'
+                        ]
+                    },
+                    speed: {
+                        scienceConnection: 'Processing speed helps you quickly recognize patterns in data, identify chemical formulas and symbols, and keep up with the pace of lab work and class discussions.',
+                        tiers: {
+                            strong: 'Fast and accurate processing — you can quickly identify patterns and symbols, which helps during data analysis and fast-paced lab activities.',
+                            developing: 'Your processing speed is building. Practice recognizing common science symbols and formulas by sight rather than reading them character by character.',
+                            needsFocus: 'Processing speed improves with familiarity. Make flashcards for chemical formulas, element symbols, and common abbreviations so recognition becomes automatic.'
+                        },
+                        tips: [
+                            'Create flashcards for chemical formulas you see in class and practice quick recognition',
+                            'When reviewing data tables, practice scanning for patterns before doing detailed analysis',
+                            'Quiz yourself on element symbols and their properties to build automatic recognition'
+                        ]
+                    }
+                },
                 STORAGE_KEY: 'neural_flow_data',
                 SETTINGS_KEY: 'neural_flow_settings',
                 MAX_TASKS: 3,
@@ -1068,7 +1256,6 @@
                     resetBtn: document.getElementById('resetBtn'),
                     integrityCheck: document.getElementById('integrityCheck'),
                     recommendations: document.getElementById('recommendations'),
-                    recommendationText: document.getElementById('recommendationText'),
                     settingsBtn: document.getElementById('settingsBtn'),
                     settingsModal: document.getElementById('settingsModal'),
                     sheetsUrl: document.getElementById('sheetsUrl'),
@@ -2225,27 +2412,147 @@
                     scoresContainer.appendChild(card);
                 });
                 
-                // Show recommendations for lowest score
-                const lowestGame = Object.entries(scores).reduce((min, [id, score]) => 
-                    score < min.score ? {id, score} : min, {id: null, score: 100});
-                
-                if (lowestGame.id) {
-                    const game = this.CONFIG.GAMES.find(g => g.id === lowestGame.id);
-                    const recommendations = {
-                        memory: 'Practice chunking numbers into groups. Try memory palace techniques.',
-                        attention: 'Use the Pomodoro Technique. Practice mindfulness meditation.',
-                        flexibility: 'Try puzzle games that require rule switching. Learn a new skill.',
-                        speed: 'Practice timed exercises. Use flashcards for quick recall.'
-                    };
-                    
-                    this.elements.recommendations.style.display = 'block';
-                    this.elements.recommendationText.textContent = 
-                        `Focus on ${game.name}: ${recommendations[lowestGame.id]}`;
-                }
+                // Build comprehensive recommendations
+                this.buildRecommendations(scores, average);
                 
                 this.showScreen('report');
             },
-            
+
+            // Build comprehensive, science-connected recommendations
+            buildRecommendations(scores, average) {
+                const container = this.elements.recommendations;
+                while (container.firstChild) container.removeChild(container.firstChild);
+
+                // Tier helper
+                const getTier = (score) => {
+                    if (score >= 80) return { key: 'strong', label: 'Strong', css: 'strong' };
+                    if (score >= 60) return { key: 'developing', label: 'Developing', css: 'developing' };
+                    return { key: 'needsFocus', label: 'Needs Focus', css: 'needs-focus' };
+                };
+
+                const overallTier = getTier(average);
+
+                // Profile summary
+                const profile = document.createElement('div');
+                profile.className = 'rec-profile';
+                const profileScore = document.createElement('div');
+                profileScore.className = 'rec-profile-score';
+                profileScore.textContent = `${average}%`;
+                const profileText = document.createElement('div');
+                const profileLabel = document.createElement('div');
+                profileLabel.className = 'rec-profile-label';
+                profileLabel.textContent = 'Executive Function Profile';
+                const profileSub = document.createElement('div');
+                profileSub.className = 'rec-profile-sublabel';
+                const tierCounts = { strong: 0, developing: 0, needsFocus: 0 };
+                this.CONFIG.GAMES.forEach(g => {
+                    const s = scores[g.id] || 0;
+                    tierCounts[getTier(s).key]++;
+                });
+                const parts = [];
+                if (tierCounts.strong > 0) parts.push(`${tierCounts.strong} strong`);
+                if (tierCounts.developing > 0) parts.push(`${tierCounts.developing} developing`);
+                if (tierCounts.needsFocus > 0) parts.push(`${tierCounts.needsFocus} needs focus`);
+                profileSub.textContent = parts.join(', ') + ' — see how each connects to science learning below';
+                profileText.appendChild(profileLabel);
+                profileText.appendChild(profileSub);
+                profile.appendChild(profileScore);
+                profile.appendChild(profileText);
+                container.appendChild(profile);
+
+                // Per-game recommendation cards
+                const cards = document.createElement('div');
+                cards.className = 'rec-cards';
+
+                this.CONFIG.GAMES.forEach(game => {
+                    const score = scores[game.id] || 0;
+                    const tier = getTier(score);
+                    const rec = this.CONFIG.RECOMMENDATIONS[game.id];
+                    if (!rec) return;
+
+                    const card = document.createElement('div');
+                    card.className = 'rec-card';
+
+                    // Header: icon + name + tier badge
+                    const header = document.createElement('div');
+                    header.className = 'rec-card-header';
+                    const title = document.createElement('div');
+                    title.className = 'rec-card-title';
+                    title.innerHTML = `<span>${game.icon}</span>${game.name}`;
+                    const badge = document.createElement('span');
+                    badge.className = `rec-tier ${tier.css}`;
+                    badge.textContent = tier.label;
+                    header.appendChild(title);
+                    header.appendChild(badge);
+                    card.appendChild(header);
+
+                    // Science connection
+                    const conn = document.createElement('div');
+                    conn.className = 'rec-connection';
+                    conn.textContent = rec.scienceConnection;
+                    card.appendChild(conn);
+
+                    // Tier-specific feedback
+                    const feedback = document.createElement('div');
+                    feedback.className = 'rec-feedback';
+                    feedback.textContent = rec.tiers[tier.key];
+                    card.appendChild(feedback);
+
+                    // Science study tips (show top 2 for developing/needs-focus, 1 for strong)
+                    const tipCount = tier.key === 'strong' ? 1 : 2;
+                    const tipList = document.createElement('ul');
+                    tipList.className = 'rec-tips';
+                    rec.tips.slice(0, tipCount).forEach(tip => {
+                        const li = document.createElement('li');
+                        li.textContent = tip;
+                        tipList.appendChild(li);
+                    });
+                    card.appendChild(tipList);
+
+                    cards.appendChild(card);
+                });
+
+                container.appendChild(cards);
+
+                // Synthesis: overall science study strategy
+                const focusAreas = this.CONFIG.GAMES
+                    .filter(g => (scores[g.id] || 0) < 60)
+                    .map(g => g.name.toLowerCase());
+                const strengths = this.CONFIG.GAMES
+                    .filter(g => (scores[g.id] || 0) >= 80)
+                    .map(g => g.name.toLowerCase());
+
+                const synthesis = document.createElement('div');
+                synthesis.className = 'rec-synthesis';
+                const synthTitle = document.createElement('h4');
+                synthTitle.textContent = 'Science Study Strategy';
+                synthesis.appendChild(synthTitle);
+
+                const synthText = document.createElement('p');
+                if (overallTier.key === 'strong') {
+                    synthText.textContent = 'Your executive function skills are well-developed across the board. ' +
+                        'You have the cognitive foundation to take on challenging science work — ' +
+                        'designing your own experiments, analyzing complex datasets, and building multi-step arguments from evidence. ' +
+                        'Keep training to maintain these skills.';
+                } else if (focusAreas.length > 0 && strengths.length > 0) {
+                    synthText.textContent = `Your strengths in ${strengths.join(' and ')} give you a solid foundation. ` +
+                        `To level up your science learning, focus on building ${focusAreas.join(' and ')} — ` +
+                        'use the tips above during your next science class and notice the difference.';
+                } else if (focusAreas.length > 0) {
+                    synthText.textContent = `The areas to focus on are ${focusAreas.join(' and ')}. ` +
+                        'These skills directly support science learning, and they improve with practice. ' +
+                        'Try the tips above during your next science class — small changes add up.';
+                } else {
+                    synthText.textContent = 'Your executive function skills are developing well. ' +
+                        'Keep practicing, and try applying the study tips above during your next science class — ' +
+                        "you'll notice the connection between these cognitive skills and your science work.";
+                }
+                synthesis.appendChild(synthText);
+                container.appendChild(synthesis);
+
+                container.style.display = 'block';
+            },
+
             // Export data
             exportData() {
                 const data = {
