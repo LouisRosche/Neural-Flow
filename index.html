@@ -605,12 +605,257 @@
         .integrity-check.active {
             display: flex;
         }
+
+        /* Settings */
+        .header {
+            position: relative;
+        }
+
+        .settings-btn {
+            position: absolute;
+            top: 50%;
+            right: 1.5rem;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: var(--transition);
+        }
+
+        .settings-btn:hover {
+            opacity: 1;
+            transform: translateY(-50%) rotate(90deg);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 5000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: var(--radius);
+            padding: 2rem;
+            max-width: 550px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            margin-bottom: 1rem;
+        }
+
+        .sync-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+
+        .sync-status.connected { background: var(--success); }
+        .sync-status.disconnected { background: var(--text-muted); }
+        .sync-status.syncing { background: var(--warning); animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .setup-code {
+            background: #1e1b4b;
+            color: #e0e7ff;
+            padding: 1rem;
+            border-radius: calc(var(--radius) / 2);
+            font-family: monospace;
+            font-size: 0.75rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 0.5rem;
+        }
+
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .collapsible-header:hover {
+            text-decoration: underline;
+        }
+
+        .collapsible-content {
+            display: none;
+        }
+
+        .collapsible-content.open {
+            display: block;
+        }
+
+        /* Recommendations */
+        .rec-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%);
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+        }
+
+        .rec-profile-score {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            line-height: 1;
+        }
+
+        .rec-profile-label {
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .rec-profile-sublabel {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .rec-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .rec-card {
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            background: white;
+        }
+
+        .rec-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .rec-card-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .rec-card-title span {
+            margin-right: 0.4rem;
+        }
+
+        .rec-tier {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .rec-tier.strong {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .rec-tier.developing {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .rec-tier.needs-focus {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .rec-connection {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .rec-feedback {
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .rec-tips {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rec-tips li {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding: 0.3rem 0 0.3rem 1.2rem;
+            position: relative;
+        }
+
+        .rec-tips li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .rec-synthesis {
+            padding: 1.25rem;
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            border-radius: var(--radius);
+        }
+
+        .rec-synthesis h4 {
+            color: #166534;
+            margin-bottom: 0.5rem;
+        }
+
+        .rec-synthesis p {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #374151;
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
         <header class="header">
             <h1>🧠 Neural Flow - Executive Function Training</h1>
+            <button class="settings-btn" id="settingsBtn" title="Settings">⚙</button>
         </header>
         
         <main class="content">
@@ -629,7 +874,7 @@
                                 <label class="form-label" for="age">Age</label>
                                 <input type="number" id="age" class="form-input" required min="6" max="18">
                             </div>
-                            
+
                             <div class="form-group">
                                 <label class="form-label" for="grade">Grade</label>
                                 <select id="grade" class="form-input" required>
@@ -647,7 +892,29 @@
                                 </select>
                             </div>
                         </div>
-                        
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="teacher">Teacher</label>
+                                <input type="text" id="teacher" class="form-input" placeholder="Teacher name" maxlength="50">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="period">Period</label>
+                                <select id="period" class="form-input">
+                                    <option value="">Select</option>
+                                    <option value="1">1st</option>
+                                    <option value="2">2nd</option>
+                                    <option value="3">3rd</option>
+                                    <option value="4">4th</option>
+                                    <option value="5">5th</option>
+                                    <option value="6">6th</option>
+                                    <option value="7">7th</option>
+                                    <option value="8">8th</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <button type="button" id="beginBtn" class="btn btn-block">Begin Training</button>
                     </div>
                 </div>
@@ -685,10 +952,7 @@
                     
                     <div class="report-scores" id="reportScores"></div>
                     
-                    <div id="recommendations" style="margin: 2rem 0; padding: 1rem; background: #fef3c7; border-radius: 10px; display: none;">
-                        <h3 style="color: #92400e;">Recommendations</h3>
-                        <p id="recommendationText"></p>
-                    </div>
+                    <div id="recommendations" style="margin-top: 2rem; display: none;"></div>
                     
                     <div style="text-align: center; margin-top: 2rem;">
                         <button id="exportBtn" class="btn">Export Data</button>
@@ -707,6 +971,55 @@
         </div>
     </div>
 
+    <!-- Settings modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <h3>⚙ Settings</h3>
+            <div class="form-group">
+                <label class="form-label" for="sheetsUrl">Google Sheets Script URL <span class="sync-status disconnected" id="syncStatus"></span></label>
+                <input type="url" id="sheetsUrl" class="form-input" placeholder="https://script.google.com/macros/s/...">
+                <small style="color: var(--text-muted);">Paste your Google Apps Script web app URL to auto-sync session data after each game.</small>
+            </div>
+            <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 10px; font-size: 0.85rem;">
+                <strong>Quick Setup:</strong>
+                <ol style="margin: 0.5rem 0; padding-left: 1.5rem; color: var(--text-muted);">
+                    <li>Create a new Google Sheet</li>
+                    <li>Add headers in Row 1: <em>Timestamp, Student, Age, Grade, Teacher, Period, Game, Score, Difficulty, Duration, Integrity</em></li>
+                    <li>Go to <strong>Extensions → Apps Script</strong></li>
+                    <li>Replace the code with the script below, then <strong>Deploy → New deployment → Web app</strong> (set access to "Anyone")</li>
+                    <li>Copy the deployment URL and paste it above</li>
+                </ol>
+                <div class="collapsible-header" id="toggleScript">▶ Show Apps Script code</div>
+                <div class="collapsible-content" id="scriptCode">
+                    <div class="setup-code">function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  sheet.appendRow([
+    data.timestamp,
+    data.student,
+    data.age,
+    data.grade,
+    data.teacher,
+    data.period,
+    data.game,
+    data.score,
+    data.difficulty,
+    data.duration,
+    data.integrity
+  ]);
+  return ContentService
+    .createTextOutput(JSON.stringify({status: 'ok'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</div>
+                </div>
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button id="closeSettingsBtn" class="btn btn-secondary">Close</button>
+                <button id="saveSettingsBtn" class="btn">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
     <script>
     // Production-ready implementation with fixes for all identified issues
     (function() {
@@ -719,8 +1032,8 @@
                 GAMES: [
                     { id: 'memory', name: 'Working Memory', icon: '🧩', description: 'Remember sequences' },
                     { id: 'attention', name: 'Sustained Attention', icon: '🎯', description: 'Focus on targets' },
-                    { id: 'flexibility', name: 'Cognitive Flexibility', icon: '🔄', description: 'Switch between rules' },
-                    { id: 'speed', name: 'Processing Speed', icon: '⚡', description: 'Quick decisions' }
+                    { id: 'flexibility', name: 'Cognitive Flexibility', icon: '🔬', description: 'Science classifications' },
+                    { id: 'speed', name: 'Processing Speed', icon: '⚡', description: 'Match chemical formulas' }
                 ],
                 GAME_INSTRUCTIONS: {
                     memory: {
@@ -732,7 +1045,7 @@
                         ]
                     },
                     attention: {
-                        instruction: "Click only the BLUE circles as quickly as possible. Avoid clicking or hovering over RED circles.",
+                        instruction: "Click only the BLUE circles as quickly as possible. Avoid clicking RED circles.",
                         tips: [
                             "Keep your eyes centered on the screen rather than chasing targets",
                             "Use peripheral vision to detect new targets appearing",
@@ -740,25 +1053,139 @@
                         ]
                     },
                     flexibility: {
-                        instruction: "Apply the current rule to determine the correct answer. Rules will change between trials - pay attention!",
+                        instruction: "Classify each item using the current science rule. The rule changes between rounds — stay sharp!",
                         tips: [
-                            "Read the rule carefully before looking at the number",
-                            "Verbalize the rule to yourself to maintain focus during switches",
-                            "Reset your mindset between trials - don't carry over the previous rule"
+                            "Read the classification rule carefully before looking at the item",
+                            "Think about the key property that defines each category",
+                            "Reset your thinking when the rule changes — don't carry over previous categories"
                         ]
                     },
                     speed: {
-                        instruction: "Match the pattern shown as quickly and accurately as possible.",
+                        instruction: "Match the chemical formula shown as quickly and accurately as possible.",
                         tips: [
-                            "Focus on the distinctive features rather than reading every letter",
-                            "Use pattern recognition rather than letter-by-letter comparison",
+                            "Focus on distinctive features: subscript numbers, element symbols",
+                            "Use pattern recognition rather than reading each character",
                             "Keep your hand positioned over the likely answer area to reduce movement time"
                         ]
                     }
                 },
+                SCIENCE_RULES: [
+                    {
+                        key: 'metal/nonmetal',
+                        question: 'Is this element a metal or nonmetal?',
+                        options: ['Metal', 'Nonmetal'],
+                        items: [
+                            { stimulus: 'Iron (Fe)', answer: 'metal' },
+                            { stimulus: 'Oxygen (O)', answer: 'nonmetal' },
+                            { stimulus: 'Gold (Au)', answer: 'metal' },
+                            { stimulus: 'Carbon (C)', answer: 'nonmetal' },
+                            { stimulus: 'Copper (Cu)', answer: 'metal' },
+                            { stimulus: 'Nitrogen (N)', answer: 'nonmetal' },
+                            { stimulus: 'Silver (Ag)', answer: 'metal' },
+                            { stimulus: 'Sulfur (S)', answer: 'nonmetal' },
+                            { stimulus: 'Aluminum (Al)', answer: 'metal' },
+                            { stimulus: 'Helium (He)', answer: 'nonmetal' },
+                            { stimulus: 'Zinc (Zn)', answer: 'metal' },
+                            { stimulus: 'Chlorine (Cl)', answer: 'nonmetal' }
+                        ]
+                    },
+                    {
+                        key: 'renewable/nonrenewable',
+                        question: 'Is this energy source renewable or nonrenewable?',
+                        options: ['Renewable', 'Nonrenewable'],
+                        items: [
+                            { stimulus: 'Solar', answer: 'renewable' },
+                            { stimulus: 'Coal', answer: 'nonrenewable' },
+                            { stimulus: 'Wind', answer: 'renewable' },
+                            { stimulus: 'Natural Gas', answer: 'nonrenewable' },
+                            { stimulus: 'Hydroelectric', answer: 'renewable' },
+                            { stimulus: 'Petroleum', answer: 'nonrenewable' },
+                            { stimulus: 'Geothermal', answer: 'renewable' },
+                            { stimulus: 'Diesel Fuel', answer: 'nonrenewable' },
+                            { stimulus: 'Biomass', answer: 'renewable' },
+                            { stimulus: 'Propane', answer: 'nonrenewable' }
+                        ]
+                    },
+                    {
+                        key: 'physical/chemical',
+                        question: 'Is this a physical or chemical change?',
+                        options: ['Physical', 'Chemical'],
+                        items: [
+                            { stimulus: 'Ice melting', answer: 'physical' },
+                            { stimulus: 'Wood burning', answer: 'chemical' },
+                            { stimulus: 'Paper tearing', answer: 'physical' },
+                            { stimulus: 'Rust forming', answer: 'chemical' },
+                            { stimulus: 'Water boiling', answer: 'physical' },
+                            { stimulus: 'Baking a cake', answer: 'chemical' },
+                            { stimulus: 'Dissolving sugar', answer: 'physical' },
+                            { stimulus: 'Digesting food', answer: 'chemical' },
+                            { stimulus: 'Crushing a can', answer: 'physical' },
+                            { stimulus: 'Milk souring', answer: 'chemical' },
+                            { stimulus: 'Cutting hair', answer: 'physical' },
+                            { stimulus: 'Fireworks exploding', answer: 'chemical' }
+                        ]
+                    }
+                ],
+                SCIENCE_FORMULAS: ['H₂O', 'CO₂', 'NaCl', 'O₂', 'N₂', 'CH₄', 'Fe₂O₃', 'CaCO₃'],
+                RECOMMENDATIONS: {
+                    memory: {
+                        scienceConnection: 'Working memory supports following multi-step lab procedures, holding variables in mind during experiments, and connecting observations to hypotheses.',
+                        tiers: {
+                            strong: 'Your working memory is solid — you can handle complex lab procedures and multi-step problem solving. Keep challenging yourself with longer sequences.',
+                            developing: "You're building working memory capacity. When studying science, try breaking procedures into smaller chunks and reviewing each step before moving on.",
+                            needsFocus: 'Working memory is a growth area. In science class, write down each step of a procedure before starting, and use diagrams to reduce what you need to hold in your head.'
+                        },
+                        tips: [
+                            'Before a lab, read through ALL steps first, then summarize each in your own words',
+                            'Use chunking when memorizing element groups or classification systems',
+                            'Draw concept maps to offload working memory during complex topics'
+                        ]
+                    },
+                    attention: {
+                        scienceConnection: 'Sustained attention supports careful observation — a key part of scientific inquiry. It can help you notice patterns in data and stay focused during long experiments.',
+                        tiers: {
+                            strong: "Your sustained attention is excellent — you're well-equipped for detailed observation and data collection during experiments.",
+                            developing: 'Your attention skills are growing. During science activities, try removing distractions and give yourself a specific thing to watch for.',
+                            needsFocus: 'Building sustained attention will strengthen your science observations. Start by focusing on one variable at a time, and take brief notes to anchor your focus.'
+                        },
+                        tips: [
+                            'During observations, write down what you notice every 30 seconds to stay engaged',
+                            'When reading science texts, pause after each paragraph and summarize the key idea',
+                            'During experiments, assign yourself a specific observation role to maintain focus'
+                        ]
+                    },
+                    flexibility: {
+                        scienceConnection: 'Cognitive flexibility can help you switch between classification systems, see problems from multiple angles, and update your thinking when new evidence arrives.',
+                        tiers: {
+                            strong: 'Strong cognitive flexibility — you can switch between classification systems and adapt your thinking when evidence changes. This is a key scientific reasoning skill.',
+                            developing: "You're building flexibility in your thinking. Practice looking at science problems from different angles — try explaining a concept using two different models.",
+                            needsFocus: "Cognitive flexibility takes practice. In science, start by explicitly naming the 'rule' you're using before switching to a new one — this makes the mental shift easier."
+                        },
+                        tips: [
+                            'Practice classifying the same set of objects using different criteria (by color, then size, then material)',
+                            "When learning a new concept, ask: 'How is this similar to something I already know? How is it different?'",
+                            'After each round, pause and think about which classifications felt tricky — noticing your hesitation patterns builds flexibility'
+                        ]
+                    },
+                    speed: {
+                        scienceConnection: 'Processing speed helps you quickly recognize patterns in data, identify chemical formulas and symbols, and keep up with the pace of lab work and class discussions.',
+                        tiers: {
+                            strong: 'Fast and accurate processing — you can quickly identify patterns and symbols, which helps during data analysis and fast-paced lab activities.',
+                            developing: 'Your processing speed is building. Practice recognizing common science symbols and formulas by sight rather than reading them character by character.',
+                            needsFocus: 'Processing speed improves with familiarity. Make flashcards for chemical formulas, element symbols, and common abbreviations so recognition becomes automatic.'
+                        },
+                        tips: [
+                            'Create flashcards for chemical formulas you see in class and practice quick recognition',
+                            'When reviewing data tables, practice scanning for patterns before doing detailed analysis',
+                            'Quiz yourself on element symbols and their properties to build automatic recognition'
+                        ]
+                    }
+                },
                 STORAGE_KEY: 'neural_flow_data',
+                SETTINGS_KEY: 'neural_flow_settings',
                 MAX_TASKS: 3,
-                ADAPTIVE_THRESHOLD: 0.7, // 70% success to increase difficulty
+                ADAPTIVE_UP: 80,   // score % to increase difficulty
+                ADAPTIVE_DOWN: 50, // score % below which difficulty decreases
                 CHECKSUM_SALT: 'NF2024' // For data integrity
             },
             
@@ -786,6 +1213,7 @@
             init() {
                 try {
                     this.testStorage();
+                    this.loadSettings();
                     this.cacheElements();
                     this.loadState();
                     this.bindEvents();
@@ -829,7 +1257,14 @@
                     resetBtn: document.getElementById('resetBtn'),
                     integrityCheck: document.getElementById('integrityCheck'),
                     recommendations: document.getElementById('recommendations'),
-                    recommendationText: document.getElementById('recommendationText')
+                    settingsBtn: document.getElementById('settingsBtn'),
+                    settingsModal: document.getElementById('settingsModal'),
+                    sheetsUrl: document.getElementById('sheetsUrl'),
+                    saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+                    closeSettingsBtn: document.getElementById('closeSettingsBtn'),
+                    syncStatus: document.getElementById('syncStatus'),
+                    toggleScript: document.getElementById('toggleScript'),
+                    scriptCode: document.getElementById('scriptCode')
                 };
                 
                 // Verify elements exist
@@ -840,6 +1275,26 @@
                 });
             },
             
+            // Load settings (Google Sheets URL, etc.)
+            loadSettings() {
+                if (!this.state.storageAvailable) return;
+                try {
+                    const saved = localStorage.getItem(this.CONFIG.SETTINGS_KEY);
+                    if (saved) {
+                        this.settings = JSON.parse(saved);
+                    }
+                } catch (e) {}
+                if (!this.settings) this.settings = { sheetsUrl: '' };
+            },
+
+            // Save settings
+            saveSettings() {
+                if (!this.state.storageAvailable) return;
+                try {
+                    localStorage.setItem(this.CONFIG.SETTINGS_KEY, JSON.stringify(this.settings));
+                } catch (e) {}
+            },
+
             // Load saved state
             loadState() {
                 if (!this.state.storageAvailable) return;
@@ -966,6 +1421,32 @@
                         setTimeout(() => delete e.target.dataset.clicked, 300);
                     }
                 });
+
+                // Settings UI
+                this.addEventListener(this.elements.settingsBtn, 'click', () => {
+                    this.elements.sheetsUrl.value = this.settings.sheetsUrl || '';
+                    this.elements.settingsModal.classList.add('active');
+                });
+                this.addEventListener(this.elements.closeSettingsBtn, 'click', () => {
+                    this.elements.settingsModal.classList.remove('active');
+                });
+                this.addEventListener(this.elements.saveSettingsBtn, 'click', () => {
+                    this.settings.sheetsUrl = this.elements.sheetsUrl.value.trim();
+                    this.saveSettings();
+                    this.updateSyncStatus(this.settings.sheetsUrl ? 'connected' : 'disconnected');
+                    this.elements.settingsModal.classList.remove('active');
+                    this.showFeedback(this.settings.sheetsUrl ? 'Google Sheets sync enabled' : 'Sync disabled', 'success');
+                });
+                this.addEventListener(this.elements.settingsModal, 'click', (e) => {
+                    if (e.target === this.elements.settingsModal) {
+                        this.elements.settingsModal.classList.remove('active');
+                    }
+                });
+                this.addEventListener(this.elements.toggleScript, 'click', () => {
+                    this.elements.scriptCode.classList.toggle('open');
+                    this.elements.toggleScript.textContent = this.elements.scriptCode.classList.contains('open')
+                        ? '▼ Hide Apps Script code' : '▶ Show Apps Script code';
+                });
             },
             
             // Add event listener with tracking
@@ -1040,25 +1521,27 @@
                 const name = document.getElementById('name').value.trim();
                 const age = parseInt(document.getElementById('age').value);
                 const grade = document.getElementById('grade').value;
-                
+                const teacher = document.getElementById('teacher').value.trim();
+                const period = document.getElementById('period').value;
+
                 // Validation
                 if (!name || name.length > 50) {
                     this.showFeedback('Please enter a valid name', 'error');
                     return;
                 }
-                
+
                 if (!age || age < 6 || age > 18) {
                     this.showFeedback('Please enter a valid age (6-18)', 'error');
                     return;
                 }
-                
+
                 if (!grade) {
                     this.showFeedback('Please select your grade', 'error');
                     return;
                 }
-                
+
                 // Set user
-                this.state.user = { name, age, grade: parseInt(grade) };
+                this.state.user = { name, age, grade: parseInt(grade), teacher, period };
                 this.state.sessionStart = Date.now();
                 this.state.integrityChecksum = this.generateChecksum(this.state);
                 
@@ -1197,9 +1680,9 @@
                 // Adaptive difficulty adjustment
                 if (this.state.taskScores.length > 0) {
                     const lastScore = this.state.taskScores[this.state.taskScores.length - 1];
-                    if (lastScore >= 80) {
+                    if (lastScore >= this.CONFIG.ADAPTIVE_UP) {
                         this.state.currentDifficulty = Math.min(this.state.currentDifficulty + 1, 5);
-                    } else if (lastScore < 50) {
+                    } else if (lastScore < this.CONFIG.ADAPTIVE_DOWN) {
                         this.state.currentDifficulty = Math.max(this.state.currentDifficulty - 1, 1);
                     }
                 }
@@ -1226,65 +1709,6 @@
                     default:
                         throw new Error('Unknown game type');
                 }
-            },
-                
-                // Store task scores at state level to avoid recursion issues
-                if (!this.state.taskScores) {
-                    this.state.taskScores = [];
-                }
-                
-                // Run appropriate task
-                switch (this.state.currentGame) {
-                    case 'memory':
-                        this.runMemoryTask(area);
-                        break;
-                    case 'attention':
-                        this.runAttentionTask(area);
-                        break;
-                    case 'flexibility':
-                        this.runFlexibilityTask(area);
-                        break;
-                    case 'speed':
-                        this.runSpeedTask(area);
-                        break;
-                    default:
-                        throw new Error('Unknown game type');
-                }
-            },
-                    
-                    // Adaptive difficulty adjustment
-                    if (this.state.taskScores.length > 0) {
-                        const lastScore = this.state.taskScores[this.state.taskScores.length - 1];
-                        if (lastScore >= 80) {
-                            this.state.currentDifficulty = Math.min(this.state.currentDifficulty + 1, 5);
-                        } else if (lastScore < 50) {
-                            this.state.currentDifficulty = Math.max(this.state.currentDifficulty - 1, 1);
-                        }
-                    }
-                    
-                    // Store task scores at state level to avoid recursion issues
-                    if (!this.state.taskScores) {
-                        this.state.taskScores = [];
-                    }
-                    
-                    // Run appropriate task
-                    switch (this.state.currentGame) {
-                        case 'memory':
-                            this.runMemoryTask(area);
-                            break;
-                        case 'attention':
-                            this.runAttentionTask(area);
-                            break;
-                        case 'flexibility':
-                            this.runFlexibilityTask(area);
-                            break;
-                        case 'speed':
-                            this.runSpeedTask(area);
-                            break;
-                        default:
-                            throw new Error('Unknown game type');
-                    }
-                },
             },
 
             showGameInstructions(gameType) {
@@ -1480,7 +1904,7 @@
                     const accuracy = correct / state.length;
                     const time = Date.now() - state.startTime;
                     const timeBonus = Math.max(0, 1 - (time / (state.length * 2000)));
-                    const score = Math.round((accuracy * 80) + (timeBonus * 20));
+                    const score = Math.round((accuracy * 90) + (timeBonus * 10));
                     
                     this.state.taskScores.push(score);
                     
@@ -1545,13 +1969,6 @@
                 const targetArea = document.createElement('div');
                 targetArea.className = 'target-area';
                 targetArea.id = 'targetArea';
-                // Add hover tracking for red targets
-                targetArea.addEventListener('mouseover', (e) => {
-                    if (e.target.classList.contains('red')) {
-                        this.attentionState.falsePositives += 0.1;
-                        this.updateAttentionDisplay();
-                    }
-                });
                 
                 const stats = document.createElement('div');
                 stats.className = 'stats';
@@ -1637,8 +2054,6 @@
                 
                 if (isTarget) {
                     state.hits++;
-                    // Bonus for quick reactions
-                    if (reactionTime < 500) state.hits += 0.2;
                 } else {
                     state.falsePositives++;
                 }
@@ -1699,12 +2114,12 @@
                 return s * Math.sqrt(Math.sqrt(b * b - c) - b);
             },
             
-            // Flexibility task
+            // Flexibility task — now uses science classification rules
             runFlexibilityTask(area) {
-                const rules = ['even/odd', 'high/low', 'prime/composite'];
-                const rule = rules[this.state.currentTask % rules.length];
+                const scienceRules = this.CONFIG.SCIENCE_RULES;
+                const rule = scienceRules[this.state.currentTask % scienceRules.length];
                 const trials = 6 + this.state.currentDifficulty;
-                
+
                 this.flexState = {
                     rule,
                     trials,
@@ -1713,30 +2128,31 @@
                     reactionTimes: [],
                     startTime: null
                 };
-                
+
                 this.runFlexTrial();
             },
-            
-            // Run flexibility trial
+
+            // Run flexibility trial with science content
             runFlexTrial() {
                 const state = this.flexState;
                 const area = this.elements.gameArea;
-                
+
                 if (state.current >= state.trials) {
                     const accuracy = state.correct / state.trials;
                     const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
                     const rtScore = Math.max(0, 1 - (avgRT / 3000));
                     const score = Math.round((accuracy * 70) + (rtScore * 30));
-                    
+
                     this.state.taskScores.push(score);
                     this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
-                    
+
                     setTimeout(() => this.nextTask(), 1500);
                     return;
                 }
-                
-                const num = Math.floor(Math.random() * 20) + 1;
-                
+
+                // Pick a random item from the current science rule
+                const item = state.rule.items[Math.floor(Math.random() * state.rule.items.length)];
+
                 // Clear area but keep instructions
                 const instructions = area.querySelector('.game-instructions');
                 while (area.firstChild) {
@@ -1745,116 +2161,43 @@
                 if (instructions) {
                     area.appendChild(instructions);
                 }
-                
+
                 // Create UI
                 const title = document.createElement('h3');
                 title.textContent = `Trial ${state.current + 1} of ${state.trials}`;
-                
-                const rule = document.createElement('h3');
-                rule.style.color = 'var(--primary)';
-                rule.textContent = this.getRuleText(state.rule);
-                
+
+                const ruleLabel = document.createElement('h3');
+                ruleLabel.style.color = 'var(--primary)';
+                ruleLabel.textContent = state.rule.question;
+
                 const stimulus = document.createElement('div');
                 stimulus.className = 'stimulus';
-                stimulus.textContent = num;
-                
+                stimulus.style.fontSize = '2.5rem';
+                stimulus.textContent = item.stimulus;
+
                 const buttons = document.createElement('div');
                 buttons.className = 'response-buttons';
-                
-                const options = this.getRuleOptions(state.rule);
-                options.forEach(option => {
+
+                state.rule.options.forEach(option => {
                     const btn = document.createElement('button');
                     btn.className = 'btn response-btn';
                     btn.textContent = option;
                     btn.dataset.response = option.toLowerCase();
-                    btn.dataset.correct = this.checkFlexAnswer(num, state.rule, option.toLowerCase());
+                    btn.dataset.correct = (option.toLowerCase() === item.answer);
                     buttons.appendChild(btn);
                 });
-                
+
                 area.appendChild(title);
-                area.appendChild(rule);
+                area.appendChild(ruleLabel);
                 area.appendChild(stimulus);
                 area.appendChild(buttons);
-                
+
                 state.startTime = Date.now();
                 state.current++;
             },
-            
-            // Get rule text
-            getRuleText(rule) {
-                switch(rule) {
-                    case 'even/odd': return 'Is the number even or odd?';
-                    case 'high/low': return 'Is the number high (≥10) or low (<10)?';
-                    case 'prime/composite': return 'Is the number prime or composite?';
-                    default: return '';
-                }
-            },
-            
-            // Get rule options
-            getRuleOptions(rule) {
-                switch(rule) {
-                    case 'even/odd': return ['Even', 'Odd'];
-                    case 'high/low': return ['High', 'Low'];
-                    case 'prime/composite': return ['Prime', 'Composite'];
-                    default: return [];
-                }
-            },
-            
-            // Check flexibility answer
-            checkFlexAnswer(num, rule, response) {
-                switch(rule) {
-                    case 'even/odd':
-                        return (num % 2 === 0 && response === 'even') || 
-                               (num % 2 !== 0 && response === 'odd');
-                    case 'high/low':
-                        return (num >= 10 && response === 'high') || 
-                               (num < 10 && response === 'low');
-                    case 'prime/composite':
-                        const isPrime = this.isPrime(num);
-                        return (isPrime && response === 'prime') || 
-                               (!isPrime && response === 'composite');
-                    default:
-                        return false;
-                }
-            },
-            
-            // Check if number is prime
-            isPrime(n) {
-                if (n <= 1) return false;
-                if (n <= 3) return true;
-                if (n % 2 === 0 || n % 3 === 0) return false;
-                for (let i = 5; i * i <= n; i += 6) {
-                    if (n % i === 0 || n % (i + 2) === 0) return false;
-                }
-                return true;
-            },
-            
-            // Handle response
-            handleResponse(response, correct) {
-                if (this.state.currentGame === 'speed') {
-                    const btn = event.target;
-                    const startTime = parseInt(btn.dataset.startTime);
-                    const rt = Date.now() - startTime;
-                    
-                    this.speedState.reactionTimes.push(rt);
-                    if (correct === 'true') this.speedState.correct++;
-                    
-                    setTimeout(() => this.runSpeedTrial(), 300);
-                } else if (this.state.currentGame === 'flexibility') {
-                    // Fix: Don't recursively call handleResponse
-                    const state = this.flexState;
-                    const rt = Date.now() - state.startTime;
-                    
-                    state.reactionTimes.push(rt);
-                    if (correct === 'true') state.correct++;
-                    
-                    setTimeout(() => this.runFlexTrial(), 500);
-                }
-            },
-            
-            // Speed task (FIXED timing bug)
+
+            // Speed task — now uses chemical formulas
             runSpeedTask(area) {
-                const patterns = ['AAA', 'BBB', 'CCC', 'DDD', 'EEE'];
                 const trials = 5 + this.state.currentDifficulty;
                 
                 this.speedState = {
@@ -1885,7 +2228,7 @@
                     return;
                 }
                 
-                const patterns = ['AAA', 'BBB', 'CCC', 'DDD'];
+                const patterns = this.CONFIG.SCIENCE_FORMULAS.slice(0, 4 + Math.floor(this.state.currentDifficulty / 2));
                 const correct = patterns[Math.floor(Math.random() * patterns.length)];
                 const options = [...patterns].sort(() => Math.random() - 0.5);
                 
@@ -1900,7 +2243,7 @@
                 
                 // Create UI
                 const title = document.createElement('h3');
-                title.textContent = 'Match the pattern quickly!';
+                title.textContent = 'Match the formula quickly!';
                 
                 const stimulus = document.createElement('div');
                 stimulus.className = 'stimulus';
@@ -1943,12 +2286,56 @@
                 const average = Math.round(
                     this.state.taskScores.reduce((a, b) => a + b, 0) / this.state.taskScores.length
                 );
-                
+
                 this.state.gameScores[this.state.currentGame] = average;
-                
+
+                // Auto-sync this game result to Google Sheets
+                this.syncToSheets(this.state.currentGame, average);
+
                 this.showScreen('menu');
                 this.renderGames();
                 this.showFeedback(`Game complete! Score: ${average}%`, 'success');
+            },
+
+            // Sync a game result to Google Sheets
+            syncToSheets(gameId, score) {
+                const url = this.settings && this.settings.sheetsUrl;
+                if (!url) return;
+
+                const user = this.state.user || {};
+                const payload = {
+                    timestamp: new Date().toISOString(),
+                    student: user.name || '',
+                    age: user.age || '',
+                    grade: user.grade || '',
+                    teacher: user.teacher || '',
+                    period: user.period || '',
+                    game: gameId,
+                    score: score,
+                    difficulty: this.state.currentDifficulty,
+                    duration: Math.round((Date.now() - this.state.sessionStart) / 1000),
+                    integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
+                };
+
+                this.updateSyncStatus('syncing');
+
+                fetch(url, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                }).then(() => {
+                    this.updateSyncStatus('connected');
+                }).catch(() => {
+                    this.updateSyncStatus('error');
+                });
+            },
+
+            // Update sync status indicator
+            updateSyncStatus(status) {
+                const el = document.getElementById('syncStatus');
+                if (!el) return;
+                el.className = 'sync-status ' + status;
             },
             
             // Exit game
@@ -1982,8 +2369,12 @@
                 this.saveState();
                 
                 // Render report
-                this.elements.reportInfo.textContent = 
-                    `${this.state.user.name} | Age ${this.state.user.age} | Grade ${this.state.user.grade} | ${new Date().toLocaleDateString()}`;
+                const u = this.state.user;
+                const infoParts = [u.name, `Age ${u.age}`, `Grade ${u.grade}`];
+                if (u.teacher) infoParts.push(u.teacher);
+                if (u.period) infoParts.push(`Period ${u.period}`);
+                infoParts.push(new Date().toLocaleDateString());
+                this.elements.reportInfo.textContent = infoParts.join(' | ');
                 
                 // Clear and rebuild scores display
                 const scoresContainer = this.elements.reportScores;
@@ -2013,27 +2404,147 @@
                     scoresContainer.appendChild(card);
                 });
                 
-                // Show recommendations for lowest score
-                const lowestGame = Object.entries(scores).reduce((min, [id, score]) => 
-                    score < min.score ? {id, score} : min, {id: null, score: 100});
-                
-                if (lowestGame.id) {
-                    const game = this.CONFIG.GAMES.find(g => g.id === lowestGame.id);
-                    const recommendations = {
-                        memory: 'Practice chunking numbers into groups. Try memory palace techniques.',
-                        attention: 'Use the Pomodoro Technique. Practice mindfulness meditation.',
-                        flexibility: 'Try puzzle games that require rule switching. Learn a new skill.',
-                        speed: 'Practice timed exercises. Use flashcards for quick recall.'
-                    };
-                    
-                    this.elements.recommendations.style.display = 'block';
-                    this.elements.recommendationText.textContent = 
-                        `Focus on ${game.name}: ${recommendations[lowestGame.id]}`;
-                }
+                // Build comprehensive recommendations
+                this.buildRecommendations(scores, average);
                 
                 this.showScreen('report');
             },
-            
+
+            // Build comprehensive, science-connected recommendations
+            buildRecommendations(scores, average) {
+                const container = this.elements.recommendations;
+                while (container.firstChild) container.removeChild(container.firstChild);
+
+                // Tier helper
+                const getTier = (score) => {
+                    if (score >= 80) return { key: 'strong', label: 'Strong', css: 'strong' };
+                    if (score >= 60) return { key: 'developing', label: 'Developing', css: 'developing' };
+                    return { key: 'needsFocus', label: 'Needs Focus', css: 'needs-focus' };
+                };
+
+                const overallTier = getTier(average);
+
+                // Profile summary
+                const profile = document.createElement('div');
+                profile.className = 'rec-profile';
+                const profileScore = document.createElement('div');
+                profileScore.className = 'rec-profile-score';
+                profileScore.textContent = `${average}%`;
+                const profileText = document.createElement('div');
+                const profileLabel = document.createElement('div');
+                profileLabel.className = 'rec-profile-label';
+                profileLabel.textContent = 'Executive Function Profile';
+                const profileSub = document.createElement('div');
+                profileSub.className = 'rec-profile-sublabel';
+                const tierCounts = { strong: 0, developing: 0, needsFocus: 0 };
+                this.CONFIG.GAMES.forEach(g => {
+                    const s = scores[g.id] || 0;
+                    tierCounts[getTier(s).key]++;
+                });
+                const parts = [];
+                if (tierCounts.strong > 0) parts.push(`${tierCounts.strong} strong`);
+                if (tierCounts.developing > 0) parts.push(`${tierCounts.developing} developing`);
+                if (tierCounts.needsFocus > 0) parts.push(`${tierCounts.needsFocus} needs focus`);
+                profileSub.textContent = parts.join(', ') + ' — see how each connects to science learning below';
+                profileText.appendChild(profileLabel);
+                profileText.appendChild(profileSub);
+                profile.appendChild(profileScore);
+                profile.appendChild(profileText);
+                container.appendChild(profile);
+
+                // Per-game recommendation cards
+                const cards = document.createElement('div');
+                cards.className = 'rec-cards';
+
+                this.CONFIG.GAMES.forEach(game => {
+                    const score = scores[game.id] || 0;
+                    const tier = getTier(score);
+                    const rec = this.CONFIG.RECOMMENDATIONS[game.id];
+                    if (!rec) return;
+
+                    const card = document.createElement('div');
+                    card.className = 'rec-card';
+
+                    // Header: icon + name + tier badge
+                    const header = document.createElement('div');
+                    header.className = 'rec-card-header';
+                    const title = document.createElement('div');
+                    title.className = 'rec-card-title';
+                    title.innerHTML = `<span>${game.icon}</span>${game.name}`;
+                    const badge = document.createElement('span');
+                    badge.className = `rec-tier ${tier.css}`;
+                    badge.textContent = tier.label;
+                    header.appendChild(title);
+                    header.appendChild(badge);
+                    card.appendChild(header);
+
+                    // Science connection
+                    const conn = document.createElement('div');
+                    conn.className = 'rec-connection';
+                    conn.textContent = rec.scienceConnection;
+                    card.appendChild(conn);
+
+                    // Tier-specific feedback
+                    const feedback = document.createElement('div');
+                    feedback.className = 'rec-feedback';
+                    feedback.textContent = rec.tiers[tier.key];
+                    card.appendChild(feedback);
+
+                    // Science study tips (show top 2 for developing/needs-focus, 1 for strong)
+                    const tipCount = tier.key === 'strong' ? 1 : 2;
+                    const tipList = document.createElement('ul');
+                    tipList.className = 'rec-tips';
+                    rec.tips.slice(0, tipCount).forEach(tip => {
+                        const li = document.createElement('li');
+                        li.textContent = tip;
+                        tipList.appendChild(li);
+                    });
+                    card.appendChild(tipList);
+
+                    cards.appendChild(card);
+                });
+
+                container.appendChild(cards);
+
+                // Synthesis: overall science study strategy
+                const focusAreas = this.CONFIG.GAMES
+                    .filter(g => (scores[g.id] || 0) < 60)
+                    .map(g => g.name.toLowerCase());
+                const strengths = this.CONFIG.GAMES
+                    .filter(g => (scores[g.id] || 0) >= 80)
+                    .map(g => g.name.toLowerCase());
+
+                const synthesis = document.createElement('div');
+                synthesis.className = 'rec-synthesis';
+                const synthTitle = document.createElement('h4');
+                synthTitle.textContent = 'Science Study Strategy';
+                synthesis.appendChild(synthTitle);
+
+                const synthText = document.createElement('p');
+                if (overallTier.key === 'strong') {
+                    synthText.textContent = 'Your executive function skills are well-developed across the board. ' +
+                        'These cognitive skills are associated with success in challenging science work — ' +
+                        'designing experiments, analyzing datasets, and building arguments from evidence. ' +
+                        'Keep training to maintain these skills.';
+                } else if (focusAreas.length > 0 && strengths.length > 0) {
+                    synthText.textContent = `Your strengths in ${strengths.join(' and ')} give you a good starting point. ` +
+                        `Building ${focusAreas.join(' and ')} may further support your science learning — ` +
+                        'try the tips above during your next science class and notice what changes.';
+                } else if (focusAreas.length > 0) {
+                    synthText.textContent = `The areas to focus on are ${focusAreas.join(' and ')}. ` +
+                        'These skills are associated with science learning, and they improve with practice. ' +
+                        'Try the tips above during your next science class — small changes add up.';
+                } else {
+                    synthText.textContent = 'Your executive function skills are developing well. ' +
+                        'Keep practicing, and try the study tips above during your next science class — ' +
+                        'many students find these cognitive skills connect to their science work.';
+                }
+                synthesis.appendChild(synthText);
+                container.appendChild(synthesis);
+
+                container.style.display = 'block';
+            },
+
             // Export data
             exportData() {
                 const data = {
@@ -2099,6 +2610,8 @@
                     document.getElementById('name').value = '';
                     document.getElementById('age').value = '';
                     document.getElementById('grade').value = '';
+                    document.getElementById('teacher').value = '';
+                    document.getElementById('period').value = '';
                 }
             },
             
