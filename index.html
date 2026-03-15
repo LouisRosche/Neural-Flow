@@ -849,18 +849,53 @@
             line-height: 1.5;
             color: #374151;
         }
+
+        /* History table */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .history-table th,
+        .history-table td {
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .history-table th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.03em;
+        }
+
+        .history-table tr:hover td {
+            background: #f0f4ff;
+        }
+
+        .history-empty {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <a href="#loginScreen" class="visually-hidden" id="skipLink">Skip to content</a>
+    <div class="app-container" role="application" aria-label="Neural Flow Executive Function Training">
         <header class="header">
             <h1>🧠 Neural Flow - Executive Function Training</h1>
-            <button class="settings-btn" id="settingsBtn" title="Settings">⚙</button>
+            <button class="settings-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
         </header>
-        
-        <main class="content">
+
+        <main class="content" role="main">
             <!-- Login Screen -->
-            <div id="loginScreen" class="screen active">
+            <div id="loginScreen" class="screen active" role="region" aria-label="Student login">
                 <div class="form-container">
                     <h2 class="form-title">Welcome!</h2>
                     <div id="loginForm">
@@ -921,17 +956,17 @@
             </div>
             
             <!-- Menu Screen -->
-            <div id="menuScreen" class="screen">
+            <div id="menuScreen" class="screen" role="region" aria-label="Game selection">
                 <h2 style="text-align: center; margin-bottom: 2rem;">Select a Training Module</h2>
                 <div class="games-container" id="gamesGrid"></div>
             </div>
             
             <!-- Game Screen -->
-            <div id="gameScreen" class="screen">
+            <div id="gameScreen" class="screen" role="region" aria-label="Active game">
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressBar"></div>
                 </div>
-                <div class="game-area" id="gameArea">
+                <div class="game-area" id="gameArea" aria-live="polite">
                     <div class="loading">
                         <div class="spinner"></div>
                         <p>Loading game...</p>
@@ -943,7 +978,7 @@
             </div>
             
             <!-- Report Screen -->
-            <div id="reportScreen" class="screen">
+            <div id="reportScreen" class="screen" role="region" aria-label="Training report">
                 <div class="report-container">
                     <div class="report-header">
                         <h2 style="font-size: 2rem; margin-bottom: 1rem;">Training Complete!</h2>
@@ -954,8 +989,14 @@
                     
                     <div id="recommendations" style="margin-top: 2rem; display: none;"></div>
                     
-                    <div style="text-align: center; margin-top: 2rem;">
+                    <div id="historySection" style="margin-top: 2rem; display: none;">
+                        <h3 style="margin-bottom: 1rem;">Session History</h3>
+                        <div id="historyContainer"></div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 2rem; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
                         <button id="exportBtn" class="btn">Export Data</button>
+                        <button id="historyBtn" class="btn btn-secondary">View History</button>
                         <button id="resetBtn" class="btn btn-secondary">New Session</button>
                     </div>
                 </div>
@@ -972,7 +1013,7 @@
     </div>
 
     <!-- Settings modal -->
-    <div class="modal-overlay" id="settingsModal">
+    <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-label="Settings">
         <div class="modal">
             <h3>⚙ Settings</h3>
             <div class="form-group">
@@ -1124,9 +1165,46 @@
                             { stimulus: 'Cutting hair', answer: 'physical' },
                             { stimulus: 'Fireworks exploding', answer: 'chemical' }
                         ]
+                    },
+                    {
+                        key: 'conductor/insulator',
+                        question: 'Is this material a conductor or insulator of electricity?',
+                        options: ['Conductor', 'Insulator'],
+                        items: [
+                            { stimulus: 'Copper wire', answer: 'conductor' },
+                            { stimulus: 'Rubber gloves', answer: 'insulator' },
+                            { stimulus: 'Aluminum foil', answer: 'conductor' },
+                            { stimulus: 'Glass rod', answer: 'insulator' },
+                            { stimulus: 'Salt water', answer: 'conductor' },
+                            { stimulus: 'Plastic wrap', answer: 'insulator' },
+                            { stimulus: 'Steel nail', answer: 'conductor' },
+                            { stimulus: 'Dry wood', answer: 'insulator' },
+                            { stimulus: 'Gold ring', answer: 'conductor' },
+                            { stimulus: 'Ceramic tile', answer: 'insulator' }
+                        ]
+                    },
+                    {
+                        key: 'element/compound',
+                        question: 'Is this substance an element or a compound?',
+                        options: ['Element', 'Compound'],
+                        items: [
+                            { stimulus: 'Oxygen (O₂)', answer: 'element' },
+                            { stimulus: 'Water (H₂O)', answer: 'compound' },
+                            { stimulus: 'Iron (Fe)', answer: 'element' },
+                            { stimulus: 'Carbon dioxide (CO₂)', answer: 'compound' },
+                            { stimulus: 'Gold (Au)', answer: 'element' },
+                            { stimulus: 'Table salt (NaCl)', answer: 'compound' },
+                            { stimulus: 'Nitrogen (N₂)', answer: 'element' },
+                            { stimulus: 'Methane (CH₄)', answer: 'compound' },
+                            { stimulus: 'Helium (He)', answer: 'element' },
+                            { stimulus: 'Rust (Fe₂O₃)', answer: 'compound' }
+                        ]
                     }
                 ],
-                SCIENCE_FORMULAS: ['H₂O', 'CO₂', 'NaCl', 'O₂', 'N₂', 'CH₄', 'Fe₂O₃', 'CaCO₃'],
+                SCIENCE_FORMULAS: [
+                    'H₂O', 'CO₂', 'NaCl', 'O₂', 'N₂', 'CH₄', 'Fe₂O₃', 'CaCO₃',
+                    'H₂SO₄', 'NaOH', 'HCl', 'NH₃', 'C₆H₁₂O₆', 'KMnO₄'
+                ],
                 RECOMMENDATIONS: {
                     memory: {
                         scienceConnection: 'Working memory supports following multi-step lab procedures, holding variables in mind during experiments, and connecting observations to hypotheses.',
@@ -1208,6 +1286,9 @@
             
             // Event listeners registry for cleanup
             listeners: new Map(),
+
+            // Timer registry for cleanup
+            _timers: [],
             
             // Initialize application
             init() {
@@ -1264,12 +1345,15 @@
                     closeSettingsBtn: document.getElementById('closeSettingsBtn'),
                     syncStatus: document.getElementById('syncStatus'),
                     toggleScript: document.getElementById('toggleScript'),
-                    scriptCode: document.getElementById('scriptCode')
+                    scriptCode: document.getElementById('scriptCode'),
+                    historyBtn: document.getElementById('historyBtn'),
+                    historySection: document.getElementById('historySection'),
+                    historyContainer: document.getElementById('historyContainer')
                 };
                 
                 // Verify elements exist
                 Object.entries(this.elements).forEach(([key, value]) => {
-                    if (!value && typeof value !== 'object') {
+                    if (value === null || value === undefined) {
                         console.warn(`Element not found: ${key}`);
                     }
                 });
@@ -1368,18 +1452,23 @@
             // Setup basic integrity check
             setupIntegrityCheck() {
                 // Detect developer tools (basic check)
-                let devtools = {open: false, orientation: null};
+                let devtools = {open: false};
                 const threshold = 160;
-                
-                setInterval(() => {
-                    if (window.outerHeight - window.innerHeight > threshold || 
-                        window.outerWidth - window.innerWidth > threshold) {
-                        if (!devtools.open) {
-                            devtools.open = true;
-                            this.state.integrityChecksum = 'unverified';
+
+                this._integrityInterval = setInterval(() => {
+                    const devtoolsOpen = window.outerHeight - window.innerHeight > threshold ||
+                        window.outerWidth - window.innerWidth > threshold;
+
+                    if (devtoolsOpen && !devtools.open) {
+                        devtools.open = true;
+                        this.state.integrityChecksum = 'unverified';
+                        // Show the integrity overlay if a game is active
+                        if (this.state.currentGame) {
+                            this.elements.integrityCheck.classList.add('active');
                         }
-                    } else {
+                    } else if (!devtoolsOpen && devtools.open) {
                         devtools.open = false;
+                        this.elements.integrityCheck.classList.remove('active');
                     }
                 }, 500);
             },
@@ -1397,8 +1486,11 @@
                 // Export button
                 this.addEventListener(this.elements.exportBtn, 'click', () => this.exportData());
                 
-                // Reset button  
+                // Reset button
                 this.addEventListener(this.elements.resetBtn, 'click', () => this.reset());
+
+                // History button
+                this.addEventListener(this.elements.historyBtn, 'click', () => this.toggleHistory());
                 
                 // Enter key on login form
                 this.addEventListener(document.getElementById('loginForm'), 'keypress', (e) => {
@@ -1431,11 +1523,16 @@
                     this.elements.settingsModal.classList.remove('active');
                 });
                 this.addEventListener(this.elements.saveSettingsBtn, 'click', () => {
-                    this.settings.sheetsUrl = this.elements.sheetsUrl.value.trim();
+                    const url = this.elements.sheetsUrl.value.trim();
+                    if (url && !this.isValidSheetsUrl(url)) {
+                        this.showFeedback('Please enter a valid Google Apps Script URL (https://script.google.com/...)', 'error');
+                        return;
+                    }
+                    this.settings.sheetsUrl = url;
                     this.saveSettings();
-                    this.updateSyncStatus(this.settings.sheetsUrl ? 'connected' : 'disconnected');
+                    this.updateSyncStatus(url ? 'connected' : 'disconnected');
                     this.elements.settingsModal.classList.remove('active');
-                    this.showFeedback(this.settings.sheetsUrl ? 'Google Sheets sync enabled' : 'Sync disabled', 'success');
+                    this.showFeedback(url ? 'Google Sheets sync enabled' : 'Sync disabled', 'success');
                 });
                 this.addEventListener(this.elements.settingsModal, 'click', (e) => {
                     if (e.target === this.elements.settingsModal) {
@@ -1446,6 +1543,13 @@
                     this.elements.scriptCode.classList.toggle('open');
                     this.elements.toggleScript.textContent = this.elements.scriptCode.classList.contains('open')
                         ? '▼ Hide Apps Script code' : '▶ Show Apps Script code';
+                });
+
+                // Keyboard: Escape closes settings modal
+                this.addEventListener(document, 'keydown', (e) => {
+                    if (e.key === 'Escape' && this.elements.settingsModal.classList.contains('active')) {
+                        this.elements.settingsModal.classList.remove('active');
+                    }
                 });
             },
             
@@ -1492,7 +1596,7 @@
                         state.reactionTimes.push(rt);
                         if (correct === 'true') state.correct++;
                         
-                        setTimeout(() => this.runFlexTrial(), 500);
+                        this.gameTimeout(() => this.runFlexTrial(), 500);
                     } else if (this.state.currentGame === 'speed') {
                         const startTime = parseInt(target.dataset.startTime);
                         const rt = Date.now() - startTime;
@@ -1500,7 +1604,7 @@
                         this.speedState.reactionTimes.push(rt);
                         if (correct === 'true') this.speedState.correct++;
                         
-                        setTimeout(() => this.runSpeedTrial(), 300);
+                        this.gameTimeout(() => this.runSpeedTrial(), 300);
                     }
                     return; // Prevent any further processing
                 }
@@ -1591,8 +1695,18 @@
                         score.className = 'game-score';
                         score.textContent = `Score: ${this.state.gameScores[game.id]}%`;
                         card.appendChild(score);
+                        card.setAttribute('aria-label', `${game.name} — completed, score ${this.state.gameScores[game.id]}%`);
                     } else {
+                        card.tabIndex = 0;
+                        card.setAttribute('role', 'button');
+                        card.setAttribute('aria-label', `Start ${game.name}: ${game.description}`);
                         card.addEventListener('click', () => this.startGame(game.id));
+                        card.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                this.startGame(game.id);
+                            }
+                        });
                     }
                     
                     grid.appendChild(card);
@@ -1600,7 +1714,7 @@
                 
                 // Check if all games complete
                 if (Object.keys(this.state.gameScores).length === this.CONFIG.GAMES.length) {
-                    setTimeout(() => this.showReport(), 500);
+                    this.gameTimeout(() => this.showReport(), 500);
                 }
             },
             
@@ -1611,6 +1725,7 @@
                     this.state.currentTask = 0;
                     this.state.currentDifficulty = 1;
                     this.state.taskScores = [];
+                    this.state.gameStart = Date.now();
                     
                     this.showScreen('game');
                     this.runTask();
@@ -1620,8 +1735,44 @@
                 }
             },
             
+            // Fisher-Yates shuffle (unbiased)
+            shuffle(arr) {
+                const a = [...arr];
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
+            },
+
+            // Clear game area but preserve instructions panel
+            clearGameArea(area) {
+                if (!area) area = this.elements.gameArea;
+                const instructions = area.querySelector('.game-instructions');
+                while (area.firstChild) {
+                    area.removeChild(area.firstChild);
+                }
+                if (instructions) {
+                    area.appendChild(instructions);
+                }
+            },
+
+            // Managed setTimeout that gets cleaned up on game exit
+            gameTimeout(fn, delay) {
+                const id = setTimeout(() => {
+                    const idx = this._timers.indexOf(id);
+                    if (idx > -1) this._timers.splice(idx, 1);
+                    fn();
+                }, delay);
+                this._timers.push(id);
+                return id;
+            },
+
             // Clean up game resources
             cleanupCurrentGame() {
+                // Clear all pending game timers
+                this._timers.forEach(id => clearTimeout(id));
+                this._timers = [];
                 // Reset all game states
                 this.memoryState = null;
                 this.attentionState = null;
@@ -1643,7 +1794,7 @@
                 }
                 
                 // Update progress
-                const progress = ((this.state.currentTask + 1) / this.CONFIG.MAX_TASKS) * 100;
+                const progress = (this.state.currentTask / this.CONFIG.MAX_TASKS) * 100;
                 this.elements.progressBar.style.width = `${progress}%`;
                 
                 // Clear game area
@@ -1652,16 +1803,30 @@
                     area.removeChild(area.firstChild);
                 }
                 
+                // Show difficulty level indicator
+                const difficultyBar = document.createElement('div');
+                difficultyBar.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:1rem;';
+                const diffLabel = document.createElement('span');
+                diffLabel.style.cssText = 'font-size:0.85rem;color:var(--text-muted);font-weight:500;';
+                diffLabel.textContent = 'Difficulty:';
+                difficultyBar.appendChild(diffLabel);
+                for (let i = 1; i <= 5; i++) {
+                    const pip = document.createElement('div');
+                    pip.style.cssText = `width:12px;height:12px;border-radius:50%;background:${i <= this.state.currentDifficulty ? 'var(--primary)' : 'var(--border)'};transition:all 0.3s;`;
+                    difficultyBar.appendChild(pip);
+                }
+                area.appendChild(difficultyBar);
+
                 // ADD INSTRUCTIONS AND READY BUTTON
                 const instructions = this.showGameInstructions(this.state.currentGame);
                 if (instructions) {
                     area.appendChild(instructions);
                 }
-                
+
                 // Add ready button
                 const readyContainer = document.createElement('div');
                 readyContainer.style.cssText = 'text-align:center;margin-top:2rem;';
-                
+
                 const readyBtn = document.createElement('button');
                 readyBtn.className = 'btn btn-success';
                 readyBtn.textContent = `Start Round ${this.state.currentTask + 1} of ${this.CONFIG.MAX_TASKS}`;
@@ -1714,18 +1879,30 @@
             showGameInstructions(gameType) {
                 const instructions = this.CONFIG.GAME_INSTRUCTIONS[gameType];
                 if (!instructions) return null;
-                
+
                 const div = document.createElement('div');
                 div.className = 'game-instructions';
-                div.innerHTML = `
-                    <h4>How to Play:</h4>
-                    <p>${instructions.instruction}</p>
-                    <h4>Tips from Research:</h4>
-                    <ul>
-                        ${instructions.tips.map(tip => `<li>${tip}</li>`).join('')}
-                    </ul>
-                `;
-                
+
+                const h4play = document.createElement('h4');
+                h4play.textContent = 'How to Play:';
+                div.appendChild(h4play);
+
+                const p = document.createElement('p');
+                p.textContent = instructions.instruction;
+                div.appendChild(p);
+
+                const h4tips = document.createElement('h4');
+                h4tips.textContent = 'Tips from Research:';
+                div.appendChild(h4tips);
+
+                const ul = document.createElement('ul');
+                instructions.tips.forEach(tip => {
+                    const li = document.createElement('li');
+                    li.textContent = tip;
+                    ul.appendChild(li);
+                });
+                div.appendChild(ul);
+
                 return div;
             },
         
@@ -1734,10 +1911,14 @@
                 const baseLength = 3;
                 const length = baseLength + this.state.currentDifficulty + this.state.currentTask;
                 const sequence = [];
-                
-                // Generate sequence
+
+                // Generate sequence (avoid consecutive duplicates)
                 for (let i = 0; i < length; i++) {
-                    sequence.push(Math.floor(Math.random() * 10));
+                    let digit;
+                    do {
+                        digit = Math.floor(Math.random() * 10);
+                    } while (i > 0 && digit === sequence[i - 1]);
+                    sequence.push(digit);
                 }
                 
                 // Store memory state
@@ -1757,17 +1938,9 @@
             showMemorySequence() {
                 const area = this.elements.gameArea;
                 const state = this.memoryState;
-                
-                // Clear area but keep instructions
-                const children = Array.from(area.children);
-                const instructionsIndex = children.findIndex(child => child.className === 'game-instructions');
-                if (instructionsIndex >= 0) {
-                    // Remove elements after instructions
-                    for (let i = children.length - 1; i > instructionsIndex; i--) {
-                        area.removeChild(children[i]);
-                    }
-                }
-                
+
+                this.clearGameArea(area);
+
                 if (state.showIndex < state.sequence.length) {
                     // Show current number with position indicator
                     const title = document.createElement('h3');
@@ -1805,7 +1978,7 @@
                     area.appendChild(counter);
                     
                     state.showIndex++;
-                    setTimeout(() => this.showMemorySequence(), 1000);
+                    this.gameTimeout(() => this.showMemorySequence(), 1000);
                 } else {
                     // Show input interface
                     this.showMemoryInput();
@@ -1816,16 +1989,14 @@
             showMemoryInput() {
                 const area = this.elements.gameArea;
                 const state = this.memoryState;
-                
-            // Clear area but keep instructions
-                const instructions = area.querySelector('.game-instructions');
-                while (area.firstChild) {
-                    area.removeChild(area.firstChild);
+
+                // Start timing from when input phase begins, not from sequence display
+                if (!state.inputStartTime) {
+                    state.inputStartTime = Date.now();
                 }
-                if (instructions) {
-                    area.appendChild(instructions);
-                }
-                
+
+                this.clearGameArea(area);
+
                 // Title
                 const title = document.createElement('h3');
                 title.textContent = 'Enter the sequence';
@@ -1902,38 +2073,31 @@
                     }
                     
                     const accuracy = correct / state.length;
-                    const time = Date.now() - state.startTime;
+                    const time = Date.now() - (state.inputStartTime || state.startTime);
                     const timeBonus = Math.max(0, 1 - (time / (state.length * 2000)));
                     const score = Math.round((accuracy * 90) + (timeBonus * 10));
                     
                     this.state.taskScores.push(score);
                     
                     // Delay before showing feedback so user can see last input
-                    setTimeout(() => {
+                    this.gameTimeout(() => {
                         // Show score in same area format
                         const area = this.elements.gameArea;
-                        // Clear area but keep instructions
-                        const instructions = area.querySelector('.game-instructions');
-                        while (area.firstChild) {
-                            area.removeChild(area.firstChild);
-                        }
-                        if (instructions) {
-                            area.appendChild(instructions);
-                        }
-                        
+                        this.clearGameArea(area);
+
                         const scoreDisplay = document.createElement('div');
                         scoreDisplay.className = 'stimulus';
                         scoreDisplay.textContent = `${score}%`;
                         scoreDisplay.style.color = score >= 70 ? 'var(--success)' : 'var(--warning)';
-                        
+
                         const message = document.createElement('h3');
                         message.textContent = score >= 70 ? 'Well done!' : 'Keep practicing!';
                         message.style.textAlign = 'center';
-                        
+
                         area.appendChild(scoreDisplay);
                         area.appendChild(message);
-                        
-                        setTimeout(() => this.nextTask(), 1500);
+
+                        this.gameTimeout(() => this.nextTask(), 1500);
                     }, 1000); // Give time to see the last input
                 } else {
                     // Update display for next input
@@ -1972,20 +2136,25 @@
                 
                 const stats = document.createElement('div');
                 stats.className = 'stats';
-                stats.innerHTML = `
-                    <div class="stat-item">
-                        <div class="stat-value" id="hitsDisplay">0</div>
-                        <div class="stat-label">Hits</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="missesDisplay">0</div>
-                        <div class="stat-label">Misses</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="accuracyDisplay">100%</div>
-                        <div class="stat-label">Accuracy</div>
-                    </div>
-                `;
+                const statDefs = [
+                    { id: 'hitsDisplay', label: 'Hits', value: '0' },
+                    { id: 'missesDisplay', label: 'Misses', value: '0' },
+                    { id: 'accuracyDisplay', label: 'Accuracy', value: '100%' }
+                ];
+                statDefs.forEach(def => {
+                    const item = document.createElement('div');
+                    item.className = 'stat-item';
+                    const val = document.createElement('div');
+                    val.className = 'stat-value';
+                    val.id = def.id;
+                    val.textContent = def.value;
+                    const lbl = document.createElement('div');
+                    lbl.className = 'stat-label';
+                    lbl.textContent = def.label;
+                    item.appendChild(val);
+                    item.appendChild(lbl);
+                    stats.appendChild(item);
+                });
                 
                 area.appendChild(title);
                 area.appendChild(targetArea);
@@ -2006,8 +2175,13 @@
                     this.endAttentionTask();
                     return;
                 }
-                
-                if (state.targetsShown < state.targets || Math.random() < 0.3) {
+
+                // Only spawn if we still have targets to show, or a limited number of extra distractors
+                const maxDistractors = Math.ceil(state.targets * 0.4);
+                const shouldSpawn = state.targetsShown < state.targets ||
+                    (state.distractorsShown < maxDistractors && Math.random() < 0.3);
+
+                if (shouldSpawn) {
                     const isTarget = state.targetsShown < state.targets && Math.random() > 0.3;
                     
                     const dot = document.createElement('div');
@@ -2029,7 +2203,7 @@
                     else state.distractorsShown++;
                     
                     // Auto-remove after timeout
-                    setTimeout(() => {
+                    this.gameTimeout(() => {
                         if (dot.parentNode) {
                             if (isTarget) {
                                 state.misses++;
@@ -2041,9 +2215,9 @@
                         }
                     }, 2000 - (this.state.currentDifficulty * 100));
                 }
-                
+
                 // Schedule next spawn
-                setTimeout(() => this.spawnTarget(), 800 - (this.state.currentDifficulty * 50));
+                this.gameTimeout(() => this.spawnTarget(), 800 - (this.state.currentDifficulty * 50));
             },
             
             // Handle target click
@@ -2068,12 +2242,16 @@
             // Update attention display
             updateAttentionDisplay() {
                 const state = this.attentionState;
+                if (!state) return;
                 const total = state.hits + state.misses + state.falsePositives;
                 const accuracy = total > 0 ? Math.round((state.hits / total) * 100) : 100;
-                
-                document.getElementById('hitsDisplay').textContent = state.hits;
-                document.getElementById('missesDisplay').textContent = state.misses;
-                document.getElementById('accuracyDisplay').textContent = `${accuracy}%`;
+
+                const hits = document.getElementById('hitsDisplay');
+                const misses = document.getElementById('missesDisplay');
+                const acc = document.getElementById('accuracyDisplay');
+                if (hits) hits.textContent = state.hits;
+                if (misses) misses.textContent = state.misses;
+                if (acc) acc.textContent = `${accuracy}%`;
             },
             
             // End attention task
@@ -2094,10 +2272,10 @@
                 
                 this.state.taskScores.push(score);
                 this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
-                
-                setTimeout(() => this.nextTask(), 1500);
+
+                this.gameTimeout(() => this.nextTask(), 1500);
             },
-            
+
             // Z-score helper for d-prime calculation
             zScore(p) {
                 p = Math.max(0.01, Math.min(0.99, p));
@@ -2146,21 +2324,14 @@
                     this.state.taskScores.push(score);
                     this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
 
-                    setTimeout(() => this.nextTask(), 1500);
+                    this.gameTimeout(() => this.nextTask(), 1500);
                     return;
                 }
 
                 // Pick a random item from the current science rule
                 const item = state.rule.items[Math.floor(Math.random() * state.rule.items.length)];
 
-                // Clear area but keep instructions
-                const instructions = area.querySelector('.game-instructions');
-                while (area.firstChild) {
-                    area.removeChild(area.firstChild);
-                }
-                if (instructions) {
-                    area.appendChild(instructions);
-                }
+                this.clearGameArea(area);
 
                 // Create UI
                 const title = document.createElement('h3');
@@ -2223,24 +2394,17 @@
                     
                     this.state.taskScores.push(score);
                     this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
-                    
-                    setTimeout(() => this.nextTask(), 1500);
+
+                    this.gameTimeout(() => this.nextTask(), 1500);
                     return;
                 }
-                
+
                 const patterns = this.CONFIG.SCIENCE_FORMULAS.slice(0, 4 + Math.floor(this.state.currentDifficulty / 2));
                 const correct = patterns[Math.floor(Math.random() * patterns.length)];
-                const options = [...patterns].sort(() => Math.random() - 0.5);
+                const options = this.shuffle(patterns);
                 
-                // Clear area but keep instructions
-                const instructions = area.querySelector('.game-instructions');
-                while (area.firstChild) {
-                    area.removeChild(area.firstChild);
-                }
-                if (instructions) {
-                    area.appendChild(instructions);
-                }
-                
+                this.clearGameArea(area);
+
                 // Create UI
                 const title = document.createElement('h3');
                 title.textContent = 'Match the formula quickly!';
@@ -2276,16 +2440,17 @@
             nextTask() {
                 this.state.currentTask++;
                 // Use a timeout to break the call stack
-                setTimeout(() => {
+                this.gameTimeout(() => {
                     this.runTask();
                 }, 100);
             },
             
             // End game
             endGame() {
-                const average = Math.round(
-                    this.state.taskScores.reduce((a, b) => a + b, 0) / this.state.taskScores.length
-                );
+                const scores = this.state.taskScores;
+                const average = scores.length > 0
+                    ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+                    : 0;
 
                 this.state.gameScores[this.state.currentGame] = average;
 
@@ -2297,10 +2462,26 @@
                 this.showFeedback(`Game complete! Score: ${average}%`, 'success');
             },
 
+            // Validate a Google Apps Script URL
+            isValidSheetsUrl(url) {
+                try {
+                    const parsed = new URL(url);
+                    return parsed.protocol === 'https:' &&
+                        parsed.hostname === 'script.google.com';
+                } catch {
+                    return false;
+                }
+            },
+
             // Sync a game result to Google Sheets
             syncToSheets(gameId, score) {
                 const url = this.settings && this.settings.sheetsUrl;
                 if (!url) return;
+
+                if (!this.isValidSheetsUrl(url)) {
+                    this.updateSyncStatus('disconnected');
+                    return;
+                }
 
                 const user = this.state.user || {};
                 const payload = {
@@ -2313,12 +2494,14 @@
                     game: gameId,
                     score: score,
                     difficulty: this.state.currentDifficulty,
-                    duration: Math.round((Date.now() - this.state.sessionStart) / 1000),
+                    duration: Math.round((Date.now() - (this.state.gameStart || this.state.sessionStart)) / 1000),
                     integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
                 };
 
                 this.updateSyncStatus('syncing');
 
+                // Note: no-cors mode means we can't read the response,
+                // but we can detect network failures
                 fetch(url, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -2326,8 +2509,15 @@
                     body: JSON.stringify(payload)
                 }).then(() => {
                     this.updateSyncStatus('connected');
-                }).catch(() => {
-                    this.updateSyncStatus('error');
+                    // Queue for retry verification: store last synced game
+                    this._lastSyncedGame = gameId;
+                }).catch((err) => {
+                    console.warn('Sheets sync failed:', err);
+                    this.updateSyncStatus('disconnected');
+                    this.showFeedback('Sync failed — data saved locally', 'warning');
+                    // Store unsent data for potential retry
+                    if (!this._unsyncedResults) this._unsyncedResults = [];
+                    this._unsyncedResults.push(payload);
                 });
             },
 
@@ -2470,7 +2660,10 @@
                     header.className = 'rec-card-header';
                     const title = document.createElement('div');
                     title.className = 'rec-card-title';
-                    title.innerHTML = `<span>${game.icon}</span>${game.name}`;
+                    const iconSpan = document.createElement('span');
+                    iconSpan.textContent = game.icon;
+                    title.appendChild(iconSpan);
+                    title.appendChild(document.createTextNode(game.name));
                     const badge = document.createElement('span');
                     badge.className = `rec-tier ${tier.css}`;
                     badge.textContent = tier.label;
@@ -2545,6 +2738,68 @@
                 container.style.display = 'block';
             },
 
+            // Toggle session history view
+            toggleHistory() {
+                const section = this.elements.historySection;
+                const container = this.elements.historyContainer;
+                const isVisible = section.style.display !== 'none';
+
+                if (isVisible) {
+                    section.style.display = 'none';
+                    this.elements.historyBtn.textContent = 'View History';
+                    return;
+                }
+
+                // Build history table
+                while (container.firstChild) container.removeChild(container.firstChild);
+
+                const history = this.state.history;
+                if (history.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'history-empty';
+                    empty.textContent = 'No previous sessions recorded.';
+                    container.appendChild(empty);
+                } else {
+                    const table = document.createElement('table');
+                    table.className = 'history-table';
+
+                    const thead = document.createElement('thead');
+                    const headerRow = document.createElement('tr');
+                    ['Date', 'Student', 'Memory', 'Attention', 'Flexibility', 'Speed', 'Average'].forEach(h => {
+                        const th = document.createElement('th');
+                        th.textContent = h;
+                        headerRow.appendChild(th);
+                    });
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+
+                    const tbody = document.createElement('tbody');
+                    history.slice().reverse().forEach(entry => {
+                        const tr = document.createElement('tr');
+                        const date = new Date(entry.date).toLocaleDateString();
+                        const name = entry.user ? entry.user.name : '—';
+                        const scores = entry.scores || {};
+                        [date, name,
+                            scores.memory != null ? scores.memory + '%' : '—',
+                            scores.attention != null ? scores.attention + '%' : '—',
+                            scores.flexibility != null ? scores.flexibility + '%' : '—',
+                            scores.speed != null ? scores.speed + '%' : '—',
+                            entry.average != null ? entry.average + '%' : '—'
+                        ].forEach(val => {
+                            const td = document.createElement('td');
+                            td.textContent = val;
+                            tr.appendChild(td);
+                        });
+                        tbody.appendChild(tr);
+                    });
+                    table.appendChild(tbody);
+                    container.appendChild(table);
+                }
+
+                section.style.display = 'block';
+                this.elements.historyBtn.textContent = 'Hide History';
+            },
+
             // Export data
             exportData() {
                 const data = {
@@ -2571,22 +2826,26 @@
                     // Fallback for sandboxed environments
                     const modal = document.createElement('div');
                     modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:10px;box-shadow:0 0 20px rgba(0,0,0,0.3);z-index:9999;max-width:90%;max-height:90%;overflow:auto;';
-                    
-                    const content = document.createElement('div');
-                    content.innerHTML = `
-                        <h3>Copy Your Data</h3>
-                        <textarea style="width:400px;height:300px;font-family:monospace;" readonly>${JSON.stringify(data, null, 2)}</textarea>
-                        <br><br>
-                        <button class="btn">Close</button>
-                    `;
-                    
-                    modal.appendChild(content);
+
+                    const heading = document.createElement('h3');
+                    heading.textContent = 'Copy Your Data';
+                    modal.appendChild(heading);
+
+                    const textarea = document.createElement('textarea');
+                    textarea.style.cssText = 'width:100%;max-width:400px;height:300px;font-family:monospace;';
+                    textarea.readOnly = true;
+                    textarea.value = JSON.stringify(data, null, 2);
+                    modal.appendChild(textarea);
+
+                    const closeBtn = document.createElement('button');
+                    closeBtn.className = 'btn';
+                    closeBtn.textContent = 'Close';
+                    closeBtn.style.marginTop = '1rem';
+                    closeBtn.addEventListener('click', () => modal.remove());
+                    modal.appendChild(closeBtn);
+
                     document.body.appendChild(modal);
-                    
-                    const textarea = modal.querySelector('textarea');
                     textarea.select();
-                    
-                    modal.querySelector('button').addEventListener('click', () => modal.remove());
                 }
             },
             
@@ -2615,15 +2874,22 @@
                 }
             },
             
-            // Show screen
+            // Show screen with focus management
             showScreen(screenId) {
                 Object.values(this.elements.screens).forEach(screen => {
                     screen.classList.remove('active');
+                    screen.setAttribute('aria-hidden', 'true');
                 });
-                
+
                 const screen = this.elements.screens[screenId];
                 if (screen) {
                     screen.classList.add('active');
+                    screen.removeAttribute('aria-hidden');
+                    // Move focus to the first heading or focusable element
+                    requestAnimationFrame(() => {
+                        const focusTarget = screen.querySelector('h2, h3, button, input, [tabindex]');
+                        if (focusTarget) focusTarget.focus();
+                    });
                 }
             },
             
@@ -2635,6 +2901,8 @@
                 
                 const feedback = document.createElement('div');
                 feedback.className = `feedback ${type}`;
+                feedback.setAttribute('role', 'alert');
+                feedback.setAttribute('aria-live', 'assertive');
                 feedback.textContent = message;
                 document.body.appendChild(feedback);
                 
@@ -2654,6 +2922,13 @@
             
             // Cleanup on unload
             cleanup() {
+                // Clear integrity check interval
+                if (this._integrityInterval) {
+                    clearInterval(this._integrityInterval);
+                }
+                // Clear any game timers
+                this._timers.forEach(id => clearTimeout(id));
+                this._timers = [];
                 // Remove all event listeners
                 this.listeners.forEach((handlers, element) => {
                     handlers.forEach(({event, handler}) => {
