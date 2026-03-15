@@ -1298,8 +1298,12 @@
             // Event listeners registry for cleanup
             listeners: new Map(),
 
-            // Timer registry for cleanup
-            _timers: [],
+            // Timer registry for cleanup (Set for O(1) add/delete)
+            _timers: new Set(),
+
+            // Failed sync payloads (capped to prevent unbounded growth)
+            _unsyncedResults: [],
+            _MAX_UNSYNCED: 20,
             
             // Initialize application
             init() {
@@ -1359,7 +1363,8 @@
                     scriptCode: document.getElementById('scriptCode'),
                     historyBtn: document.getElementById('historyBtn'),
                     historySection: document.getElementById('historySection'),
-                    historyContainer: document.getElementById('historyContainer')
+                    historyContainer: document.getElementById('historyContainer'),
+                    progressBarContainer: document.getElementById('progressBarContainer')
                 };
                 
                 // Verify elements exist
@@ -1757,8 +1762,9 @@
             },
 
             // Clear game area but preserve instructions panel
-            clearGameArea(area) {
-                if (!area) area = this.elements.gameArea;
+            clearGameArea() {
+                const area = this.elements.gameArea;
+                if (!area) return;
                 const instructions = area.querySelector('.game-instructions');
                 while (area.firstChild) {
                     area.removeChild(area.firstChild);
@@ -1771,29 +1777,37 @@
             // Managed setTimeout that gets cleaned up on game exit
             gameTimeout(fn, delay) {
                 const id = setTimeout(() => {
-                    const idx = this._timers.indexOf(id);
-                    if (idx > -1) this._timers.splice(idx, 1);
+                    this._timers.delete(id);
                     fn();
                 }, delay);
-                this._timers.push(id);
+                this._timers.add(id);
                 return id;
+            },
+
+            // Record a task score, show feedback, and advance to next task
+            completeTask(score) {
+                this.state.taskScores.push(score);
+                this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
+                this.gameTimeout(() => this.nextTask(), this.CONFIG.FEEDBACK_DISPLAY_MS);
+            },
+
+            // Clear all pending game timers
+            clearTimers() {
+                this._timers.forEach(id => clearTimeout(id));
+                this._timers.clear();
             },
 
             // Clean up game resources
             cleanupCurrentGame() {
-                // Clear all pending game timers
-                this._timers.forEach(id => clearTimeout(id));
-                this._timers = [];
+                this.clearTimers();
                 // Reset all game states
                 this.memoryState = null;
                 this.attentionState = null;
                 this.flexState = null;
                 this.speedState = null;
-                // Clear the game area
+                // Clear the game area (no instructions to preserve during cleanup)
                 if (this.elements.gameArea) {
-                    while (this.elements.gameArea.firstChild) {
-                        this.elements.gameArea.removeChild(this.elements.gameArea.firstChild);
-                    }
+                    this.clearGameArea();
                 }
             },
             
@@ -1807,14 +1821,13 @@
                 // Update progress
                 const progress = Math.round((this.state.currentTask / this.CONFIG.MAX_TASKS) * 100);
                 this.elements.progressBar.style.width = `${progress}%`;
-                const container = document.getElementById('progressBarContainer');
-                if (container) container.setAttribute('aria-valuenow', progress);
+                if (this.elements.progressBarContainer) {
+                    this.elements.progressBarContainer.setAttribute('aria-valuenow', progress);
+                }
                 
                 // Clear game area
+                this.clearGameArea();
                 const area = this.elements.gameArea;
-                while (area.firstChild) {
-                    area.removeChild(area.firstChild);
-                }
                 
                 // Show difficulty level indicator
                 const difficultyBar = document.createElement('div');
@@ -1952,7 +1965,7 @@
                 const area = this.elements.gameArea;
                 const state = this.memoryState;
 
-                this.clearGameArea(area);
+                this.clearGameArea();
 
                 if (state.showIndex < state.sequence.length) {
                     // Show current number with position indicator
@@ -2008,7 +2021,7 @@
                     state.inputStartTime = Date.now();
                 }
 
-                this.clearGameArea(area);
+                this.clearGameArea();
 
                 // Title
                 const title = document.createElement('h3');
@@ -2096,7 +2109,7 @@
                     this.gameTimeout(() => {
                         // Show score in same area format
                         const area = this.elements.gameArea;
-                        this.clearGameArea(area);
+                        this.clearGameArea();
 
                         const scoreDisplay = document.createElement('div');
                         scoreDisplay.className = 'stimulus';
@@ -2110,8 +2123,8 @@
                         area.appendChild(scoreDisplay);
                         area.appendChild(message);
 
-                        this.gameTimeout(() => this.nextTask(), 1500);
-                    }, 1000); // Give time to see the last input
+                        this.gameTimeout(() => this.nextTask(), this.CONFIG.FEEDBACK_DISPLAY_MS);
+                    }, this.CONFIG.MEMORY_DISPLAY_MS); // Give time to see the last input
                 } else {
                     // Update display for next input
                     this.showMemoryInput();
@@ -2134,7 +2147,9 @@
                     targetsShown: 0,
                     distractorsShown: 0,
                     startTime: Date.now(),
-                    active: []
+                    active: [],
+                    // Cached display elements (avoid repeated getElementById)
+                    els: {}
                 };
                 
                 this.attentionState = state;
@@ -2172,7 +2187,13 @@
                 area.appendChild(title);
                 area.appendChild(targetArea);
                 area.appendChild(stats);
-                
+
+                // Cache display elements for hot-path updates
+                state.els.hits = document.getElementById('hitsDisplay');
+                state.els.misses = document.getElementById('missesDisplay');
+                state.els.accuracy = document.getElementById('accuracyDisplay');
+                state.els.targetArea = targetArea;
+
                 // Start spawning targets
                 this.spawnTarget();
             },
@@ -2202,7 +2223,7 @@
                     dot.dataset.isTarget = isTarget;
                     dot.dataset.spawnTime = Date.now();
                     
-                    const area = document.getElementById('targetArea');
+                    const area = state.els.targetArea;
                     const maxX = area.offsetWidth - 50;
                     const maxY = area.offsetHeight - 50;
                     
@@ -2252,19 +2273,16 @@
                 this.updateAttentionDisplay();
             },
             
-            // Update attention display
+            // Update attention display (uses cached elements for hot-path performance)
             updateAttentionDisplay() {
                 const state = this.attentionState;
-                if (!state) return;
+                if (!state || !state.els) return;
                 const total = state.hits + state.misses + state.falsePositives;
                 const accuracy = total > 0 ? Math.round((state.hits / total) * 100) : 100;
 
-                const hits = document.getElementById('hitsDisplay');
-                const misses = document.getElementById('missesDisplay');
-                const acc = document.getElementById('accuracyDisplay');
-                if (hits) hits.textContent = state.hits;
-                if (misses) misses.textContent = state.misses;
-                if (acc) acc.textContent = `${accuracy}%`;
+                if (state.els.hits) state.els.hits.textContent = state.hits;
+                if (state.els.misses) state.els.misses.textContent = state.misses;
+                if (state.els.accuracy) state.els.accuracy.textContent = `${accuracy}%`;
             },
             
             // End attention task
@@ -2273,10 +2291,7 @@
 
                 // Guard: if no responses at all, score is 0 (not 50%)
                 if (state.hits === 0 && state.falsePositives === 0) {
-                    const score = 0;
-                    this.state.taskScores.push(score);
-                    this.showFeedback(`Score: ${score}%`, 'warning');
-                    this.gameTimeout(() => this.nextTask(), 1500);
+                    this.completeTask(0);
                     return;
                 }
 
@@ -2291,11 +2306,8 @@
 
                 const score = Math.round(Math.max(0, Math.min(100,
                     50 + (dPrime * 12.5))));
-                
-                this.state.taskScores.push(score);
-                this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
 
-                this.gameTimeout(() => this.nextTask(), 1500);
+                this.completeTask(score);
             },
 
             // Z-score helper for d-prime calculation
@@ -2352,17 +2364,14 @@
                     const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.FLEX_RT_NORM_MS));
                     const score = Math.round((accuracy * 70) + (rtScore * 30));
 
-                    this.state.taskScores.push(score);
-                    this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
-
-                    this.gameTimeout(() => this.nextTask(), 1500);
+                    this.completeTask(score);
                     return;
                 }
 
                 // Use pre-shuffled item for this trial
                 const item = state.trialItems[state.current];
 
-                this.clearGameArea(area);
+                this.clearGameArea();
 
                 // Create UI — show trial number before incrementing
                 const title = document.createElement('h3');
@@ -2423,11 +2432,8 @@
                     const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
                     const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.SPEED_RT_NORM_MS));
                     const score = Math.round((accuracy * 50) + (rtScore * 50));
-                    
-                    this.state.taskScores.push(score);
-                    this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
 
-                    this.gameTimeout(() => this.nextTask(), 1500);
+                    this.completeTask(score);
                     return;
                 }
 
@@ -2435,7 +2441,7 @@
                 const correct = patterns[Math.floor(Math.random() * patterns.length)];
                 const options = this.shuffle(patterns);
                 
-                this.clearGameArea(area);
+                this.clearGameArea();
 
                 // Create UI
                 const title = document.createElement('h3');
@@ -2547,15 +2553,16 @@
                     console.warn('Sheets sync failed:', err);
                     this.updateSyncStatus('disconnected');
                     this.showFeedback('Sync failed — data saved locally', 'warning');
-                    // Store unsent data for potential retry
-                    if (!this._unsyncedResults) this._unsyncedResults = [];
-                    this._unsyncedResults.push(payload);
+                    // Store unsent data for potential retry (bounded)
+                    if (this._unsyncedResults.length < this._MAX_UNSYNCED) {
+                        this._unsyncedResults.push(payload);
+                    }
                 });
             },
 
             // Update sync status indicator
             updateSyncStatus(status) {
-                const el = document.getElementById('syncStatus');
+                const el = this.elements.syncStatus;
                 if (!el) return;
                 el.className = 'sync-status ' + status;
             },
@@ -2965,8 +2972,7 @@
                     clearInterval(this._integrityInterval);
                 }
                 // Clear any game timers
-                this._timers.forEach(id => clearTimeout(id));
-                this._timers = [];
+                this.clearTimers();
                 // Remove all event listeners
                 this.listeners.forEach((handlers, element) => {
                     handlers.forEach(({event, handler}) => {
