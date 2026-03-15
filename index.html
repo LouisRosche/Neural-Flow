@@ -1372,6 +1372,7 @@
                 gameScores: {},
                 sessionStart: null,
                 history: [],
+                gameStart: null,
                 storageAvailable: false,
                 integrityChecksum: null,
                 // Trial-level research data
@@ -2234,7 +2235,6 @@
             // Handle memory input
             handleMemoryInput(num) {
                 const state = this.memoryState;
-                //CHECK
                 if (!state || state.userInput.length >= state.length) return;
                 
                 const position = state.userInput.length;
@@ -2380,7 +2380,7 @@
             spawnTarget() {
                 const state = this.attentionState;
                 
-                // ADD THIS LINE to stop spawning if game was exited
+                // Stop spawning if game was exited
                 if (!state || this.state.currentGame !== 'attention') return;
                 
                 if (state.targetsShown >= state.targets && state.active.length === 0) {
@@ -2748,7 +2748,7 @@
                     game: gameId,
                     score: score,
                     difficulty: this.state.currentDifficulty,
-                    duration: Math.round((Date.now() - (this.state.gameStart || this.state.sessionStart)) / 1000),
+                    duration: Math.round((Date.now() - this.state.gameStart) / 1000),
                     integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
                 };
 
@@ -2787,6 +2787,7 @@
             async exitGame() {
                 if (this.state.currentTask === 0 || await this.showConfirm('Exit game? Progress will be lost.', 'Exit Game')) {
                     this.cleanupCurrentGame();
+                    this.state.gameStart = null;
                     this.state.currentGame = null;
                     this.state.currentTask = 0;
                     this.state.taskScores = [];
@@ -3183,6 +3184,7 @@
                         gameScores: {},
                         sessionStart: null,
                         history: this.state.history,
+                        gameStart: null,
                         storageAvailable: this.state.storageAvailable,
                         integrityChecksum: null,
                         trialLog: []
