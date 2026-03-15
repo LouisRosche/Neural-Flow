@@ -914,6 +914,9 @@
                                 <label class="form-label" for="grade">Grade</label>
                                 <select id="grade" class="form-input" required>
                                     <option value="">Select</option>
+                                    <option value="K">Kindergarten</option>
+                                    <option value="1">1st</option>
+                                    <option value="2">2nd</option>
                                     <option value="3">3rd</option>
                                     <option value="4">4th</option>
                                     <option value="5">5th</option>
@@ -995,7 +998,7 @@
                     </div>
 
                     <div style="text-align: center; margin-top: 2rem; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
-                        <button id="exportBtn" class="btn">Export Data</button>
+                        <button id="exportBtn" class="btn">Export Results (JSON + CSV)</button>
                         <button id="historyBtn" class="btn btn-secondary">View History</button>
                         <button id="resetBtn" class="btn btn-secondary">New Session</button>
                     </div>
@@ -1122,101 +1125,170 @@
                         ]
                     }
                 },
-                SCIENCE_RULES: [
-                    {
-                        key: 'metal/nonmetal',
-                        question: 'Is this element a metal or nonmetal?',
-                        options: ['Metal', 'Nonmetal'],
-                        items: [
-                            { stimulus: 'Iron (Fe)', answer: 'metal' },
-                            { stimulus: 'Oxygen (O)', answer: 'nonmetal' },
-                            { stimulus: 'Gold (Au)', answer: 'metal' },
-                            { stimulus: 'Carbon (C)', answer: 'nonmetal' },
-                            { stimulus: 'Copper (Cu)', answer: 'metal' },
-                            { stimulus: 'Nitrogen (N)', answer: 'nonmetal' },
-                            { stimulus: 'Silver (Ag)', answer: 'metal' },
-                            { stimulus: 'Sulfur (S)', answer: 'nonmetal' },
-                            { stimulus: 'Aluminum (Al)', answer: 'metal' },
-                            { stimulus: 'Helium (He)', answer: 'nonmetal' },
-                            { stimulus: 'Zinc (Zn)', answer: 'metal' },
-                            { stimulus: 'Chlorine (Cl)', answer: 'nonmetal' }
-                        ]
-                    },
-                    {
-                        key: 'renewable/nonrenewable',
-                        question: 'Is this energy source renewable or nonrenewable?',
-                        options: ['Renewable', 'Nonrenewable'],
-                        items: [
-                            { stimulus: 'Solar', answer: 'renewable' },
-                            { stimulus: 'Coal', answer: 'nonrenewable' },
-                            { stimulus: 'Wind', answer: 'renewable' },
-                            { stimulus: 'Natural Gas', answer: 'nonrenewable' },
-                            { stimulus: 'Hydroelectric', answer: 'renewable' },
-                            { stimulus: 'Petroleum', answer: 'nonrenewable' },
-                            { stimulus: 'Geothermal', answer: 'renewable' },
-                            { stimulus: 'Diesel Fuel', answer: 'nonrenewable' },
-                            { stimulus: 'Biomass', answer: 'renewable' },
-                            { stimulus: 'Propane', answer: 'nonrenewable' }
-                        ]
-                    },
-                    {
-                        key: 'physical/chemical',
-                        question: 'Is this a physical or chemical change?',
-                        options: ['Physical', 'Chemical'],
-                        items: [
-                            { stimulus: 'Ice melting', answer: 'physical' },
-                            { stimulus: 'Wood burning', answer: 'chemical' },
-                            { stimulus: 'Paper tearing', answer: 'physical' },
-                            { stimulus: 'Rust forming', answer: 'chemical' },
-                            { stimulus: 'Water boiling', answer: 'physical' },
-                            { stimulus: 'Baking a cake', answer: 'chemical' },
-                            { stimulus: 'Dissolving sugar', answer: 'physical' },
-                            { stimulus: 'Digesting food', answer: 'chemical' },
-                            { stimulus: 'Crushing a can', answer: 'physical' },
-                            { stimulus: 'Milk souring', answer: 'chemical' },
-                            { stimulus: 'Cutting hair', answer: 'physical' },
-                            { stimulus: 'Fireworks exploding', answer: 'chemical' }
-                        ]
-                    },
-                    {
-                        key: 'conductor/insulator',
-                        question: 'Is this material a conductor or insulator of electricity?',
-                        options: ['Conductor', 'Insulator'],
-                        items: [
-                            { stimulus: 'Copper wire', answer: 'conductor' },
-                            { stimulus: 'Rubber gloves', answer: 'insulator' },
-                            { stimulus: 'Aluminum foil', answer: 'conductor' },
-                            { stimulus: 'Glass rod', answer: 'insulator' },
-                            { stimulus: 'Salt water', answer: 'conductor' },
-                            { stimulus: 'Plastic wrap', answer: 'insulator' },
-                            { stimulus: 'Steel nail', answer: 'conductor' },
-                            { stimulus: 'Dry wood', answer: 'insulator' },
-                            { stimulus: 'Gold ring', answer: 'conductor' },
-                            { stimulus: 'Ceramic tile', answer: 'insulator' }
-                        ]
-                    },
-                    {
-                        key: 'element/compound',
-                        question: 'Is this substance an element or a compound?',
-                        options: ['Element', 'Compound'],
-                        items: [
-                            { stimulus: 'Oxygen (O₂)', answer: 'element' },
-                            { stimulus: 'Water (H₂O)', answer: 'compound' },
-                            { stimulus: 'Iron (Fe)', answer: 'element' },
-                            { stimulus: 'Carbon dioxide (CO₂)', answer: 'compound' },
-                            { stimulus: 'Gold (Au)', answer: 'element' },
-                            { stimulus: 'Table salt (NaCl)', answer: 'compound' },
-                            { stimulus: 'Nitrogen (N₂)', answer: 'element' },
-                            { stimulus: 'Methane (CH₄)', answer: 'compound' },
-                            { stimulus: 'Helium (He)', answer: 'element' },
-                            { stimulus: 'Rust (Fe₂O₃)', answer: 'compound' }
-                        ]
-                    }
-                ],
-                SCIENCE_FORMULAS: [
-                    'H₂O', 'CO₂', 'NaCl', 'O₂', 'N₂', 'CH₄', 'Fe₂O₃', 'CaCO₃',
-                    'H₂SO₄', 'NaOH', 'HCl', 'NH₃', 'C₆H₁₂O₆', 'KMnO₄'
-                ],
+                // Grade-keyed content: maps grade → { rules, formulas }
+                // K-2: basic observations, 3-5: life/earth science, 6-8: physical/chemical (thorough),
+                // 9-12: advanced chemistry/physics
+                GRADE_CONTENT: {
+                    // --- K-2: Observable properties and basic classification ---
+                    K: { band: 'K-2', rules: [
+                        { key: 'living/nonliving', question: 'Is this living or nonliving?', options: ['Living', 'Nonliving'], items: [
+                            { stimulus: 'Dog', answer: 'living' }, { stimulus: 'Rock', answer: 'nonliving' },
+                            { stimulus: 'Tree', answer: 'living' }, { stimulus: 'Chair', answer: 'nonliving' },
+                            { stimulus: 'Fish', answer: 'living' }, { stimulus: 'Pencil', answer: 'nonliving' },
+                            { stimulus: 'Flower', answer: 'living' }, { stimulus: 'Water', answer: 'nonliving' },
+                            { stimulus: 'Butterfly', answer: 'living' }, { stimulus: 'Shoe', answer: 'nonliving' }
+                        ]},
+                        { key: 'solid/liquid', question: 'Is this a solid or a liquid?', options: ['Solid', 'Liquid'], items: [
+                            { stimulus: 'Ice cube', answer: 'solid' }, { stimulus: 'Juice', answer: 'liquid' },
+                            { stimulus: 'Book', answer: 'solid' }, { stimulus: 'Milk', answer: 'liquid' },
+                            { stimulus: 'Crayon', answer: 'solid' }, { stimulus: 'Soup', answer: 'liquid' },
+                            { stimulus: 'Ball', answer: 'solid' }, { stimulus: 'Rain', answer: 'liquid' },
+                            { stimulus: 'Coin', answer: 'solid' }, { stimulus: 'Honey', answer: 'liquid' }
+                        ]},
+                        { key: 'hot/cold', question: 'Is this usually hot or cold?', options: ['Hot', 'Cold'], items: [
+                            { stimulus: 'Fire', answer: 'hot' }, { stimulus: 'Snow', answer: 'cold' },
+                            { stimulus: 'Oven', answer: 'hot' }, { stimulus: 'Ice cream', answer: 'cold' },
+                            { stimulus: 'Sun', answer: 'hot' }, { stimulus: 'Freezer', answer: 'cold' },
+                            { stimulus: 'Stove', answer: 'hot' }, { stimulus: 'Iceberg', answer: 'cold' },
+                            { stimulus: 'Campfire', answer: 'hot' }, { stimulus: 'Popsicle', answer: 'cold' }
+                        ]}
+                    ], formulas: ['H₂O', 'O₂', 'CO₂', 'NaCl'] },
+                    1: { band: 'K-2', inherit: 'K' },
+                    2: { band: 'K-2', inherit: 'K' },
+
+                    // --- 3-5: Life science, earth science, basic physical science ---
+                    3: { band: '3-5', rules: [
+                        { key: 'plant/animal', question: 'Is this a plant or an animal?', options: ['Plant', 'Animal'], items: [
+                            { stimulus: 'Oak tree', answer: 'plant' }, { stimulus: 'Eagle', answer: 'animal' },
+                            { stimulus: 'Cactus', answer: 'plant' }, { stimulus: 'Whale', answer: 'animal' },
+                            { stimulus: 'Fern', answer: 'plant' }, { stimulus: 'Spider', answer: 'animal' },
+                            { stimulus: 'Moss', answer: 'plant' }, { stimulus: 'Frog', answer: 'animal' },
+                            { stimulus: 'Sunflower', answer: 'plant' }, { stimulus: 'Shark', answer: 'animal' },
+                            { stimulus: 'Kelp', answer: 'plant' }, { stimulus: 'Ant', answer: 'animal' }
+                        ]},
+                        { key: 'weathering/erosion', question: 'Is this an example of weathering or erosion?', options: ['Weathering', 'Erosion'], items: [
+                            { stimulus: 'Cracking rock from ice', answer: 'weathering' },
+                            { stimulus: 'River carrying sand', answer: 'erosion' },
+                            { stimulus: 'Roots splitting rock', answer: 'weathering' },
+                            { stimulus: 'Wind blowing soil', answer: 'erosion' },
+                            { stimulus: 'Acid rain dissolving stone', answer: 'weathering' },
+                            { stimulus: 'Glacier carving valley', answer: 'erosion' },
+                            { stimulus: 'Tree root cracking sidewalk', answer: 'weathering' },
+                            { stimulus: 'Ocean waves wearing cliff', answer: 'erosion' },
+                            { stimulus: 'Frost wedging', answer: 'weathering' },
+                            { stimulus: 'Mudslide', answer: 'erosion' }
+                        ]},
+                        { key: 'renewable/nonrenewable', question: 'Is this energy source renewable or nonrenewable?', options: ['Renewable', 'Nonrenewable'], items: [
+                            { stimulus: 'Solar', answer: 'renewable' }, { stimulus: 'Coal', answer: 'nonrenewable' },
+                            { stimulus: 'Wind', answer: 'renewable' }, { stimulus: 'Natural Gas', answer: 'nonrenewable' },
+                            { stimulus: 'Hydroelectric', answer: 'renewable' }, { stimulus: 'Petroleum', answer: 'nonrenewable' },
+                            { stimulus: 'Geothermal', answer: 'renewable' }, { stimulus: 'Diesel Fuel', answer: 'nonrenewable' },
+                            { stimulus: 'Biomass', answer: 'renewable' }, { stimulus: 'Propane', answer: 'nonrenewable' }
+                        ]}
+                    ], formulas: ['H₂O', 'CO₂', 'O₂', 'NaCl', 'N₂', 'CH₄'] },
+                    4: { band: '3-5', inherit: '3' },
+                    5: { band: '3-5', inherit: '3' },
+
+                    // --- 6-8: Physical/chemical science (thorough — active research grades) ---
+                    6: { band: '6-8', rules: [
+                        { key: 'metal/nonmetal', question: 'Is this element a metal or nonmetal?', options: ['Metal', 'Nonmetal'], items: [
+                            { stimulus: 'Iron (Fe)', answer: 'metal' }, { stimulus: 'Oxygen (O)', answer: 'nonmetal' },
+                            { stimulus: 'Gold (Au)', answer: 'metal' }, { stimulus: 'Carbon (C)', answer: 'nonmetal' },
+                            { stimulus: 'Copper (Cu)', answer: 'metal' }, { stimulus: 'Nitrogen (N)', answer: 'nonmetal' },
+                            { stimulus: 'Silver (Ag)', answer: 'metal' }, { stimulus: 'Sulfur (S)', answer: 'nonmetal' },
+                            { stimulus: 'Aluminum (Al)', answer: 'metal' }, { stimulus: 'Helium (He)', answer: 'nonmetal' },
+                            { stimulus: 'Zinc (Zn)', answer: 'metal' }, { stimulus: 'Chlorine (Cl)', answer: 'nonmetal' }
+                        ]},
+                        { key: 'physical/chemical', question: 'Is this a physical or chemical change?', options: ['Physical', 'Chemical'], items: [
+                            { stimulus: 'Ice melting', answer: 'physical' }, { stimulus: 'Wood burning', answer: 'chemical' },
+                            { stimulus: 'Paper tearing', answer: 'physical' }, { stimulus: 'Rust forming', answer: 'chemical' },
+                            { stimulus: 'Water boiling', answer: 'physical' }, { stimulus: 'Baking a cake', answer: 'chemical' },
+                            { stimulus: 'Dissolving sugar', answer: 'physical' }, { stimulus: 'Digesting food', answer: 'chemical' },
+                            { stimulus: 'Crushing a can', answer: 'physical' }, { stimulus: 'Milk souring', answer: 'chemical' },
+                            { stimulus: 'Cutting hair', answer: 'physical' }, { stimulus: 'Fireworks exploding', answer: 'chemical' }
+                        ]},
+                        { key: 'conductor/insulator', question: 'Is this material a conductor or insulator of electricity?', options: ['Conductor', 'Insulator'], items: [
+                            { stimulus: 'Copper wire', answer: 'conductor' }, { stimulus: 'Rubber gloves', answer: 'insulator' },
+                            { stimulus: 'Aluminum foil', answer: 'conductor' }, { stimulus: 'Glass rod', answer: 'insulator' },
+                            { stimulus: 'Salt water', answer: 'conductor' }, { stimulus: 'Plastic wrap', answer: 'insulator' },
+                            { stimulus: 'Steel nail', answer: 'conductor' }, { stimulus: 'Dry wood', answer: 'insulator' },
+                            { stimulus: 'Gold ring', answer: 'conductor' }, { stimulus: 'Ceramic tile', answer: 'insulator' }
+                        ]},
+                        { key: 'element/compound', question: 'Is this substance an element or a compound?', options: ['Element', 'Compound'], items: [
+                            { stimulus: 'Oxygen (O₂)', answer: 'element' }, { stimulus: 'Water (H₂O)', answer: 'compound' },
+                            { stimulus: 'Iron (Fe)', answer: 'element' }, { stimulus: 'Carbon dioxide (CO₂)', answer: 'compound' },
+                            { stimulus: 'Gold (Au)', answer: 'element' }, { stimulus: 'Table salt (NaCl)', answer: 'compound' },
+                            { stimulus: 'Nitrogen (N₂)', answer: 'element' }, { stimulus: 'Methane (CH₄)', answer: 'compound' },
+                            { stimulus: 'Helium (He)', answer: 'element' }, { stimulus: 'Rust (Fe₂O₃)', answer: 'compound' }
+                        ]},
+                        { key: 'renewable/nonrenewable', question: 'Is this energy source renewable or nonrenewable?', options: ['Renewable', 'Nonrenewable'], items: [
+                            { stimulus: 'Solar', answer: 'renewable' }, { stimulus: 'Coal', answer: 'nonrenewable' },
+                            { stimulus: 'Wind', answer: 'renewable' }, { stimulus: 'Natural Gas', answer: 'nonrenewable' },
+                            { stimulus: 'Hydroelectric', answer: 'renewable' }, { stimulus: 'Petroleum', answer: 'nonrenewable' },
+                            { stimulus: 'Geothermal', answer: 'renewable' }, { stimulus: 'Diesel Fuel', answer: 'nonrenewable' },
+                            { stimulus: 'Biomass', answer: 'renewable' }, { stimulus: 'Propane', answer: 'nonrenewable' }
+                        ]}
+                    ], formulas: [
+                        'H₂O', 'CO₂', 'NaCl', 'O₂', 'N₂', 'CH₄', 'Fe₂O₃', 'CaCO₃',
+                        'H₂SO₄', 'NaOH', 'HCl', 'NH₃', 'C₆H₁₂O₆', 'KMnO₄'
+                    ] },
+                    7: { band: '6-8', inherit: '6' },
+                    8: { band: '6-8', inherit: '6' },
+
+                    // --- 9-12: Advanced chemistry/physics ---
+                    9: { band: '9-12', rules: [
+                        { key: 'ionic/covalent', question: 'Is this bond ionic or covalent?', options: ['Ionic', 'Covalent'], items: [
+                            { stimulus: 'NaCl (table salt)', answer: 'ionic' }, { stimulus: 'H₂O (water)', answer: 'covalent' },
+                            { stimulus: 'MgO (magnesium oxide)', answer: 'ionic' }, { stimulus: 'CO₂ (carbon dioxide)', answer: 'covalent' },
+                            { stimulus: 'KBr (potassium bromide)', answer: 'ionic' }, { stimulus: 'CH₄ (methane)', answer: 'covalent' },
+                            { stimulus: 'CaF₂ (calcium fluoride)', answer: 'ionic' }, { stimulus: 'NH₃ (ammonia)', answer: 'covalent' },
+                            { stimulus: 'LiCl (lithium chloride)', answer: 'ionic' }, { stimulus: 'O₂ (oxygen gas)', answer: 'covalent' },
+                            { stimulus: 'BaSO₄ (barium sulfate)', answer: 'ionic' }, { stimulus: 'C₂H₆ (ethane)', answer: 'covalent' }
+                        ]},
+                        { key: 'acid/base', question: 'Is this substance an acid or a base?', options: ['Acid', 'Base'], items: [
+                            { stimulus: 'HCl (hydrochloric acid)', answer: 'acid' }, { stimulus: 'NaOH (sodium hydroxide)', answer: 'base' },
+                            { stimulus: 'H₂SO₄ (sulfuric acid)', answer: 'acid' }, { stimulus: 'KOH (potassium hydroxide)', answer: 'base' },
+                            { stimulus: 'HNO₃ (nitric acid)', answer: 'acid' }, { stimulus: 'Ca(OH)₂ (calcium hydroxide)', answer: 'base' },
+                            { stimulus: 'CH₃COOH (acetic acid)', answer: 'acid' }, { stimulus: 'NH₃ (ammonia)', answer: 'base' },
+                            { stimulus: 'H₃PO₄ (phosphoric acid)', answer: 'acid' }, { stimulus: 'Mg(OH)₂ (magnesium hydroxide)', answer: 'base' },
+                            { stimulus: 'HF (hydrofluoric acid)', answer: 'acid' }, { stimulus: 'Al(OH)₃ (aluminum hydroxide)', answer: 'base' }
+                        ]},
+                        { key: 'exothermic/endothermic', question: 'Is this reaction exothermic or endothermic?', options: ['Exothermic', 'Endothermic'], items: [
+                            { stimulus: 'Combustion of methane', answer: 'exothermic' },
+                            { stimulus: 'Photosynthesis', answer: 'endothermic' },
+                            { stimulus: 'Neutralization (acid + base)', answer: 'exothermic' },
+                            { stimulus: 'Melting ice', answer: 'endothermic' },
+                            { stimulus: 'Rusting of iron', answer: 'exothermic' },
+                            { stimulus: 'Cooking an egg', answer: 'endothermic' },
+                            { stimulus: 'Burning wood', answer: 'exothermic' },
+                            { stimulus: 'Evaporating water', answer: 'endothermic' },
+                            { stimulus: 'Cellular respiration', answer: 'exothermic' },
+                            { stimulus: 'Dissolving NH₄NO₃ in water', answer: 'endothermic' }
+                        ]},
+                        { key: 'element/compound', question: 'Is this substance an element or a compound?', options: ['Element', 'Compound'], items: [
+                            { stimulus: 'Oxygen (O₂)', answer: 'element' }, { stimulus: 'Water (H₂O)', answer: 'compound' },
+                            { stimulus: 'Iron (Fe)', answer: 'element' }, { stimulus: 'Glucose (C₆H₁₂O₆)', answer: 'compound' },
+                            { stimulus: 'Gold (Au)', answer: 'element' }, { stimulus: 'Ethanol (C₂H₅OH)', answer: 'compound' },
+                            { stimulus: 'Neon (Ne)', answer: 'element' }, { stimulus: 'Sulfuric acid (H₂SO₄)', answer: 'compound' },
+                            { stimulus: 'Silicon (Si)', answer: 'element' }, { stimulus: 'Sodium bicarbonate (NaHCO₃)', answer: 'compound' }
+                        ]},
+                        { key: 'metal/nonmetal', question: 'Is this element a metal or nonmetal?', options: ['Metal', 'Nonmetal'], items: [
+                            { stimulus: 'Iron (Fe)', answer: 'metal' }, { stimulus: 'Oxygen (O)', answer: 'nonmetal' },
+                            { stimulus: 'Gold (Au)', answer: 'metal' }, { stimulus: 'Carbon (C)', answer: 'nonmetal' },
+                            { stimulus: 'Copper (Cu)', answer: 'metal' }, { stimulus: 'Nitrogen (N)', answer: 'nonmetal' },
+                            { stimulus: 'Silver (Ag)', answer: 'metal' }, { stimulus: 'Sulfur (S)', answer: 'nonmetal' },
+                            { stimulus: 'Aluminum (Al)', answer: 'metal' }, { stimulus: 'Helium (He)', answer: 'nonmetal' },
+                            { stimulus: 'Zinc (Zn)', answer: 'metal' }, { stimulus: 'Chlorine (Cl)', answer: 'nonmetal' }
+                        ]}
+                    ], formulas: [
+                        'H₂O', 'CO₂', 'NaCl', 'O₂', 'N₂', 'CH₄', 'Fe₂O₃', 'CaCO₃',
+                        'H₂SO₄', 'NaOH', 'HCl', 'NH₃', 'C₆H₁₂O₆', 'KMnO₄',
+                        'C₂H₅OH', 'NaHCO₃', 'H₃PO₄', 'Ca(OH)₂', 'BaSO₄', 'KBr'
+                    ] },
+                    10: { band: '9-12', inherit: '9' },
+                    11: { band: '9-12', inherit: '9' },
+                    12: { band: '9-12', inherit: '9' }
+                },
                 RECOMMENDATIONS: {
                     memory: {
                         scienceConnection: 'Working memory is linked to following multi-step lab procedures, holding variables in mind during experiments, and connecting observations to hypotheses.',
@@ -1301,7 +1373,9 @@
                 sessionStart: null,
                 history: [],
                 storageAvailable: false,
-                integrityChecksum: null
+                integrityChecksum: null,
+                // Trial-level research data
+                trialLog: []
             },
             
             // DOM element cache
@@ -1642,18 +1716,47 @@
                     if (this.state.currentGame === 'flexibility') {
                         const state = this.flexState;
                         const rt = Date.now() - state.startTime;
-                        
+                        const trialItem = state.trialItems[state.current - 1];
+
                         state.reactionTimes.push(rt);
-                        if (correct === 'true') state.correct++;
-                        
+                        const isCorrect = correct === 'true';
+                        if (isCorrect) state.correct++;
+
+                        // Trial-level logging
+                        this.logTrial({
+                            trialType: 'flexibility_classification',
+                            rule: state.rule.key,
+                            stimulus: trialItem ? trialItem.stimulus : null,
+                            correctAnswer: trialItem ? trialItem.answer : null,
+                            response: response,
+                            correct: isCorrect,
+                            rt: rt,
+                            trialNumber: state.current,
+                            totalTrials: state.trials
+                        });
+
                         this.gameTimeout(() => this.runFlexTrial(), 500);
                     } else if (this.state.currentGame === 'speed') {
                         const startTime = parseInt(target.dataset.startTime);
                         const rt = Date.now() - startTime;
-                        
+                        const isCorrect = correct === 'true';
+
                         this.speedState.reactionTimes.push(rt);
-                        if (correct === 'true') this.speedState.correct++;
-                        
+                        if (isCorrect) this.speedState.correct++;
+
+                        // Trial-level logging
+                        this.logTrial({
+                            trialType: 'speed_match',
+                            stimulus: target.closest('.response-buttons') ?
+                                target.closest('.response-buttons').previousElementSibling.textContent : null,
+                            response: response,
+                            correct: isCorrect,
+                            rt: rt,
+                            trialNumber: this.speedState.current,
+                            totalTrials: this.speedState.trials,
+                            optionCount: this.speedState.patterns ? this.speedState.patterns.length : null
+                        });
+
                         this.gameTimeout(() => this.runSpeedTrial(), 300);
                     }
                     return; // Prevent any further processing
@@ -1795,6 +1898,21 @@
                 return a;
             },
 
+            // Resolve grade-appropriate content (rules + formulas)
+            getGradeContent() {
+                const grade = this.state.user ? this.state.user.grade : '6';
+                let content = this.CONFIG.GRADE_CONTENT[grade];
+                // Follow inheritance chain
+                while (content && content.inherit) {
+                    content = this.CONFIG.GRADE_CONTENT[content.inherit];
+                }
+                // Fallback to grade 6 (middle school default)
+                if (!content || !content.rules) {
+                    content = this.CONFIG.GRADE_CONTENT['6'];
+                }
+                return content;
+            },
+
             // Clear game area but preserve instructions panel
             clearGameArea() {
                 const area = this.elements.gameArea;
@@ -1816,6 +1934,18 @@
                 }, delay);
                 this._timers.add(id);
                 return id;
+            },
+
+            // Log a single trial for research export
+            logTrial(data) {
+                this.state.trialLog.push({
+                    timestamp: Date.now(),
+                    game: this.state.currentGame,
+                    task: this.state.currentTask,
+                    difficulty: this.state.currentDifficulty,
+                    grade: this.state.user ? this.state.user.grade : null,
+                    ...data
+                });
             },
 
             // Record a task score, show feedback, and advance to next task
@@ -2108,10 +2238,24 @@
                 if (!state || state.userInput.length >= state.length) return;
                 
                 const position = state.userInput.length;
+                const digitRT = Date.now() - (state.lastInputTime || state.inputStartTime || state.startTime);
                 state.userInput.push(num);
-                
+
                 // Real-time validation
                 const isCorrect = num === state.sequence[position];
+
+                // Trial-level logging
+                this.logTrial({
+                    trialType: 'memory_digit',
+                    serialPosition: position,
+                    sequenceLength: state.length,
+                    stimulus: state.sequence[position],
+                    response: num,
+                    correct: isCorrect,
+                    rt: digitRT,
+                    interResponseInterval: state.lastInputTime ? Date.now() - state.lastInputTime : null
+                });
+                state.lastInputTime = Date.now();
                 
                 // Update display with color + symbol feedback (color-blind safe)
                 const slot = document.getElementById(`slot-${position}`);
@@ -2286,6 +2430,18 @@
                         if (dot.parentNode) {
                             if (isTarget) {
                                 state.misses++;
+                                // Log missed target
+                                this.logTrial({
+                                    trialType: 'attention_miss',
+                                    stimulus: 'target',
+                                    response: 'none',
+                                    correct: false,
+                                    rt: null,
+                                    posX: parseInt(dot.style.left),
+                                    posY: parseInt(dot.style.top),
+                                    targetsShownSoFar: state.targetsShown,
+                                    distractorsShownSoFar: state.distractorsShown
+                                });
                                 this.updateAttentionDisplay();
                             }
                             dot.remove();
@@ -2304,17 +2460,30 @@
                 const state = this.attentionState;
                 const isTarget = target.dataset.isTarget === 'true';
                 const reactionTime = Date.now() - parseInt(target.dataset.spawnTime);
-                
+
                 if (isTarget) {
                     state.hits++;
                 } else {
                     state.falsePositives++;
                 }
-                
+
+                // Trial-level logging
+                this.logTrial({
+                    trialType: isTarget ? 'attention_hit' : 'attention_false_alarm',
+                    stimulus: isTarget ? 'target' : 'distractor',
+                    response: 'click',
+                    correct: isTarget,
+                    rt: reactionTime,
+                    posX: parseInt(target.style.left),
+                    posY: parseInt(target.style.top),
+                    targetsShownSoFar: state.targetsShown,
+                    distractorsShownSoFar: state.distractorsShown
+                });
+
                 target.remove();
                 const idx = state.active.indexOf(target);
                 if (idx > -1) state.active.splice(idx, 1);
-                
+
                 this.updateAttentionDisplay();
             },
             
@@ -2371,9 +2540,10 @@
                 return s * Math.sqrt(Math.sqrt(b * b - c) - b);
             },
             
-            // Flexibility task — now uses science classification rules
+            // Flexibility task — uses grade-appropriate science classification rules
             runFlexibilityTask(area) {
-                const scienceRules = this.CONFIG.SCIENCE_RULES;
+                const content = this.getGradeContent();
+                const scienceRules = content.rules;
                 const rule = scienceRules[this.state.currentTask % scienceRules.length];
                 const trials = 6 + this.state.currentDifficulty;
 
@@ -2482,7 +2652,8 @@
                     return;
                 }
 
-                const patterns = this.CONFIG.SCIENCE_FORMULAS.slice(0, 4 + Math.floor(this.state.currentDifficulty / 2));
+                const content = this.getGradeContent();
+                const patterns = content.formulas.slice(0, 4 + Math.floor(this.state.currentDifficulty / 2));
                 const correct = patterns[Math.floor(Math.random() * patterns.length)];
                 const options = this.shuffle(patterns);
                 
@@ -2885,6 +3056,59 @@
             },
 
             // Export data
+            // Helper: trigger a file download
+            downloadFile(content, filename, type) {
+                try {
+                    const blob = new Blob([content], { type });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    // Fallback for sandboxed environments
+                    const modal = document.createElement('div');
+                    modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:10px;box-shadow:0 0 20px rgba(0,0,0,0.3);z-index:9999;max-width:90%;max-height:90%;overflow:auto;';
+                    const heading = document.createElement('h3');
+                    heading.textContent = 'Copy Your Data';
+                    modal.appendChild(heading);
+                    const textarea = document.createElement('textarea');
+                    textarea.style.cssText = 'width:100%;max-width:400px;height:300px;font-family:monospace;';
+                    textarea.readOnly = true;
+                    textarea.value = content;
+                    modal.appendChild(textarea);
+                    const closeBtn = document.createElement('button');
+                    closeBtn.className = 'btn';
+                    closeBtn.textContent = 'Close';
+                    closeBtn.style.marginTop = '1rem';
+                    closeBtn.addEventListener('click', () => modal.remove());
+                    modal.appendChild(closeBtn);
+                    document.body.appendChild(modal);
+                    textarea.select();
+                }
+            },
+
+            // Convert trial log to CSV
+            trialLogToCSV() {
+                if (this.state.trialLog.length === 0) return '';
+                // Collect all unique keys across all trials
+                const allKeys = new Set();
+                this.state.trialLog.forEach(t => Object.keys(t).forEach(k => allKeys.add(k)));
+                const headers = Array.from(allKeys);
+                const rows = this.state.trialLog.map(trial =>
+                    headers.map(h => {
+                        const val = trial[h];
+                        if (val === null || val === undefined) return '';
+                        if (typeof val === 'string' && (val.includes(',') || val.includes('"'))) {
+                            return '"' + val.replace(/"/g, '""') + '"';
+                        }
+                        return String(val);
+                    }).join(',')
+                );
+                return headers.join(',') + '\n' + rows.join('\n');
+            },
+
             exportData() {
                 // Filter history to only include current student's sessions (privacy)
                 const currentName = this.state.user ? this.state.user.name : null;
@@ -2892,51 +3116,59 @@
                     ? this.state.history.filter(h => h.user && h.user.name === currentName)
                     : [];
 
-                const data = {
+                const timestamp = Date.now();
+                const studentSlug = (currentName || 'unknown').replace(/\s+/g, '_').toLowerCase();
+
+                // 1. Summary JSON (game-level scores + metadata)
+                const summaryData = {
+                    exportVersion: 2,
                     user: this.state.user,
                     session: {
                         date: new Date().toISOString(),
                         scores: this.state.gameScores,
+                        difficulty: this.state.currentDifficulty,
                         integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
                     },
-                    history: filteredHistory
+                    history: filteredHistory,
+                    trialCount: this.state.trialLog.length
                 };
-                
-                try {
-                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `neural-flow-${Date.now()}.json`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    
-                    this.showFeedback('Data exported successfully', 'success');
-                } catch (error) {
-                    // Fallback for sandboxed environments
-                    const modal = document.createElement('div');
-                    modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:10px;box-shadow:0 0 20px rgba(0,0,0,0.3);z-index:9999;max-width:90%;max-height:90%;overflow:auto;';
+                this.downloadFile(
+                    JSON.stringify(summaryData, null, 2),
+                    `neural-flow-summary-${studentSlug}-${timestamp}.json`,
+                    'application/json'
+                );
 
-                    const heading = document.createElement('h3');
-                    heading.textContent = 'Copy Your Data';
-                    modal.appendChild(heading);
-
-                    const textarea = document.createElement('textarea');
-                    textarea.style.cssText = 'width:100%;max-width:400px;height:300px;font-family:monospace;';
-                    textarea.readOnly = true;
-                    textarea.value = JSON.stringify(data, null, 2);
-                    modal.appendChild(textarea);
-
-                    const closeBtn = document.createElement('button');
-                    closeBtn.className = 'btn';
-                    closeBtn.textContent = 'Close';
-                    closeBtn.style.marginTop = '1rem';
-                    closeBtn.addEventListener('click', () => modal.remove());
-                    modal.appendChild(closeBtn);
-
-                    document.body.appendChild(modal);
-                    textarea.select();
+                // 2. Trial-level CSV (raw research data)
+                if (this.state.trialLog.length > 0) {
+                    const csv = this.trialLogToCSV();
+                    this.downloadFile(
+                        csv,
+                        `neural-flow-trials-${studentSlug}-${timestamp}.csv`,
+                        'text/csv'
+                    );
                 }
+
+                // 3. Trial-level JSON (full fidelity for programmatic analysis)
+                if (this.state.trialLog.length > 0) {
+                    const trialData = {
+                        exportVersion: 2,
+                        user: this.state.user,
+                        sessionDate: new Date().toISOString(),
+                        trials: this.state.trialLog
+                    };
+                    this.downloadFile(
+                        JSON.stringify(trialData, null, 2),
+                        `neural-flow-trials-${studentSlug}-${timestamp}.json`,
+                        'application/json'
+                    );
+                }
+
+                this.showFeedback(
+                    this.state.trialLog.length > 0
+                        ? 'Exported: summary + trial-level data (JSON + CSV)'
+                        : 'Summary data exported (no trial data yet)',
+                    'success'
+                );
             },
             
             // Reset application
@@ -2952,7 +3184,8 @@
                         sessionStart: null,
                         history: this.state.history,
                         storageAvailable: this.state.storageAvailable,
-                        integrityChecksum: null
+                        integrityChecksum: null,
+                        trialLog: []
                     };
                     
                     this.showScreen('login');
