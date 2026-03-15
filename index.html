@@ -1061,13 +1061,25 @@
         </div>
     </div>
 
+    <!-- Confirmation modal (replaces browser confirm()) -->
+    <div class="modal-overlay" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+        <div class="modal" style="max-width: 400px;">
+            <h3 id="confirmTitle">Confirm</h3>
+            <p id="confirmMessage" style="margin-bottom: 1.5rem; color: var(--text-muted);"></p>
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button id="confirmCancel" class="btn btn-secondary">Cancel</button>
+                <button id="confirmOk" class="btn">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script>
     // Production-ready implementation with fixes for all identified issues
     (function() {
         'use strict';
         
         // Application namespace
-        const App = window.App = {
+        const App = {
             // Configuration
             CONFIG: {
                 GAMES: [
@@ -1534,9 +1546,11 @@
                 this.addEventListener(this.elements.settingsBtn, 'click', () => {
                     this.elements.sheetsUrl.value = this.settings.sheetsUrl || '';
                     this.elements.settingsModal.classList.add('active');
+                    this.elements.sheetsUrl.focus();
                 });
                 this.addEventListener(this.elements.closeSettingsBtn, 'click', () => {
                     this.elements.settingsModal.classList.remove('active');
+                    this.elements.settingsBtn.focus();
                 });
                 this.addEventListener(this.elements.saveSettingsBtn, 'click', () => {
                     const url = this.elements.sheetsUrl.value.trim();
@@ -1561,10 +1575,30 @@
                         ? '▼ Hide Apps Script code' : '▶ Show Apps Script code';
                 });
 
-                // Keyboard: Escape closes settings modal
+                // Keyboard: Escape closes settings modal + focus trap
                 this.addEventListener(document, 'keydown', (e) => {
-                    if (e.key === 'Escape' && this.elements.settingsModal.classList.contains('active')) {
+                    if (!this.elements.settingsModal.classList.contains('active')) return;
+
+                    if (e.key === 'Escape') {
                         this.elements.settingsModal.classList.remove('active');
+                        this.elements.settingsBtn.focus();
+                        return;
+                    }
+
+                    // Focus trap: Tab cycles within modal
+                    if (e.key === 'Tab') {
+                        const modal = this.elements.settingsModal.querySelector('.modal');
+                        const focusable = modal.querySelectorAll('input, button, [tabindex]:not([tabindex="-1"])');
+                        if (focusable.length === 0) return;
+                        const first = focusable[0];
+                        const last = focusable[focusable.length - 1];
+                        if (e.shiftKey && document.activeElement === first) {
+                            e.preventDefault();
+                            last.focus();
+                        } else if (!e.shiftKey && document.activeElement === last) {
+                            e.preventDefault();
+                            first.focus();
+                        }
                     }
                 });
             },
@@ -2222,6 +2256,17 @@
                     dot.className = `target ${isTarget ? 'blue' : 'red'}`;
                     dot.dataset.isTarget = isTarget;
                     dot.dataset.spawnTime = Date.now();
+                    dot.setAttribute('role', 'button');
+                    dot.setAttribute('tabindex', '0');
+                    dot.setAttribute('aria-label', isTarget ? 'Blue target — click or press Enter' : 'Red distractor — avoid');
+
+                    // Keyboard support: Enter/Space triggers same as click
+                    dot.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            this.handleTargetClick(dot);
+                        }
+                    });
                     
                     const area = state.els.targetArea;
                     const maxX = area.offsetWidth - 50;
@@ -2568,9 +2613,9 @@
             },
             
             // Exit game
-            exitGame() {
-                if (this.state.currentTask === 0 || confirm('Exit game? Progress will be lost.')) {
-                    this.cleanupCurrentGame(); // ADD THIS LINE to use the new cleanup method
+            async exitGame() {
+                if (this.state.currentTask === 0 || await this.showConfirm('Exit game? Progress will be lost.', 'Exit Game')) {
+                    this.cleanupCurrentGame();
                     this.state.currentGame = null;
                     this.state.currentTask = 0;
                     this.state.taskScores = [];
@@ -2895,8 +2940,8 @@
             },
             
             // Reset application
-            reset() {
-                if (confirm('Start a new session? Current progress will be saved.')) {
+            async reset() {
+                if (await this.showConfirm('Start a new session? Current progress will be saved.', 'New Session')) {
                     this.state = {
                         user: null,
                         currentGame: null,
@@ -2919,6 +2964,34 @@
                 }
             },
             
+            // Promise-based confirmation modal (replaces browser confirm())
+            showConfirm(message, title = 'Confirm') {
+                return new Promise(resolve => {
+                    const modal = document.getElementById('confirmModal');
+                    const titleEl = document.getElementById('confirmTitle');
+                    const msgEl = document.getElementById('confirmMessage');
+                    const okBtn = document.getElementById('confirmOk');
+                    const cancelBtn = document.getElementById('confirmCancel');
+
+                    titleEl.textContent = title;
+                    msgEl.textContent = message;
+                    modal.classList.add('active');
+                    okBtn.focus();
+
+                    const cleanup = (result) => {
+                        modal.classList.remove('active');
+                        okBtn.removeEventListener('click', onOk);
+                        cancelBtn.removeEventListener('click', onCancel);
+                        resolve(result);
+                    };
+                    const onOk = () => cleanup(true);
+                    const onCancel = () => cleanup(false);
+
+                    okBtn.addEventListener('click', onOk);
+                    cancelBtn.addEventListener('click', onCancel);
+                });
+            },
+
             // Show screen with focus management
             showScreen(screenId) {
                 Object.values(this.elements.screens).forEach(screen => {
