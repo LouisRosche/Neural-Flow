@@ -963,7 +963,7 @@
             
             <!-- Game Screen -->
             <div id="gameScreen" class="screen" role="region" aria-label="Active game">
-                <div class="progress-bar">
+                <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Game progress" id="progressBarContainer">
                     <div class="progress-fill" id="progressBar"></div>
                 </div>
                 <div class="game-area" id="gameArea" aria-live="polite">
@@ -1207,7 +1207,7 @@
                 ],
                 RECOMMENDATIONS: {
                     memory: {
-                        scienceConnection: 'Working memory supports following multi-step lab procedures, holding variables in mind during experiments, and connecting observations to hypotheses.',
+                        scienceConnection: 'Working memory is linked to following multi-step lab procedures, holding variables in mind during experiments, and connecting observations to hypotheses.',
                         tiers: {
                             strong: 'Your working memory is solid — you can handle complex lab procedures and multi-step problem solving. Keep challenging yourself with longer sequences.',
                             developing: "You're building working memory capacity. When studying science, try breaking procedures into smaller chunks and reviewing each step before moving on.",
@@ -1220,7 +1220,7 @@
                         ]
                     },
                     attention: {
-                        scienceConnection: 'Sustained attention supports careful observation — a key part of scientific inquiry. It can help you notice patterns in data and stay focused during long experiments.',
+                        scienceConnection: 'Sustained attention is associated with careful observation — a key part of scientific inquiry. It may help you notice patterns in data and stay focused during long experiments.',
                         tiers: {
                             strong: "Your sustained attention is excellent — you're well-equipped for detailed observation and data collection during experiments.",
                             developing: 'Your attention skills are growing. During science activities, try removing distractions and give yourself a specific thing to watch for.',
@@ -1233,7 +1233,7 @@
                         ]
                     },
                     flexibility: {
-                        scienceConnection: 'Cognitive flexibility can help you switch between classification systems, see problems from multiple angles, and update your thinking when new evidence arrives.',
+                        scienceConnection: 'Cognitive flexibility is linked to switching between classification systems, seeing problems from multiple angles, and updating your thinking when new evidence arrives.',
                         tiers: {
                             strong: 'Strong cognitive flexibility — you can switch between classification systems and adapt your thinking when evidence changes. This is a key scientific reasoning skill.',
                             developing: "You're building flexibility in your thinking. Practice looking at science problems from different angles — try explaining a concept using two different models.",
@@ -1246,7 +1246,7 @@
                         ]
                     },
                     speed: {
-                        scienceConnection: 'Processing speed helps you quickly recognize patterns in data, identify chemical formulas and symbols, and keep up with the pace of lab work and class discussions.',
+                        scienceConnection: 'Processing speed is associated with quickly recognizing patterns in data, identifying chemical formulas and symbols, and keeping up with the pace of lab work and class discussions.',
                         tiers: {
                             strong: 'Fast and accurate processing — you can quickly identify patterns and symbols, which helps during data analysis and fast-paced lab activities.',
                             developing: 'Your processing speed is building. Practice recognizing common science symbols and formulas by sight rather than reading them character by character.',
@@ -1262,9 +1262,20 @@
                 STORAGE_KEY: 'neural_flow_data',
                 SETTINGS_KEY: 'neural_flow_settings',
                 MAX_TASKS: 3,
+                MAX_DIFFICULTY: 5,
                 ADAPTIVE_UP: 80,   // score % to increase difficulty
                 ADAPTIVE_DOWN: 50, // score % below which difficulty decreases
-                CHECKSUM_SALT: 'NF2024' // For data integrity
+                CHECKSUM_SALT: 'NF2024', // For data integrity
+                // Timing constants (milliseconds)
+                MEMORY_DISPLAY_MS: 1000,
+                ATTENTION_TARGET_BASE_MS: 2000,
+                ATTENTION_TARGET_DIFF_MS: 100,
+                ATTENTION_SPAWN_BASE_MS: 800,
+                ATTENTION_SPAWN_DIFF_MS: 50,
+                FLEX_RT_NORM_MS: 3000,
+                SPEED_RT_NORM_MS: 2000,
+                FEEDBACK_DISPLAY_MS: 1500,
+                DEBOUNCE_MS: 300
             },
             
             // Application state
@@ -1510,7 +1521,7 @@
                     }
                     if (e.target.tagName === 'BUTTON') {
                         e.target.dataset.clicked = 'true';
-                        setTimeout(() => delete e.target.dataset.clicked, 300);
+                        setTimeout(() => delete e.target.dataset.clicked, this.CONFIG.DEBOUNCE_MS);
                     }
                 });
 
@@ -1794,8 +1805,10 @@
                 }
                 
                 // Update progress
-                const progress = (this.state.currentTask / this.CONFIG.MAX_TASKS) * 100;
+                const progress = Math.round((this.state.currentTask / this.CONFIG.MAX_TASKS) * 100);
                 this.elements.progressBar.style.width = `${progress}%`;
+                const container = document.getElementById('progressBarContainer');
+                if (container) container.setAttribute('aria-valuenow', progress);
                 
                 // Clear game area
                 const area = this.elements.gameArea;
@@ -1810,7 +1823,7 @@
                 diffLabel.style.cssText = 'font-size:0.85rem;color:var(--text-muted);font-weight:500;';
                 diffLabel.textContent = 'Difficulty:';
                 difficultyBar.appendChild(diffLabel);
-                for (let i = 1; i <= 5; i++) {
+                for (let i = 1; i <= this.CONFIG.MAX_DIFFICULTY; i++) {
                     const pip = document.createElement('div');
                     pip.style.cssText = `width:12px;height:12px;border-radius:50%;background:${i <= this.state.currentDifficulty ? 'var(--primary)' : 'var(--border)'};transition:all 0.3s;`;
                     difficultyBar.appendChild(pip);
@@ -1846,7 +1859,7 @@
                 if (this.state.taskScores.length > 0) {
                     const lastScore = this.state.taskScores[this.state.taskScores.length - 1];
                     if (lastScore >= this.CONFIG.ADAPTIVE_UP) {
-                        this.state.currentDifficulty = Math.min(this.state.currentDifficulty + 1, 5);
+                        this.state.currentDifficulty = Math.min(this.state.currentDifficulty + 1, this.CONFIG.MAX_DIFFICULTY);
                     } else if (lastScore < this.CONFIG.ADAPTIVE_DOWN) {
                         this.state.currentDifficulty = Math.max(this.state.currentDifficulty - 1, 1);
                     }
@@ -1978,7 +1991,7 @@
                     area.appendChild(counter);
                     
                     state.showIndex++;
-                    this.gameTimeout(() => this.showMemorySequence(), 1000);
+                    this.gameTimeout(() => this.showMemorySequence(), this.CONFIG.MEMORY_DISPLAY_MS);
                 } else {
                     // Show input interface
                     this.showMemoryInput();
@@ -2053,15 +2066,15 @@
                 // Real-time validation
                 const isCorrect = num === state.sequence[position];
                 
-                // Update display with color feedback
+                // Update display with color + symbol feedback (color-blind safe)
                 const slot = document.getElementById(`slot-${position}`);
                 if (slot) {
-                    slot.textContent = num;
+                    slot.textContent = num + (isCorrect ? ' ✓' : ' ✗');
                     slot.classList.add('filled');
-                    // Add visual feedback for correct/incorrect
                     slot.style.background = isCorrect ? 'var(--success)' : 'var(--error)';
                     slot.style.borderColor = isCorrect ? 'var(--success)' : 'var(--error)';
                     slot.style.color = 'white';
+                    slot.setAttribute('aria-label', `Digit ${num}, ${isCorrect ? 'correct' : 'incorrect'}`);
                 }
                 
                 // Check if complete
@@ -2213,11 +2226,11 @@
                             const idx = state.active.indexOf(dot);
                             if (idx > -1) state.active.splice(idx, 1);
                         }
-                    }, 2000 - (this.state.currentDifficulty * 100));
+                    }, this.CONFIG.ATTENTION_TARGET_BASE_MS - (this.state.currentDifficulty * this.CONFIG.ATTENTION_TARGET_DIFF_MS));
                 }
 
                 // Schedule next spawn
-                this.gameTimeout(() => this.spawnTarget(), 800 - (this.state.currentDifficulty * 50));
+                this.gameTimeout(() => this.spawnTarget(), this.CONFIG.ATTENTION_SPAWN_BASE_MS - (this.state.currentDifficulty * this.CONFIG.ATTENTION_SPAWN_DIFF_MS));
             },
             
             // Handle target click
@@ -2257,17 +2270,26 @@
             // End attention task
             endAttentionTask() {
                 const state = this.attentionState;
-                
+
+                // Guard: if no responses at all, score is 0 (not 50%)
+                if (state.hits === 0 && state.falsePositives === 0) {
+                    const score = 0;
+                    this.state.taskScores.push(score);
+                    this.showFeedback(`Score: ${score}%`, 'warning');
+                    this.gameTimeout(() => this.nextTask(), 1500);
+                    return;
+                }
+
                 // Calculate comprehensive score
                 const hitRate = state.targetsShown > 0 ? state.hits / state.targetsShown : 0;
-                const falseAlarmRate = state.distractorsShown > 0 ? 
+                const falseAlarmRate = state.distractorsShown > 0 ?
                     state.falsePositives / state.distractorsShown : 0;
-                
+
                 // d-prime calculation (signal detection theory)
-                const dPrime = Math.min(4, Math.max(-4, 
+                const dPrime = Math.min(4, Math.max(-4,
                     this.zScore(hitRate) - this.zScore(falseAlarmRate)));
-                
-                const score = Math.round(Math.max(0, Math.min(100, 
+
+                const score = Math.round(Math.max(0, Math.min(100,
                     50 + (dPrime * 12.5))));
                 
                 this.state.taskScores.push(score);
@@ -2298,9 +2320,18 @@
                 const rule = scienceRules[this.state.currentTask % scienceRules.length];
                 const trials = 6 + this.state.currentDifficulty;
 
+                // Pre-shuffle items to avoid repeats within a round
+                const shuffledItems = this.shuffle(rule.items);
+                // If we need more trials than items, cycle through the shuffled list
+                const trialItems = [];
+                for (let i = 0; i < trials; i++) {
+                    trialItems.push(shuffledItems[i % shuffledItems.length]);
+                }
+
                 this.flexState = {
                     rule,
                     trials,
+                    trialItems,
                     current: 0,
                     correct: 0,
                     reactionTimes: [],
@@ -2318,7 +2349,7 @@
                 if (state.current >= state.trials) {
                     const accuracy = state.correct / state.trials;
                     const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
-                    const rtScore = Math.max(0, 1 - (avgRT / 3000));
+                    const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.FLEX_RT_NORM_MS));
                     const score = Math.round((accuracy * 70) + (rtScore * 30));
 
                     this.state.taskScores.push(score);
@@ -2328,12 +2359,12 @@
                     return;
                 }
 
-                // Pick a random item from the current science rule
-                const item = state.rule.items[Math.floor(Math.random() * state.rule.items.length)];
+                // Use pre-shuffled item for this trial
+                const item = state.trialItems[state.current];
 
                 this.clearGameArea(area);
 
-                // Create UI
+                // Create UI — show trial number before incrementing
                 const title = document.createElement('h3');
                 title.textContent = `Trial ${state.current + 1} of ${state.trials}`;
 
@@ -2364,6 +2395,7 @@
                 area.appendChild(buttons);
 
                 state.startTime = Date.now();
+                // Increment AFTER displaying (will be checked at start of next runFlexTrial)
                 state.current++;
             },
 
@@ -2389,7 +2421,7 @@
                 if (state.current >= state.trials) {
                     const accuracy = state.correct / state.trials;
                     const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
-                    const rtScore = Math.max(0, 1 - (avgRT / 2000));
+                    const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.SPEED_RT_NORM_MS));
                     const score = Math.round((accuracy * 50) + (rtScore * 50));
                     
                     this.state.taskScores.push(score);
@@ -2716,16 +2748,16 @@
                 const synthText = document.createElement('p');
                 if (overallTier.key === 'strong') {
                     synthText.textContent = 'Your executive function skills are well-developed across the board. ' +
-                        'These cognitive skills are associated with success in challenging science work — ' +
+                        'Research links these cognitive skills to success in challenging science work — ' +
                         'designing experiments, analyzing datasets, and building arguments from evidence. ' +
                         'Keep training to maintain these skills.';
                 } else if (focusAreas.length > 0 && strengths.length > 0) {
                     synthText.textContent = `Your strengths in ${strengths.join(' and ')} give you a good starting point. ` +
-                        `Building ${focusAreas.join(' and ')} may further support your science learning — ` +
+                        `Building ${focusAreas.join(' and ')} is often linked to stronger science learning — ` +
                         'try the tips above during your next science class and notice what changes.';
                 } else if (focusAreas.length > 0) {
                     synthText.textContent = `The areas to focus on are ${focusAreas.join(' and ')}. ` +
-                        'These skills are associated with science learning, and they improve with practice. ' +
+                        'Research links these skills to science learning, and they tend to improve with practice. ' +
                         'Try the tips above during your next science class — small changes add up.';
                 } else {
                     synthText.textContent = 'Your executive function skills are developing well. ' +
@@ -2802,6 +2834,12 @@
 
             // Export data
             exportData() {
+                // Filter history to only include current student's sessions (privacy)
+                const currentName = this.state.user ? this.state.user.name : null;
+                const filteredHistory = currentName
+                    ? this.state.history.filter(h => h.user && h.user.name === currentName)
+                    : [];
+
                 const data = {
                     user: this.state.user,
                     session: {
@@ -2809,7 +2847,7 @@
                         scores: this.state.gameScores,
                         integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
                     },
-                    history: this.state.history
+                    history: filteredHistory
                 };
                 
                 try {
