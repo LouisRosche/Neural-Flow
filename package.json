@@ -1,0 +1,26 @@
+{
+  "name": "neural-flow",
+  "version": "1.0.0",
+  "description": "Neural Flow - Executive Function Training",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:e2e": "playwright test",
+    "test:all": "vitest run && playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:43845/git/LouisRosche/Neural-Flow"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@vitest/ui": "^4.1.0",
+    "jsdom": "^29.0.0",
+    "vitest": "^4.1.0"
+  }
+}

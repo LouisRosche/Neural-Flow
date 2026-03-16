@@ -849,18 +849,53 @@
             line-height: 1.5;
             color: #374151;
         }
+
+        /* History table */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .history-table th,
+        .history-table td {
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .history-table th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.03em;
+        }
+
+        .history-table tr:hover td {
+            background: #f0f4ff;
+        }
+
+        .history-empty {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <a href="#loginScreen" class="visually-hidden" id="skipLink">Skip to content</a>
+    <div class="app-container" role="application" aria-label="Neural Flow Executive Function Training">
         <header class="header">
             <h1>🧠 Neural Flow - Executive Function Training</h1>
-            <button class="settings-btn" id="settingsBtn" title="Settings">⚙</button>
+            <button class="settings-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
         </header>
-        
-        <main class="content">
+
+        <main class="content" role="main">
             <!-- Login Screen -->
-            <div id="loginScreen" class="screen active">
+            <div id="loginScreen" class="screen active" role="region" aria-label="Student login">
                 <div class="form-container">
                     <h2 class="form-title">Welcome!</h2>
                     <div id="loginForm">
@@ -879,6 +914,9 @@
                                 <label class="form-label" for="grade">Grade</label>
                                 <select id="grade" class="form-input" required>
                                     <option value="">Select</option>
+                                    <option value="K">Kindergarten</option>
+                                    <option value="1">1st</option>
+                                    <option value="2">2nd</option>
                                     <option value="3">3rd</option>
                                     <option value="4">4th</option>
                                     <option value="5">5th</option>
@@ -921,17 +959,17 @@
             </div>
             
             <!-- Menu Screen -->
-            <div id="menuScreen" class="screen">
+            <div id="menuScreen" class="screen" role="region" aria-label="Game selection">
                 <h2 style="text-align: center; margin-bottom: 2rem;">Select a Training Module</h2>
                 <div class="games-container" id="gamesGrid"></div>
             </div>
             
             <!-- Game Screen -->
-            <div id="gameScreen" class="screen">
-                <div class="progress-bar">
+            <div id="gameScreen" class="screen" role="region" aria-label="Active game">
+                <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Game progress" id="progressBarContainer">
                     <div class="progress-fill" id="progressBar"></div>
                 </div>
-                <div class="game-area" id="gameArea">
+                <div class="game-area" id="gameArea" aria-live="polite">
                     <div class="loading">
                         <div class="spinner"></div>
                         <p>Loading game...</p>
@@ -943,7 +981,7 @@
             </div>
             
             <!-- Report Screen -->
-            <div id="reportScreen" class="screen">
+            <div id="reportScreen" class="screen" role="region" aria-label="Training report">
                 <div class="report-container">
                     <div class="report-header">
                         <h2 style="font-size: 2rem; margin-bottom: 1rem;">Training Complete!</h2>
@@ -954,8 +992,14 @@
                     
                     <div id="recommendations" style="margin-top: 2rem; display: none;"></div>
                     
-                    <div style="text-align: center; margin-top: 2rem;">
-                        <button id="exportBtn" class="btn">Export Data</button>
+                    <div id="historySection" style="margin-top: 2rem; display: none;">
+                        <h3 style="margin-bottom: 1rem;">Session History</h3>
+                        <div id="historyContainer"></div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 2rem; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                        <button id="exportBtn" class="btn">Export Results (JSON + CSV)</button>
+                        <button id="historyBtn" class="btn btn-secondary">View History</button>
                         <button id="resetBtn" class="btn btn-secondary">New Session</button>
                     </div>
                 </div>
@@ -972,7 +1016,7 @@
     </div>
 
     <!-- Settings modal -->
-    <div class="modal-overlay" id="settingsModal">
+    <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-label="Settings">
         <div class="modal">
             <h3>⚙ Settings</h3>
             <div class="form-group">
@@ -1020,13 +1064,25 @@
         </div>
     </div>
 
+    <!-- Confirmation modal (replaces browser confirm()) -->
+    <div class="modal-overlay" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+        <div class="modal" style="max-width: 400px;">
+            <h3 id="confirmTitle">Confirm</h3>
+            <p id="confirmMessage" style="margin-bottom: 1.5rem; color: var(--text-muted);"></p>
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button id="confirmCancel" class="btn btn-secondary">Cancel</button>
+                <button id="confirmOk" class="btn">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script>
     // Production-ready implementation with fixes for all identified issues
     (function() {
         'use strict';
         
         // Application namespace
-        const App = window.App = {
+        const App = {
             // Configuration
             CONFIG: {
                 GAMES: [
@@ -1069,67 +1125,173 @@
                         ]
                     }
                 },
-                SCIENCE_RULES: [
-                    {
-                        key: 'metal/nonmetal',
-                        question: 'Is this element a metal or nonmetal?',
-                        options: ['Metal', 'Nonmetal'],
-                        items: [
-                            { stimulus: 'Iron (Fe)', answer: 'metal' },
-                            { stimulus: 'Oxygen (O)', answer: 'nonmetal' },
-                            { stimulus: 'Gold (Au)', answer: 'metal' },
-                            { stimulus: 'Carbon (C)', answer: 'nonmetal' },
-                            { stimulus: 'Copper (Cu)', answer: 'metal' },
-                            { stimulus: 'Nitrogen (N)', answer: 'nonmetal' },
-                            { stimulus: 'Silver (Ag)', answer: 'metal' },
-                            { stimulus: 'Sulfur (S)', answer: 'nonmetal' },
-                            { stimulus: 'Aluminum (Al)', answer: 'metal' },
-                            { stimulus: 'Helium (He)', answer: 'nonmetal' },
-                            { stimulus: 'Zinc (Zn)', answer: 'metal' },
-                            { stimulus: 'Chlorine (Cl)', answer: 'nonmetal' }
-                        ]
-                    },
-                    {
-                        key: 'renewable/nonrenewable',
-                        question: 'Is this energy source renewable or nonrenewable?',
-                        options: ['Renewable', 'Nonrenewable'],
-                        items: [
-                            { stimulus: 'Solar', answer: 'renewable' },
-                            { stimulus: 'Coal', answer: 'nonrenewable' },
-                            { stimulus: 'Wind', answer: 'renewable' },
-                            { stimulus: 'Natural Gas', answer: 'nonrenewable' },
-                            { stimulus: 'Hydroelectric', answer: 'renewable' },
-                            { stimulus: 'Petroleum', answer: 'nonrenewable' },
-                            { stimulus: 'Geothermal', answer: 'renewable' },
-                            { stimulus: 'Diesel Fuel', answer: 'nonrenewable' },
-                            { stimulus: 'Biomass', answer: 'renewable' },
-                            { stimulus: 'Propane', answer: 'nonrenewable' }
-                        ]
-                    },
-                    {
-                        key: 'physical/chemical',
-                        question: 'Is this a physical or chemical change?',
-                        options: ['Physical', 'Chemical'],
-                        items: [
-                            { stimulus: 'Ice melting', answer: 'physical' },
-                            { stimulus: 'Wood burning', answer: 'chemical' },
-                            { stimulus: 'Paper tearing', answer: 'physical' },
-                            { stimulus: 'Rust forming', answer: 'chemical' },
-                            { stimulus: 'Water boiling', answer: 'physical' },
-                            { stimulus: 'Baking a cake', answer: 'chemical' },
-                            { stimulus: 'Dissolving sugar', answer: 'physical' },
-                            { stimulus: 'Digesting food', answer: 'chemical' },
-                            { stimulus: 'Crushing a can', answer: 'physical' },
-                            { stimulus: 'Milk souring', answer: 'chemical' },
-                            { stimulus: 'Cutting hair', answer: 'physical' },
-                            { stimulus: 'Fireworks exploding', answer: 'chemical' }
-                        ]
-                    }
-                ],
-                SCIENCE_FORMULAS: ['H₂O', 'CO₂', 'NaCl', 'O₂', 'N₂', 'CH₄', 'Fe₂O₃', 'CaCO₃'],
+                // Grade-keyed content: maps grade → { rules, formulas }
+                // K-2: basic observations, 3-5: life/earth science, 6-8: physical/chemical (thorough),
+                // 9-12: advanced chemistry/physics
+                GRADE_CONTENT: {
+                    // --- K-2: Observable properties and basic classification ---
+                    K: { band: 'K-2', rules: [
+                        { key: 'living/nonliving', question: 'Is this living or nonliving?', options: ['Living', 'Nonliving'], items: [
+                            { stimulus: 'Dog', answer: 'living' }, { stimulus: 'Rock', answer: 'nonliving' },
+                            { stimulus: 'Tree', answer: 'living' }, { stimulus: 'Chair', answer: 'nonliving' },
+                            { stimulus: 'Fish', answer: 'living' }, { stimulus: 'Pencil', answer: 'nonliving' },
+                            { stimulus: 'Flower', answer: 'living' }, { stimulus: 'Water', answer: 'nonliving' },
+                            { stimulus: 'Butterfly', answer: 'living' }, { stimulus: 'Shoe', answer: 'nonliving' }
+                        ]},
+                        { key: 'solid/liquid', question: 'Is this a solid or a liquid?', options: ['Solid', 'Liquid'], items: [
+                            { stimulus: 'Ice cube', answer: 'solid' }, { stimulus: 'Juice', answer: 'liquid' },
+                            { stimulus: 'Book', answer: 'solid' }, { stimulus: 'Milk', answer: 'liquid' },
+                            { stimulus: 'Crayon', answer: 'solid' }, { stimulus: 'Soup', answer: 'liquid' },
+                            { stimulus: 'Ball', answer: 'solid' }, { stimulus: 'Rain', answer: 'liquid' },
+                            { stimulus: 'Coin', answer: 'solid' }, { stimulus: 'Honey', answer: 'liquid' }
+                        ]},
+                        { key: 'hot/cold', question: 'Is this usually hot or cold?', options: ['Hot', 'Cold'], items: [
+                            { stimulus: 'Fire', answer: 'hot' }, { stimulus: 'Snow', answer: 'cold' },
+                            { stimulus: 'Oven', answer: 'hot' }, { stimulus: 'Ice cream', answer: 'cold' },
+                            { stimulus: 'Sun', answer: 'hot' }, { stimulus: 'Freezer', answer: 'cold' },
+                            { stimulus: 'Stove', answer: 'hot' }, { stimulus: 'Iceberg', answer: 'cold' },
+                            { stimulus: 'Campfire', answer: 'hot' }, { stimulus: 'Popsicle', answer: 'cold' }
+                        ]}
+                    ], formulas: ['H₂O', 'O₂', 'CO₂', 'NaCl'] },
+                    1: { band: 'K-2', inherit: 'K' },
+                    2: { band: 'K-2', inherit: 'K' },
+
+                    // --- 3-5: Life science, earth science, basic physical science ---
+                    3: { band: '3-5', rules: [
+                        { key: 'plant/animal', question: 'Is this a plant or an animal?', options: ['Plant', 'Animal'], items: [
+                            { stimulus: 'Oak tree', answer: 'plant' }, { stimulus: 'Eagle', answer: 'animal' },
+                            { stimulus: 'Cactus', answer: 'plant' }, { stimulus: 'Whale', answer: 'animal' },
+                            { stimulus: 'Fern', answer: 'plant' }, { stimulus: 'Spider', answer: 'animal' },
+                            { stimulus: 'Moss', answer: 'plant' }, { stimulus: 'Frog', answer: 'animal' },
+                            { stimulus: 'Sunflower', answer: 'plant' }, { stimulus: 'Shark', answer: 'animal' },
+                            { stimulus: 'Kelp', answer: 'plant' }, { stimulus: 'Ant', answer: 'animal' }
+                        ]},
+                        { key: 'weathering/erosion', question: 'Is this an example of weathering or erosion?', options: ['Weathering', 'Erosion'], items: [
+                            { stimulus: 'Cracking rock from ice', answer: 'weathering' },
+                            { stimulus: 'River carrying sand', answer: 'erosion' },
+                            { stimulus: 'Roots splitting rock', answer: 'weathering' },
+                            { stimulus: 'Wind blowing soil', answer: 'erosion' },
+                            { stimulus: 'Acid rain dissolving stone', answer: 'weathering' },
+                            { stimulus: 'Glacier carving valley', answer: 'erosion' },
+                            { stimulus: 'Tree root cracking sidewalk', answer: 'weathering' },
+                            { stimulus: 'Ocean waves wearing cliff', answer: 'erosion' },
+                            { stimulus: 'Frost wedging', answer: 'weathering' },
+                            { stimulus: 'Mudslide', answer: 'erosion' }
+                        ]},
+                        { key: 'renewable/nonrenewable', question: 'Is this energy source renewable or nonrenewable?', options: ['Renewable', 'Nonrenewable'], items: [
+                            { stimulus: 'Solar', answer: 'renewable' }, { stimulus: 'Coal', answer: 'nonrenewable' },
+                            { stimulus: 'Wind', answer: 'renewable' }, { stimulus: 'Natural Gas', answer: 'nonrenewable' },
+                            { stimulus: 'Hydroelectric', answer: 'renewable' }, { stimulus: 'Petroleum', answer: 'nonrenewable' },
+                            { stimulus: 'Geothermal', answer: 'renewable' }, { stimulus: 'Diesel Fuel', answer: 'nonrenewable' },
+                            { stimulus: 'Biomass', answer: 'renewable' }, { stimulus: 'Propane', answer: 'nonrenewable' }
+                        ]}
+                    ], formulas: ['H₂O', 'CO₂', 'O₂', 'NaCl', 'N₂', 'CH₄'] },
+                    4: { band: '3-5', inherit: '3' },
+                    5: { band: '3-5', inherit: '3' },
+
+                    // --- 6-8: Physical/chemical science (thorough — active research grades) ---
+                    6: { band: '6-8', rules: [
+                        { key: 'metal/nonmetal', question: 'Is this element a metal or nonmetal?', options: ['Metal', 'Nonmetal'], items: [
+                            { stimulus: 'Iron (Fe)', answer: 'metal' }, { stimulus: 'Oxygen (O)', answer: 'nonmetal' },
+                            { stimulus: 'Gold (Au)', answer: 'metal' }, { stimulus: 'Carbon (C)', answer: 'nonmetal' },
+                            { stimulus: 'Copper (Cu)', answer: 'metal' }, { stimulus: 'Nitrogen (N)', answer: 'nonmetal' },
+                            { stimulus: 'Silver (Ag)', answer: 'metal' }, { stimulus: 'Sulfur (S)', answer: 'nonmetal' },
+                            { stimulus: 'Aluminum (Al)', answer: 'metal' }, { stimulus: 'Helium (He)', answer: 'nonmetal' },
+                            { stimulus: 'Zinc (Zn)', answer: 'metal' }, { stimulus: 'Chlorine (Cl)', answer: 'nonmetal' }
+                        ]},
+                        { key: 'physical/chemical', question: 'Is this a physical or chemical change?', options: ['Physical', 'Chemical'], items: [
+                            { stimulus: 'Ice melting', answer: 'physical' }, { stimulus: 'Wood burning', answer: 'chemical' },
+                            { stimulus: 'Paper tearing', answer: 'physical' }, { stimulus: 'Rust forming', answer: 'chemical' },
+                            { stimulus: 'Water boiling', answer: 'physical' }, { stimulus: 'Baking a cake', answer: 'chemical' },
+                            { stimulus: 'Dissolving sugar', answer: 'physical' }, { stimulus: 'Digesting food', answer: 'chemical' },
+                            { stimulus: 'Crushing a can', answer: 'physical' }, { stimulus: 'Milk souring', answer: 'chemical' },
+                            { stimulus: 'Cutting hair', answer: 'physical' }, { stimulus: 'Fireworks exploding', answer: 'chemical' }
+                        ]},
+                        { key: 'conductor/insulator', question: 'Is this material a conductor or insulator of electricity?', options: ['Conductor', 'Insulator'], items: [
+                            { stimulus: 'Copper wire', answer: 'conductor' }, { stimulus: 'Rubber gloves', answer: 'insulator' },
+                            { stimulus: 'Aluminum foil', answer: 'conductor' }, { stimulus: 'Glass rod', answer: 'insulator' },
+                            { stimulus: 'Salt water', answer: 'conductor' }, { stimulus: 'Plastic wrap', answer: 'insulator' },
+                            { stimulus: 'Steel nail', answer: 'conductor' }, { stimulus: 'Dry wood', answer: 'insulator' },
+                            { stimulus: 'Gold ring', answer: 'conductor' }, { stimulus: 'Ceramic tile', answer: 'insulator' }
+                        ]},
+                        { key: 'element/compound', question: 'Is this substance an element or a compound?', options: ['Element', 'Compound'], items: [
+                            { stimulus: 'Oxygen (O₂)', answer: 'element' }, { stimulus: 'Water (H₂O)', answer: 'compound' },
+                            { stimulus: 'Iron (Fe)', answer: 'element' }, { stimulus: 'Carbon dioxide (CO₂)', answer: 'compound' },
+                            { stimulus: 'Gold (Au)', answer: 'element' }, { stimulus: 'Table salt (NaCl)', answer: 'compound' },
+                            { stimulus: 'Nitrogen (N₂)', answer: 'element' }, { stimulus: 'Methane (CH₄)', answer: 'compound' },
+                            { stimulus: 'Helium (He)', answer: 'element' }, { stimulus: 'Rust (Fe₂O₃)', answer: 'compound' }
+                        ]},
+                        { key: 'renewable/nonrenewable', question: 'Is this energy source renewable or nonrenewable?', options: ['Renewable', 'Nonrenewable'], items: [
+                            { stimulus: 'Solar', answer: 'renewable' }, { stimulus: 'Coal', answer: 'nonrenewable' },
+                            { stimulus: 'Wind', answer: 'renewable' }, { stimulus: 'Natural Gas', answer: 'nonrenewable' },
+                            { stimulus: 'Hydroelectric', answer: 'renewable' }, { stimulus: 'Petroleum', answer: 'nonrenewable' },
+                            { stimulus: 'Geothermal', answer: 'renewable' }, { stimulus: 'Diesel Fuel', answer: 'nonrenewable' },
+                            { stimulus: 'Biomass', answer: 'renewable' }, { stimulus: 'Propane', answer: 'nonrenewable' }
+                        ]}
+                    ], formulas: [
+                        'H₂O', 'CO₂', 'NaCl', 'O₂', 'N₂', 'CH₄', 'Fe₂O₃', 'CaCO₃',
+                        'H₂SO₄', 'NaOH', 'HCl', 'NH₃', 'C₆H₁₂O₆', 'KMnO₄'
+                    ] },
+                    7: { band: '6-8', inherit: '6' },
+                    8: { band: '6-8', inherit: '6' },
+
+                    // --- 9-12: Advanced chemistry/physics ---
+                    9: { band: '9-12', rules: [
+                        { key: 'ionic/covalent', question: 'Is this bond ionic or covalent?', options: ['Ionic', 'Covalent'], items: [
+                            { stimulus: 'NaCl (table salt)', answer: 'ionic' }, { stimulus: 'H₂O (water)', answer: 'covalent' },
+                            { stimulus: 'MgO (magnesium oxide)', answer: 'ionic' }, { stimulus: 'CO₂ (carbon dioxide)', answer: 'covalent' },
+                            { stimulus: 'KBr (potassium bromide)', answer: 'ionic' }, { stimulus: 'CH₄ (methane)', answer: 'covalent' },
+                            { stimulus: 'CaF₂ (calcium fluoride)', answer: 'ionic' }, { stimulus: 'NH₃ (ammonia)', answer: 'covalent' },
+                            { stimulus: 'LiCl (lithium chloride)', answer: 'ionic' }, { stimulus: 'O₂ (oxygen gas)', answer: 'covalent' },
+                            { stimulus: 'BaSO₄ (barium sulfate)', answer: 'ionic' }, { stimulus: 'C₂H₆ (ethane)', answer: 'covalent' }
+                        ]},
+                        { key: 'acid/base', question: 'Is this substance an acid or a base?', options: ['Acid', 'Base'], items: [
+                            { stimulus: 'HCl (hydrochloric acid)', answer: 'acid' }, { stimulus: 'NaOH (sodium hydroxide)', answer: 'base' },
+                            { stimulus: 'H₂SO₄ (sulfuric acid)', answer: 'acid' }, { stimulus: 'KOH (potassium hydroxide)', answer: 'base' },
+                            { stimulus: 'HNO₃ (nitric acid)', answer: 'acid' }, { stimulus: 'Ca(OH)₂ (calcium hydroxide)', answer: 'base' },
+                            { stimulus: 'CH₃COOH (acetic acid)', answer: 'acid' }, { stimulus: 'NH₃ (ammonia)', answer: 'base' },
+                            { stimulus: 'H₃PO₄ (phosphoric acid)', answer: 'acid' }, { stimulus: 'Mg(OH)₂ (magnesium hydroxide)', answer: 'base' },
+                            { stimulus: 'HF (hydrofluoric acid)', answer: 'acid' }, { stimulus: 'Al(OH)₃ (aluminum hydroxide)', answer: 'base' }
+                        ]},
+                        { key: 'exothermic/endothermic', question: 'Is this reaction exothermic or endothermic?', options: ['Exothermic', 'Endothermic'], items: [
+                            { stimulus: 'Combustion of methane', answer: 'exothermic' },
+                            { stimulus: 'Photosynthesis', answer: 'endothermic' },
+                            { stimulus: 'Neutralization (acid + base)', answer: 'exothermic' },
+                            { stimulus: 'Melting ice', answer: 'endothermic' },
+                            { stimulus: 'Rusting of iron', answer: 'exothermic' },
+                            { stimulus: 'Cooking an egg', answer: 'endothermic' },
+                            { stimulus: 'Burning wood', answer: 'exothermic' },
+                            { stimulus: 'Evaporating water', answer: 'endothermic' },
+                            { stimulus: 'Cellular respiration', answer: 'exothermic' },
+                            { stimulus: 'Dissolving NH₄NO₃ in water', answer: 'endothermic' }
+                        ]},
+                        { key: 'element/compound', question: 'Is this substance an element or a compound?', options: ['Element', 'Compound'], items: [
+                            { stimulus: 'Oxygen (O₂)', answer: 'element' }, { stimulus: 'Water (H₂O)', answer: 'compound' },
+                            { stimulus: 'Iron (Fe)', answer: 'element' }, { stimulus: 'Glucose (C₆H₁₂O₆)', answer: 'compound' },
+                            { stimulus: 'Gold (Au)', answer: 'element' }, { stimulus: 'Ethanol (C₂H₅OH)', answer: 'compound' },
+                            { stimulus: 'Neon (Ne)', answer: 'element' }, { stimulus: 'Sulfuric acid (H₂SO₄)', answer: 'compound' },
+                            { stimulus: 'Silicon (Si)', answer: 'element' }, { stimulus: 'Sodium bicarbonate (NaHCO₃)', answer: 'compound' }
+                        ]},
+                        { key: 'metal/nonmetal', question: 'Is this element a metal or nonmetal?', options: ['Metal', 'Nonmetal'], items: [
+                            { stimulus: 'Iron (Fe)', answer: 'metal' }, { stimulus: 'Oxygen (O)', answer: 'nonmetal' },
+                            { stimulus: 'Gold (Au)', answer: 'metal' }, { stimulus: 'Carbon (C)', answer: 'nonmetal' },
+                            { stimulus: 'Copper (Cu)', answer: 'metal' }, { stimulus: 'Nitrogen (N)', answer: 'nonmetal' },
+                            { stimulus: 'Silver (Ag)', answer: 'metal' }, { stimulus: 'Sulfur (S)', answer: 'nonmetal' },
+                            { stimulus: 'Aluminum (Al)', answer: 'metal' }, { stimulus: 'Helium (He)', answer: 'nonmetal' },
+                            { stimulus: 'Zinc (Zn)', answer: 'metal' }, { stimulus: 'Chlorine (Cl)', answer: 'nonmetal' }
+                        ]}
+                    ], formulas: [
+                        'H₂O', 'CO₂', 'NaCl', 'O₂', 'N₂', 'CH₄', 'Fe₂O₃', 'CaCO₃',
+                        'H₂SO₄', 'NaOH', 'HCl', 'NH₃', 'C₆H₁₂O₆', 'KMnO₄',
+                        'C₂H₅OH', 'NaHCO₃', 'H₃PO₄', 'Ca(OH)₂', 'BaSO₄', 'KBr'
+                    ] },
+                    10: { band: '9-12', inherit: '9' },
+                    11: { band: '9-12', inherit: '9' },
+                    12: { band: '9-12', inherit: '9' }
+                },
                 RECOMMENDATIONS: {
                     memory: {
-                        scienceConnection: 'Working memory supports following multi-step lab procedures, holding variables in mind during experiments, and connecting observations to hypotheses.',
+                        scienceConnection: 'Working memory is linked to following multi-step lab procedures, holding variables in mind during experiments, and connecting observations to hypotheses.',
                         tiers: {
                             strong: 'Your working memory is solid — you can handle complex lab procedures and multi-step problem solving. Keep challenging yourself with longer sequences.',
                             developing: "You're building working memory capacity. When studying science, try breaking procedures into smaller chunks and reviewing each step before moving on.",
@@ -1142,7 +1304,7 @@
                         ]
                     },
                     attention: {
-                        scienceConnection: 'Sustained attention supports careful observation — a key part of scientific inquiry. It can help you notice patterns in data and stay focused during long experiments.',
+                        scienceConnection: 'Sustained attention is associated with careful observation — a key part of scientific inquiry. It may help you notice patterns in data and stay focused during long experiments.',
                         tiers: {
                             strong: "Your sustained attention is excellent — you're well-equipped for detailed observation and data collection during experiments.",
                             developing: 'Your attention skills are growing. During science activities, try removing distractions and give yourself a specific thing to watch for.',
@@ -1155,7 +1317,7 @@
                         ]
                     },
                     flexibility: {
-                        scienceConnection: 'Cognitive flexibility can help you switch between classification systems, see problems from multiple angles, and update your thinking when new evidence arrives.',
+                        scienceConnection: 'Cognitive flexibility is linked to switching between classification systems, seeing problems from multiple angles, and updating your thinking when new evidence arrives.',
                         tiers: {
                             strong: 'Strong cognitive flexibility — you can switch between classification systems and adapt your thinking when evidence changes. This is a key scientific reasoning skill.',
                             developing: "You're building flexibility in your thinking. Practice looking at science problems from different angles — try explaining a concept using two different models.",
@@ -1168,7 +1330,7 @@
                         ]
                     },
                     speed: {
-                        scienceConnection: 'Processing speed helps you quickly recognize patterns in data, identify chemical formulas and symbols, and keep up with the pace of lab work and class discussions.',
+                        scienceConnection: 'Processing speed is associated with quickly recognizing patterns in data, identifying chemical formulas and symbols, and keeping up with the pace of lab work and class discussions.',
                         tiers: {
                             strong: 'Fast and accurate processing — you can quickly identify patterns and symbols, which helps during data analysis and fast-paced lab activities.',
                             developing: 'Your processing speed is building. Practice recognizing common science symbols and formulas by sight rather than reading them character by character.',
@@ -1184,9 +1346,20 @@
                 STORAGE_KEY: 'neural_flow_data',
                 SETTINGS_KEY: 'neural_flow_settings',
                 MAX_TASKS: 3,
+                MAX_DIFFICULTY: 5,
                 ADAPTIVE_UP: 80,   // score % to increase difficulty
                 ADAPTIVE_DOWN: 50, // score % below which difficulty decreases
-                CHECKSUM_SALT: 'NF2024' // For data integrity
+                CHECKSUM_SALT: 'NF2024', // For data integrity
+                // Timing constants (milliseconds)
+                MEMORY_DISPLAY_MS: 1000,
+                ATTENTION_TARGET_BASE_MS: 2000,
+                ATTENTION_TARGET_DIFF_MS: 100,
+                ATTENTION_SPAWN_BASE_MS: 800,
+                ATTENTION_SPAWN_DIFF_MS: 50,
+                FLEX_RT_NORM_MS: 3000,
+                SPEED_RT_NORM_MS: 2000,
+                FEEDBACK_DISPLAY_MS: 1500,
+                DEBOUNCE_MS: 300
             },
             
             // Application state
@@ -1199,8 +1372,11 @@
                 gameScores: {},
                 sessionStart: null,
                 history: [],
+                gameStart: null,
                 storageAvailable: false,
-                integrityChecksum: null
+                integrityChecksum: null,
+                // Trial-level research data
+                trialLog: []
             },
             
             // DOM element cache
@@ -1208,6 +1384,13 @@
             
             // Event listeners registry for cleanup
             listeners: new Map(),
+
+            // Timer registry for cleanup (Set for O(1) add/delete)
+            _timers: new Set(),
+
+            // Failed sync payloads (capped to prevent unbounded growth)
+            _unsyncedResults: [],
+            _MAX_UNSYNCED: 20,
             
             // Initialize application
             init() {
@@ -1264,12 +1447,16 @@
                     closeSettingsBtn: document.getElementById('closeSettingsBtn'),
                     syncStatus: document.getElementById('syncStatus'),
                     toggleScript: document.getElementById('toggleScript'),
-                    scriptCode: document.getElementById('scriptCode')
+                    scriptCode: document.getElementById('scriptCode'),
+                    historyBtn: document.getElementById('historyBtn'),
+                    historySection: document.getElementById('historySection'),
+                    historyContainer: document.getElementById('historyContainer'),
+                    progressBarContainer: document.getElementById('progressBarContainer')
                 };
                 
                 // Verify elements exist
                 Object.entries(this.elements).forEach(([key, value]) => {
-                    if (!value && typeof value !== 'object') {
+                    if (value === null || value === undefined) {
                         console.warn(`Element not found: ${key}`);
                     }
                 });
@@ -1368,18 +1555,23 @@
             // Setup basic integrity check
             setupIntegrityCheck() {
                 // Detect developer tools (basic check)
-                let devtools = {open: false, orientation: null};
+                let devtools = {open: false};
                 const threshold = 160;
-                
-                setInterval(() => {
-                    if (window.outerHeight - window.innerHeight > threshold || 
-                        window.outerWidth - window.innerWidth > threshold) {
-                        if (!devtools.open) {
-                            devtools.open = true;
-                            this.state.integrityChecksum = 'unverified';
+
+                this._integrityInterval = setInterval(() => {
+                    const devtoolsOpen = window.outerHeight - window.innerHeight > threshold ||
+                        window.outerWidth - window.innerWidth > threshold;
+
+                    if (devtoolsOpen && !devtools.open) {
+                        devtools.open = true;
+                        this.state.integrityChecksum = 'unverified';
+                        // Show the integrity overlay if a game is active
+                        if (this.state.currentGame) {
+                            this.elements.integrityCheck.classList.add('active');
                         }
-                    } else {
+                    } else if (!devtoolsOpen && devtools.open) {
                         devtools.open = false;
+                        this.elements.integrityCheck.classList.remove('active');
                     }
                 }, 500);
             },
@@ -1397,8 +1589,11 @@
                 // Export button
                 this.addEventListener(this.elements.exportBtn, 'click', () => this.exportData());
                 
-                // Reset button  
+                // Reset button
                 this.addEventListener(this.elements.resetBtn, 'click', () => this.reset());
+
+                // History button
+                this.addEventListener(this.elements.historyBtn, 'click', () => this.toggleHistory());
                 
                 // Enter key on login form
                 this.addEventListener(document.getElementById('loginForm'), 'keypress', (e) => {
@@ -1418,7 +1613,7 @@
                     }
                     if (e.target.tagName === 'BUTTON') {
                         e.target.dataset.clicked = 'true';
-                        setTimeout(() => delete e.target.dataset.clicked, 300);
+                        setTimeout(() => delete e.target.dataset.clicked, this.CONFIG.DEBOUNCE_MS);
                     }
                 });
 
@@ -1426,16 +1621,23 @@
                 this.addEventListener(this.elements.settingsBtn, 'click', () => {
                     this.elements.sheetsUrl.value = this.settings.sheetsUrl || '';
                     this.elements.settingsModal.classList.add('active');
+                    this.elements.sheetsUrl.focus();
                 });
                 this.addEventListener(this.elements.closeSettingsBtn, 'click', () => {
                     this.elements.settingsModal.classList.remove('active');
+                    this.elements.settingsBtn.focus();
                 });
                 this.addEventListener(this.elements.saveSettingsBtn, 'click', () => {
-                    this.settings.sheetsUrl = this.elements.sheetsUrl.value.trim();
+                    const url = this.elements.sheetsUrl.value.trim();
+                    if (url && !this.isValidSheetsUrl(url)) {
+                        this.showFeedback('Please enter a valid Google Apps Script URL (https://script.google.com/...)', 'error');
+                        return;
+                    }
+                    this.settings.sheetsUrl = url;
                     this.saveSettings();
-                    this.updateSyncStatus(this.settings.sheetsUrl ? 'connected' : 'disconnected');
+                    this.updateSyncStatus(url ? 'connected' : 'disconnected');
                     this.elements.settingsModal.classList.remove('active');
-                    this.showFeedback(this.settings.sheetsUrl ? 'Google Sheets sync enabled' : 'Sync disabled', 'success');
+                    this.showFeedback(url ? 'Google Sheets sync enabled' : 'Sync disabled', 'success');
                 });
                 this.addEventListener(this.elements.settingsModal, 'click', (e) => {
                     if (e.target === this.elements.settingsModal) {
@@ -1446,6 +1648,33 @@
                     this.elements.scriptCode.classList.toggle('open');
                     this.elements.toggleScript.textContent = this.elements.scriptCode.classList.contains('open')
                         ? '▼ Hide Apps Script code' : '▶ Show Apps Script code';
+                });
+
+                // Keyboard: Escape closes settings modal + focus trap
+                this.addEventListener(document, 'keydown', (e) => {
+                    if (!this.elements.settingsModal.classList.contains('active')) return;
+
+                    if (e.key === 'Escape') {
+                        this.elements.settingsModal.classList.remove('active');
+                        this.elements.settingsBtn.focus();
+                        return;
+                    }
+
+                    // Focus trap: Tab cycles within modal
+                    if (e.key === 'Tab') {
+                        const modal = this.elements.settingsModal.querySelector('.modal');
+                        const focusable = modal.querySelectorAll('input, button, [tabindex]:not([tabindex="-1"])');
+                        if (focusable.length === 0) return;
+                        const first = focusable[0];
+                        const last = focusable[focusable.length - 1];
+                        if (e.shiftKey && document.activeElement === first) {
+                            e.preventDefault();
+                            last.focus();
+                        } else if (!e.shiftKey && document.activeElement === last) {
+                            e.preventDefault();
+                            first.focus();
+                        }
+                    }
                 });
             },
             
@@ -1488,19 +1717,48 @@
                     if (this.state.currentGame === 'flexibility') {
                         const state = this.flexState;
                         const rt = Date.now() - state.startTime;
-                        
+                        const trialItem = state.trialItems[state.current - 1];
+
                         state.reactionTimes.push(rt);
-                        if (correct === 'true') state.correct++;
-                        
-                        setTimeout(() => this.runFlexTrial(), 500);
+                        const isCorrect = correct === 'true';
+                        if (isCorrect) state.correct++;
+
+                        // Trial-level logging
+                        this.logTrial({
+                            trialType: 'flexibility_classification',
+                            rule: state.rule.key,
+                            stimulus: trialItem ? trialItem.stimulus : null,
+                            correctAnswer: trialItem ? trialItem.answer : null,
+                            response: response,
+                            correct: isCorrect,
+                            rt: rt,
+                            trialNumber: state.current,
+                            totalTrials: state.trials
+                        });
+
+                        this.gameTimeout(() => this.runFlexTrial(), 500);
                     } else if (this.state.currentGame === 'speed') {
                         const startTime = parseInt(target.dataset.startTime);
                         const rt = Date.now() - startTime;
-                        
+                        const isCorrect = correct === 'true';
+
                         this.speedState.reactionTimes.push(rt);
-                        if (correct === 'true') this.speedState.correct++;
-                        
-                        setTimeout(() => this.runSpeedTrial(), 300);
+                        if (isCorrect) this.speedState.correct++;
+
+                        // Trial-level logging
+                        this.logTrial({
+                            trialType: 'speed_match',
+                            stimulus: target.closest('.response-buttons') ?
+                                target.closest('.response-buttons').previousElementSibling.textContent : null,
+                            response: response,
+                            correct: isCorrect,
+                            rt: rt,
+                            trialNumber: this.speedState.current,
+                            totalTrials: this.speedState.trials,
+                            optionCount: this.speedState.patterns ? this.speedState.patterns.length : null
+                        });
+
+                        this.gameTimeout(() => this.runSpeedTrial(), 300);
                     }
                     return; // Prevent any further processing
                 }
@@ -1591,8 +1849,18 @@
                         score.className = 'game-score';
                         score.textContent = `Score: ${this.state.gameScores[game.id]}%`;
                         card.appendChild(score);
+                        card.setAttribute('aria-label', `${game.name} — completed, score ${this.state.gameScores[game.id]}%`);
                     } else {
+                        card.tabIndex = 0;
+                        card.setAttribute('role', 'button');
+                        card.setAttribute('aria-label', `Start ${game.name}: ${game.description}`);
                         card.addEventListener('click', () => this.startGame(game.id));
+                        card.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                this.startGame(game.id);
+                            }
+                        });
                     }
                     
                     grid.appendChild(card);
@@ -1600,7 +1868,7 @@
                 
                 // Check if all games complete
                 if (Object.keys(this.state.gameScores).length === this.CONFIG.GAMES.length) {
-                    setTimeout(() => this.showReport(), 500);
+                    this.gameTimeout(() => this.showReport(), 500);
                 }
             },
             
@@ -1611,6 +1879,7 @@
                     this.state.currentTask = 0;
                     this.state.currentDifficulty = 1;
                     this.state.taskScores = [];
+                    this.state.gameStart = Date.now();
                     
                     this.showScreen('game');
                     this.runTask();
@@ -1620,18 +1889,90 @@
                 }
             },
             
+            // Fisher-Yates shuffle (unbiased)
+            shuffle(arr) {
+                const a = [...arr];
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
+            },
+
+            // Resolve grade-appropriate content (rules + formulas)
+            getGradeContent() {
+                const grade = this.state.user ? this.state.user.grade : '6';
+                let content = this.CONFIG.GRADE_CONTENT[grade];
+                // Follow inheritance chain
+                while (content && content.inherit) {
+                    content = this.CONFIG.GRADE_CONTENT[content.inherit];
+                }
+                // Fallback to grade 6 (middle school default)
+                if (!content || !content.rules) {
+                    content = this.CONFIG.GRADE_CONTENT['6'];
+                }
+                return content;
+            },
+
+            // Clear game area but preserve instructions panel
+            clearGameArea() {
+                const area = this.elements.gameArea;
+                if (!area) return;
+                const instructions = area.querySelector('.game-instructions');
+                while (area.firstChild) {
+                    area.removeChild(area.firstChild);
+                }
+                if (instructions) {
+                    area.appendChild(instructions);
+                }
+            },
+
+            // Managed setTimeout that gets cleaned up on game exit
+            gameTimeout(fn, delay) {
+                const id = setTimeout(() => {
+                    this._timers.delete(id);
+                    fn();
+                }, delay);
+                this._timers.add(id);
+                return id;
+            },
+
+            // Log a single trial for research export
+            logTrial(data) {
+                this.state.trialLog.push({
+                    timestamp: Date.now(),
+                    game: this.state.currentGame,
+                    task: this.state.currentTask,
+                    difficulty: this.state.currentDifficulty,
+                    grade: this.state.user ? this.state.user.grade : null,
+                    ...data
+                });
+            },
+
+            // Record a task score, show feedback, and advance to next task
+            completeTask(score) {
+                this.state.taskScores.push(score);
+                this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
+                this.gameTimeout(() => this.nextTask(), this.CONFIG.FEEDBACK_DISPLAY_MS);
+            },
+
+            // Clear all pending game timers
+            clearTimers() {
+                this._timers.forEach(id => clearTimeout(id));
+                this._timers.clear();
+            },
+
             // Clean up game resources
             cleanupCurrentGame() {
+                this.clearTimers();
                 // Reset all game states
                 this.memoryState = null;
                 this.attentionState = null;
                 this.flexState = null;
                 this.speedState = null;
-                // Clear the game area
+                // Clear the game area (no instructions to preserve during cleanup)
                 if (this.elements.gameArea) {
-                    while (this.elements.gameArea.firstChild) {
-                        this.elements.gameArea.removeChild(this.elements.gameArea.firstChild);
-                    }
+                    this.clearGameArea();
                 }
             },
             
@@ -1643,25 +1984,40 @@
                 }
                 
                 // Update progress
-                const progress = ((this.state.currentTask + 1) / this.CONFIG.MAX_TASKS) * 100;
+                const progress = Math.round((this.state.currentTask / this.CONFIG.MAX_TASKS) * 100);
                 this.elements.progressBar.style.width = `${progress}%`;
-                
-                // Clear game area
-                const area = this.elements.gameArea;
-                while (area.firstChild) {
-                    area.removeChild(area.firstChild);
+                if (this.elements.progressBarContainer) {
+                    this.elements.progressBarContainer.setAttribute('aria-valuenow', progress);
                 }
                 
+                // Clear game area
+                this.clearGameArea();
+                const area = this.elements.gameArea;
+                
+                // Show difficulty level indicator
+                const difficultyBar = document.createElement('div');
+                difficultyBar.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:1rem;';
+                const diffLabel = document.createElement('span');
+                diffLabel.style.cssText = 'font-size:0.85rem;color:var(--text-muted);font-weight:500;';
+                diffLabel.textContent = 'Difficulty:';
+                difficultyBar.appendChild(diffLabel);
+                for (let i = 1; i <= this.CONFIG.MAX_DIFFICULTY; i++) {
+                    const pip = document.createElement('div');
+                    pip.style.cssText = `width:12px;height:12px;border-radius:50%;background:${i <= this.state.currentDifficulty ? 'var(--primary)' : 'var(--border)'};transition:all 0.3s;`;
+                    difficultyBar.appendChild(pip);
+                }
+                area.appendChild(difficultyBar);
+
                 // ADD INSTRUCTIONS AND READY BUTTON
                 const instructions = this.showGameInstructions(this.state.currentGame);
                 if (instructions) {
                     area.appendChild(instructions);
                 }
-                
+
                 // Add ready button
                 const readyContainer = document.createElement('div');
                 readyContainer.style.cssText = 'text-align:center;margin-top:2rem;';
-                
+
                 const readyBtn = document.createElement('button');
                 readyBtn.className = 'btn btn-success';
                 readyBtn.textContent = `Start Round ${this.state.currentTask + 1} of ${this.CONFIG.MAX_TASKS}`;
@@ -1681,7 +2037,7 @@
                 if (this.state.taskScores.length > 0) {
                     const lastScore = this.state.taskScores[this.state.taskScores.length - 1];
                     if (lastScore >= this.CONFIG.ADAPTIVE_UP) {
-                        this.state.currentDifficulty = Math.min(this.state.currentDifficulty + 1, 5);
+                        this.state.currentDifficulty = Math.min(this.state.currentDifficulty + 1, this.CONFIG.MAX_DIFFICULTY);
                     } else if (lastScore < this.CONFIG.ADAPTIVE_DOWN) {
                         this.state.currentDifficulty = Math.max(this.state.currentDifficulty - 1, 1);
                     }
@@ -1714,18 +2070,30 @@
             showGameInstructions(gameType) {
                 const instructions = this.CONFIG.GAME_INSTRUCTIONS[gameType];
                 if (!instructions) return null;
-                
+
                 const div = document.createElement('div');
                 div.className = 'game-instructions';
-                div.innerHTML = `
-                    <h4>How to Play:</h4>
-                    <p>${instructions.instruction}</p>
-                    <h4>Tips from Research:</h4>
-                    <ul>
-                        ${instructions.tips.map(tip => `<li>${tip}</li>`).join('')}
-                    </ul>
-                `;
-                
+
+                const h4play = document.createElement('h4');
+                h4play.textContent = 'How to Play:';
+                div.appendChild(h4play);
+
+                const p = document.createElement('p');
+                p.textContent = instructions.instruction;
+                div.appendChild(p);
+
+                const h4tips = document.createElement('h4');
+                h4tips.textContent = 'Tips from Research:';
+                div.appendChild(h4tips);
+
+                const ul = document.createElement('ul');
+                instructions.tips.forEach(tip => {
+                    const li = document.createElement('li');
+                    li.textContent = tip;
+                    ul.appendChild(li);
+                });
+                div.appendChild(ul);
+
                 return div;
             },
         
@@ -1734,10 +2102,14 @@
                 const baseLength = 3;
                 const length = baseLength + this.state.currentDifficulty + this.state.currentTask;
                 const sequence = [];
-                
-                // Generate sequence
+
+                // Generate sequence (avoid consecutive duplicates)
                 for (let i = 0; i < length; i++) {
-                    sequence.push(Math.floor(Math.random() * 10));
+                    let digit;
+                    do {
+                        digit = Math.floor(Math.random() * 10);
+                    } while (i > 0 && digit === sequence[i - 1]);
+                    sequence.push(digit);
                 }
                 
                 // Store memory state
@@ -1757,17 +2129,9 @@
             showMemorySequence() {
                 const area = this.elements.gameArea;
                 const state = this.memoryState;
-                
-                // Clear area but keep instructions
-                const children = Array.from(area.children);
-                const instructionsIndex = children.findIndex(child => child.className === 'game-instructions');
-                if (instructionsIndex >= 0) {
-                    // Remove elements after instructions
-                    for (let i = children.length - 1; i > instructionsIndex; i--) {
-                        area.removeChild(children[i]);
-                    }
-                }
-                
+
+                this.clearGameArea();
+
                 if (state.showIndex < state.sequence.length) {
                     // Show current number with position indicator
                     const title = document.createElement('h3');
@@ -1805,7 +2169,7 @@
                     area.appendChild(counter);
                     
                     state.showIndex++;
-                    setTimeout(() => this.showMemorySequence(), 1000);
+                    this.gameTimeout(() => this.showMemorySequence(), this.CONFIG.MEMORY_DISPLAY_MS);
                 } else {
                     // Show input interface
                     this.showMemoryInput();
@@ -1816,16 +2180,14 @@
             showMemoryInput() {
                 const area = this.elements.gameArea;
                 const state = this.memoryState;
-                
-            // Clear area but keep instructions
-                const instructions = area.querySelector('.game-instructions');
-                while (area.firstChild) {
-                    area.removeChild(area.firstChild);
+
+                // Start timing from when input phase begins, not from sequence display
+                if (!state.inputStartTime) {
+                    state.inputStartTime = Date.now();
                 }
-                if (instructions) {
-                    area.appendChild(instructions);
-                }
-                
+
+                this.clearGameArea();
+
                 // Title
                 const title = document.createElement('h3');
                 title.textContent = 'Enter the sequence';
@@ -1873,24 +2235,37 @@
             // Handle memory input
             handleMemoryInput(num) {
                 const state = this.memoryState;
-                //CHECK
                 if (!state || state.userInput.length >= state.length) return;
                 
                 const position = state.userInput.length;
+                const digitRT = Date.now() - (state.lastInputTime || state.inputStartTime || state.startTime);
                 state.userInput.push(num);
-                
+
                 // Real-time validation
                 const isCorrect = num === state.sequence[position];
+
+                // Trial-level logging
+                this.logTrial({
+                    trialType: 'memory_digit',
+                    serialPosition: position,
+                    sequenceLength: state.length,
+                    stimulus: state.sequence[position],
+                    response: num,
+                    correct: isCorrect,
+                    rt: digitRT,
+                    interResponseInterval: state.lastInputTime ? Date.now() - state.lastInputTime : null
+                });
+                state.lastInputTime = Date.now();
                 
-                // Update display with color feedback
+                // Update display with color + symbol feedback (color-blind safe)
                 const slot = document.getElementById(`slot-${position}`);
                 if (slot) {
-                    slot.textContent = num;
+                    slot.textContent = num + (isCorrect ? ' ✓' : ' ✗');
                     slot.classList.add('filled');
-                    // Add visual feedback for correct/incorrect
                     slot.style.background = isCorrect ? 'var(--success)' : 'var(--error)';
                     slot.style.borderColor = isCorrect ? 'var(--success)' : 'var(--error)';
                     slot.style.color = 'white';
+                    slot.setAttribute('aria-label', `Digit ${num}, ${isCorrect ? 'correct' : 'incorrect'}`);
                 }
                 
                 // Check if complete
@@ -1902,39 +2277,32 @@
                     }
                     
                     const accuracy = correct / state.length;
-                    const time = Date.now() - state.startTime;
+                    const time = Date.now() - (state.inputStartTime || state.startTime);
                     const timeBonus = Math.max(0, 1 - (time / (state.length * 2000)));
                     const score = Math.round((accuracy * 90) + (timeBonus * 10));
                     
                     this.state.taskScores.push(score);
                     
                     // Delay before showing feedback so user can see last input
-                    setTimeout(() => {
+                    this.gameTimeout(() => {
                         // Show score in same area format
                         const area = this.elements.gameArea;
-                        // Clear area but keep instructions
-                        const instructions = area.querySelector('.game-instructions');
-                        while (area.firstChild) {
-                            area.removeChild(area.firstChild);
-                        }
-                        if (instructions) {
-                            area.appendChild(instructions);
-                        }
-                        
+                        this.clearGameArea();
+
                         const scoreDisplay = document.createElement('div');
                         scoreDisplay.className = 'stimulus';
                         scoreDisplay.textContent = `${score}%`;
                         scoreDisplay.style.color = score >= 70 ? 'var(--success)' : 'var(--warning)';
-                        
+
                         const message = document.createElement('h3');
                         message.textContent = score >= 70 ? 'Well done!' : 'Keep practicing!';
                         message.style.textAlign = 'center';
-                        
+
                         area.appendChild(scoreDisplay);
                         area.appendChild(message);
-                        
-                        setTimeout(() => this.nextTask(), 1500);
-                    }, 1000); // Give time to see the last input
+
+                        this.gameTimeout(() => this.nextTask(), this.CONFIG.FEEDBACK_DISPLAY_MS);
+                    }, this.CONFIG.MEMORY_DISPLAY_MS); // Give time to see the last input
                 } else {
                     // Update display for next input
                     this.showMemoryInput();
@@ -1957,7 +2325,9 @@
                     targetsShown: 0,
                     distractorsShown: 0,
                     startTime: Date.now(),
-                    active: []
+                    active: [],
+                    // Cached display elements (avoid repeated getElementById)
+                    els: {}
                 };
                 
                 this.attentionState = state;
@@ -1972,25 +2342,36 @@
                 
                 const stats = document.createElement('div');
                 stats.className = 'stats';
-                stats.innerHTML = `
-                    <div class="stat-item">
-                        <div class="stat-value" id="hitsDisplay">0</div>
-                        <div class="stat-label">Hits</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="missesDisplay">0</div>
-                        <div class="stat-label">Misses</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="accuracyDisplay">100%</div>
-                        <div class="stat-label">Accuracy</div>
-                    </div>
-                `;
+                const statDefs = [
+                    { id: 'hitsDisplay', label: 'Hits', value: '0' },
+                    { id: 'missesDisplay', label: 'Misses', value: '0' },
+                    { id: 'accuracyDisplay', label: 'Accuracy', value: '100%' }
+                ];
+                statDefs.forEach(def => {
+                    const item = document.createElement('div');
+                    item.className = 'stat-item';
+                    const val = document.createElement('div');
+                    val.className = 'stat-value';
+                    val.id = def.id;
+                    val.textContent = def.value;
+                    const lbl = document.createElement('div');
+                    lbl.className = 'stat-label';
+                    lbl.textContent = def.label;
+                    item.appendChild(val);
+                    item.appendChild(lbl);
+                    stats.appendChild(item);
+                });
                 
                 area.appendChild(title);
                 area.appendChild(targetArea);
                 area.appendChild(stats);
-                
+
+                // Cache display elements for hot-path updates
+                state.els.hits = document.getElementById('hitsDisplay');
+                state.els.misses = document.getElementById('missesDisplay');
+                state.els.accuracy = document.getElementById('accuracyDisplay');
+                state.els.targetArea = targetArea;
+
                 // Start spawning targets
                 this.spawnTarget();
             },
@@ -1999,23 +2380,39 @@
             spawnTarget() {
                 const state = this.attentionState;
                 
-                // ADD THIS LINE to stop spawning if game was exited
+                // Stop spawning if game was exited
                 if (!state || this.state.currentGame !== 'attention') return;
                 
                 if (state.targetsShown >= state.targets && state.active.length === 0) {
                     this.endAttentionTask();
                     return;
                 }
-                
-                if (state.targetsShown < state.targets || Math.random() < 0.3) {
+
+                // Only spawn if we still have targets to show, or a limited number of extra distractors
+                const maxDistractors = Math.ceil(state.targets * 0.4);
+                const shouldSpawn = state.targetsShown < state.targets ||
+                    (state.distractorsShown < maxDistractors && Math.random() < 0.3);
+
+                if (shouldSpawn) {
                     const isTarget = state.targetsShown < state.targets && Math.random() > 0.3;
                     
                     const dot = document.createElement('div');
                     dot.className = `target ${isTarget ? 'blue' : 'red'}`;
                     dot.dataset.isTarget = isTarget;
                     dot.dataset.spawnTime = Date.now();
+                    dot.setAttribute('role', 'button');
+                    dot.setAttribute('tabindex', '0');
+                    dot.setAttribute('aria-label', isTarget ? 'Blue target — click or press Enter' : 'Red distractor — avoid');
+
+                    // Keyboard support: Enter/Space triggers same as click
+                    dot.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            this.handleTargetClick(dot);
+                        }
+                    });
                     
-                    const area = document.getElementById('targetArea');
+                    const area = state.els.targetArea;
                     const maxX = area.offsetWidth - 50;
                     const maxY = area.offsetHeight - 50;
                     
@@ -2029,21 +2426,33 @@
                     else state.distractorsShown++;
                     
                     // Auto-remove after timeout
-                    setTimeout(() => {
+                    this.gameTimeout(() => {
                         if (dot.parentNode) {
                             if (isTarget) {
                                 state.misses++;
+                                // Log missed target
+                                this.logTrial({
+                                    trialType: 'attention_miss',
+                                    stimulus: 'target',
+                                    response: 'none',
+                                    correct: false,
+                                    rt: null,
+                                    posX: parseInt(dot.style.left),
+                                    posY: parseInt(dot.style.top),
+                                    targetsShownSoFar: state.targetsShown,
+                                    distractorsShownSoFar: state.distractorsShown
+                                });
                                 this.updateAttentionDisplay();
                             }
                             dot.remove();
                             const idx = state.active.indexOf(dot);
                             if (idx > -1) state.active.splice(idx, 1);
                         }
-                    }, 2000 - (this.state.currentDifficulty * 100));
+                    }, this.CONFIG.ATTENTION_TARGET_BASE_MS - (this.state.currentDifficulty * this.CONFIG.ATTENTION_TARGET_DIFF_MS));
                 }
-                
+
                 // Schedule next spawn
-                setTimeout(() => this.spawnTarget(), 800 - (this.state.currentDifficulty * 50));
+                this.gameTimeout(() => this.spawnTarget(), this.CONFIG.ATTENTION_SPAWN_BASE_MS - (this.state.currentDifficulty * this.CONFIG.ATTENTION_SPAWN_DIFF_MS));
             },
             
             // Handle target click
@@ -2051,53 +2460,70 @@
                 const state = this.attentionState;
                 const isTarget = target.dataset.isTarget === 'true';
                 const reactionTime = Date.now() - parseInt(target.dataset.spawnTime);
-                
+
                 if (isTarget) {
                     state.hits++;
                 } else {
                     state.falsePositives++;
                 }
-                
+
+                // Trial-level logging
+                this.logTrial({
+                    trialType: isTarget ? 'attention_hit' : 'attention_false_alarm',
+                    stimulus: isTarget ? 'target' : 'distractor',
+                    response: 'click',
+                    correct: isTarget,
+                    rt: reactionTime,
+                    posX: parseInt(target.style.left),
+                    posY: parseInt(target.style.top),
+                    targetsShownSoFar: state.targetsShown,
+                    distractorsShownSoFar: state.distractorsShown
+                });
+
                 target.remove();
                 const idx = state.active.indexOf(target);
                 if (idx > -1) state.active.splice(idx, 1);
-                
+
                 this.updateAttentionDisplay();
             },
             
-            // Update attention display
+            // Update attention display (uses cached elements for hot-path performance)
             updateAttentionDisplay() {
                 const state = this.attentionState;
+                if (!state || !state.els) return;
                 const total = state.hits + state.misses + state.falsePositives;
                 const accuracy = total > 0 ? Math.round((state.hits / total) * 100) : 100;
-                
-                document.getElementById('hitsDisplay').textContent = state.hits;
-                document.getElementById('missesDisplay').textContent = state.misses;
-                document.getElementById('accuracyDisplay').textContent = `${accuracy}%`;
+
+                if (state.els.hits) state.els.hits.textContent = state.hits;
+                if (state.els.misses) state.els.misses.textContent = state.misses;
+                if (state.els.accuracy) state.els.accuracy.textContent = `${accuracy}%`;
             },
             
             // End attention task
             endAttentionTask() {
                 const state = this.attentionState;
-                
+
+                // Guard: if no responses at all, score is 0 (not 50%)
+                if (state.hits === 0 && state.falsePositives === 0) {
+                    this.completeTask(0);
+                    return;
+                }
+
                 // Calculate comprehensive score
                 const hitRate = state.targetsShown > 0 ? state.hits / state.targetsShown : 0;
-                const falseAlarmRate = state.distractorsShown > 0 ? 
+                const falseAlarmRate = state.distractorsShown > 0 ?
                     state.falsePositives / state.distractorsShown : 0;
-                
+
                 // d-prime calculation (signal detection theory)
-                const dPrime = Math.min(4, Math.max(-4, 
+                const dPrime = Math.min(4, Math.max(-4,
                     this.zScore(hitRate) - this.zScore(falseAlarmRate)));
-                
-                const score = Math.round(Math.max(0, Math.min(100, 
+
+                const score = Math.round(Math.max(0, Math.min(100,
                     50 + (dPrime * 12.5))));
-                
-                this.state.taskScores.push(score);
-                this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
-                
-                setTimeout(() => this.nextTask(), 1500);
+
+                this.completeTask(score);
             },
-            
+
             // Z-score helper for d-prime calculation
             zScore(p) {
                 p = Math.max(0.01, Math.min(0.99, p));
@@ -2114,15 +2540,25 @@
                 return s * Math.sqrt(Math.sqrt(b * b - c) - b);
             },
             
-            // Flexibility task — now uses science classification rules
+            // Flexibility task — uses grade-appropriate science classification rules
             runFlexibilityTask(area) {
-                const scienceRules = this.CONFIG.SCIENCE_RULES;
+                const content = this.getGradeContent();
+                const scienceRules = content.rules;
                 const rule = scienceRules[this.state.currentTask % scienceRules.length];
                 const trials = 6 + this.state.currentDifficulty;
+
+                // Pre-shuffle items to avoid repeats within a round
+                const shuffledItems = this.shuffle(rule.items);
+                // If we need more trials than items, cycle through the shuffled list
+                const trialItems = [];
+                for (let i = 0; i < trials; i++) {
+                    trialItems.push(shuffledItems[i % shuffledItems.length]);
+                }
 
                 this.flexState = {
                     rule,
                     trials,
+                    trialItems,
                     current: 0,
                     correct: 0,
                     reactionTimes: [],
@@ -2140,29 +2576,19 @@
                 if (state.current >= state.trials) {
                     const accuracy = state.correct / state.trials;
                     const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
-                    const rtScore = Math.max(0, 1 - (avgRT / 3000));
+                    const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.FLEX_RT_NORM_MS));
                     const score = Math.round((accuracy * 70) + (rtScore * 30));
 
-                    this.state.taskScores.push(score);
-                    this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
-
-                    setTimeout(() => this.nextTask(), 1500);
+                    this.completeTask(score);
                     return;
                 }
 
-                // Pick a random item from the current science rule
-                const item = state.rule.items[Math.floor(Math.random() * state.rule.items.length)];
+                // Use pre-shuffled item for this trial
+                const item = state.trialItems[state.current];
 
-                // Clear area but keep instructions
-                const instructions = area.querySelector('.game-instructions');
-                while (area.firstChild) {
-                    area.removeChild(area.firstChild);
-                }
-                if (instructions) {
-                    area.appendChild(instructions);
-                }
+                this.clearGameArea();
 
-                // Create UI
+                // Create UI — show trial number before incrementing
                 const title = document.createElement('h3');
                 title.textContent = `Trial ${state.current + 1} of ${state.trials}`;
 
@@ -2193,6 +2619,7 @@
                 area.appendChild(buttons);
 
                 state.startTime = Date.now();
+                // Increment AFTER displaying (will be checked at start of next runFlexTrial)
                 state.current++;
             },
 
@@ -2218,29 +2645,20 @@
                 if (state.current >= state.trials) {
                     const accuracy = state.correct / state.trials;
                     const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
-                    const rtScore = Math.max(0, 1 - (avgRT / 2000));
+                    const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.SPEED_RT_NORM_MS));
                     const score = Math.round((accuracy * 50) + (rtScore * 50));
-                    
-                    this.state.taskScores.push(score);
-                    this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
-                    
-                    setTimeout(() => this.nextTask(), 1500);
+
+                    this.completeTask(score);
                     return;
                 }
-                
-                const patterns = this.CONFIG.SCIENCE_FORMULAS.slice(0, 4 + Math.floor(this.state.currentDifficulty / 2));
+
+                const content = this.getGradeContent();
+                const patterns = content.formulas.slice(0, 4 + Math.floor(this.state.currentDifficulty / 2));
                 const correct = patterns[Math.floor(Math.random() * patterns.length)];
-                const options = [...patterns].sort(() => Math.random() - 0.5);
+                const options = this.shuffle(patterns);
                 
-                // Clear area but keep instructions
-                const instructions = area.querySelector('.game-instructions');
-                while (area.firstChild) {
-                    area.removeChild(area.firstChild);
-                }
-                if (instructions) {
-                    area.appendChild(instructions);
-                }
-                
+                this.clearGameArea();
+
                 // Create UI
                 const title = document.createElement('h3');
                 title.textContent = 'Match the formula quickly!';
@@ -2276,16 +2694,17 @@
             nextTask() {
                 this.state.currentTask++;
                 // Use a timeout to break the call stack
-                setTimeout(() => {
+                this.gameTimeout(() => {
                     this.runTask();
                 }, 100);
             },
             
             // End game
             endGame() {
-                const average = Math.round(
-                    this.state.taskScores.reduce((a, b) => a + b, 0) / this.state.taskScores.length
-                );
+                const scores = this.state.taskScores;
+                const average = scores.length > 0
+                    ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+                    : 0;
 
                 this.state.gameScores[this.state.currentGame] = average;
 
@@ -2297,10 +2716,26 @@
                 this.showFeedback(`Game complete! Score: ${average}%`, 'success');
             },
 
+            // Validate a Google Apps Script URL
+            isValidSheetsUrl(url) {
+                try {
+                    const parsed = new URL(url);
+                    return parsed.protocol === 'https:' &&
+                        parsed.hostname === 'script.google.com';
+                } catch {
+                    return false;
+                }
+            },
+
             // Sync a game result to Google Sheets
             syncToSheets(gameId, score) {
                 const url = this.settings && this.settings.sheetsUrl;
                 if (!url) return;
+
+                if (!this.isValidSheetsUrl(url)) {
+                    this.updateSyncStatus('disconnected');
+                    return;
+                }
 
                 const user = this.state.user || {};
                 const payload = {
@@ -2313,12 +2748,14 @@
                     game: gameId,
                     score: score,
                     difficulty: this.state.currentDifficulty,
-                    duration: Math.round((Date.now() - this.state.sessionStart) / 1000),
+                    duration: Math.round((Date.now() - this.state.gameStart) / 1000),
                     integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
                 };
 
                 this.updateSyncStatus('syncing');
 
+                // Note: no-cors mode means we can't read the response,
+                // but we can detect network failures
                 fetch(url, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -2326,22 +2763,31 @@
                     body: JSON.stringify(payload)
                 }).then(() => {
                     this.updateSyncStatus('connected');
-                }).catch(() => {
-                    this.updateSyncStatus('error');
+                    // Queue for retry verification: store last synced game
+                    this._lastSyncedGame = gameId;
+                }).catch((err) => {
+                    console.warn('Sheets sync failed:', err);
+                    this.updateSyncStatus('disconnected');
+                    this.showFeedback('Sync failed — data saved locally', 'warning');
+                    // Store unsent data for potential retry (bounded)
+                    if (this._unsyncedResults.length < this._MAX_UNSYNCED) {
+                        this._unsyncedResults.push(payload);
+                    }
                 });
             },
 
             // Update sync status indicator
             updateSyncStatus(status) {
-                const el = document.getElementById('syncStatus');
+                const el = this.elements.syncStatus;
                 if (!el) return;
                 el.className = 'sync-status ' + status;
             },
             
             // Exit game
-            exitGame() {
-                if (this.state.currentTask === 0 || confirm('Exit game? Progress will be lost.')) {
-                    this.cleanupCurrentGame(); // ADD THIS LINE to use the new cleanup method
+            async exitGame() {
+                if (this.state.currentTask === 0 || await this.showConfirm('Exit game? Progress will be lost.', 'Exit Game')) {
+                    this.cleanupCurrentGame();
+                    this.state.gameStart = null;
                     this.state.currentGame = null;
                     this.state.currentTask = 0;
                     this.state.taskScores = [];
@@ -2470,7 +2916,10 @@
                     header.className = 'rec-card-header';
                     const title = document.createElement('div');
                     title.className = 'rec-card-title';
-                    title.innerHTML = `<span>${game.icon}</span>${game.name}`;
+                    const iconSpan = document.createElement('span');
+                    iconSpan.textContent = game.icon;
+                    title.appendChild(iconSpan);
+                    title.appendChild(document.createTextNode(game.name));
                     const badge = document.createElement('span');
                     badge.className = `rec-tier ${tier.css}`;
                     badge.textContent = tier.label;
@@ -2523,16 +2972,16 @@
                 const synthText = document.createElement('p');
                 if (overallTier.key === 'strong') {
                     synthText.textContent = 'Your executive function skills are well-developed across the board. ' +
-                        'These cognitive skills are associated with success in challenging science work — ' +
+                        'Research links these cognitive skills to success in challenging science work — ' +
                         'designing experiments, analyzing datasets, and building arguments from evidence. ' +
                         'Keep training to maintain these skills.';
                 } else if (focusAreas.length > 0 && strengths.length > 0) {
                     synthText.textContent = `Your strengths in ${strengths.join(' and ')} give you a good starting point. ` +
-                        `Building ${focusAreas.join(' and ')} may further support your science learning — ` +
+                        `Building ${focusAreas.join(' and ')} is often linked to stronger science learning — ` +
                         'try the tips above during your next science class and notice what changes.';
                 } else if (focusAreas.length > 0) {
                     synthText.textContent = `The areas to focus on are ${focusAreas.join(' and ')}. ` +
-                        'These skills are associated with science learning, and they improve with practice. ' +
+                        'Research links these skills to science learning, and they tend to improve with practice. ' +
                         'Try the tips above during your next science class — small changes add up.';
                 } else {
                     synthText.textContent = 'Your executive function skills are developing well. ' +
@@ -2545,54 +2994,187 @@
                 container.style.display = 'block';
             },
 
+            // Toggle session history view
+            toggleHistory() {
+                const section = this.elements.historySection;
+                const container = this.elements.historyContainer;
+                const isVisible = section.style.display !== 'none';
+
+                if (isVisible) {
+                    section.style.display = 'none';
+                    this.elements.historyBtn.textContent = 'View History';
+                    return;
+                }
+
+                // Build history table
+                while (container.firstChild) container.removeChild(container.firstChild);
+
+                const history = this.state.history;
+                if (history.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'history-empty';
+                    empty.textContent = 'No previous sessions recorded.';
+                    container.appendChild(empty);
+                } else {
+                    const table = document.createElement('table');
+                    table.className = 'history-table';
+
+                    const thead = document.createElement('thead');
+                    const headerRow = document.createElement('tr');
+                    ['Date', 'Student', 'Memory', 'Attention', 'Flexibility', 'Speed', 'Average'].forEach(h => {
+                        const th = document.createElement('th');
+                        th.textContent = h;
+                        headerRow.appendChild(th);
+                    });
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+
+                    const tbody = document.createElement('tbody');
+                    history.slice().reverse().forEach(entry => {
+                        const tr = document.createElement('tr');
+                        const date = new Date(entry.date).toLocaleDateString();
+                        const name = entry.user ? entry.user.name : '—';
+                        const scores = entry.scores || {};
+                        [date, name,
+                            scores.memory != null ? scores.memory + '%' : '—',
+                            scores.attention != null ? scores.attention + '%' : '—',
+                            scores.flexibility != null ? scores.flexibility + '%' : '—',
+                            scores.speed != null ? scores.speed + '%' : '—',
+                            entry.average != null ? entry.average + '%' : '—'
+                        ].forEach(val => {
+                            const td = document.createElement('td');
+                            td.textContent = val;
+                            tr.appendChild(td);
+                        });
+                        tbody.appendChild(tr);
+                    });
+                    table.appendChild(tbody);
+                    container.appendChild(table);
+                }
+
+                section.style.display = 'block';
+                this.elements.historyBtn.textContent = 'Hide History';
+            },
+
             // Export data
-            exportData() {
-                const data = {
-                    user: this.state.user,
-                    session: {
-                        date: new Date().toISOString(),
-                        scores: this.state.gameScores,
-                        integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
-                    },
-                    history: this.state.history
-                };
-                
+            // Helper: trigger a file download
+            downloadFile(content, filename, type) {
                 try {
-                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const blob = new Blob([content], { type });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `neural-flow-${Date.now()}.json`;
+                    a.download = filename;
                     a.click();
                     URL.revokeObjectURL(url);
-                    
-                    this.showFeedback('Data exported successfully', 'success');
                 } catch (error) {
                     // Fallback for sandboxed environments
                     const modal = document.createElement('div');
                     modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:10px;box-shadow:0 0 20px rgba(0,0,0,0.3);z-index:9999;max-width:90%;max-height:90%;overflow:auto;';
-                    
-                    const content = document.createElement('div');
-                    content.innerHTML = `
-                        <h3>Copy Your Data</h3>
-                        <textarea style="width:400px;height:300px;font-family:monospace;" readonly>${JSON.stringify(data, null, 2)}</textarea>
-                        <br><br>
-                        <button class="btn">Close</button>
-                    `;
-                    
-                    modal.appendChild(content);
+                    const heading = document.createElement('h3');
+                    heading.textContent = 'Copy Your Data';
+                    modal.appendChild(heading);
+                    const textarea = document.createElement('textarea');
+                    textarea.style.cssText = 'width:100%;max-width:400px;height:300px;font-family:monospace;';
+                    textarea.readOnly = true;
+                    textarea.value = content;
+                    modal.appendChild(textarea);
+                    const closeBtn = document.createElement('button');
+                    closeBtn.className = 'btn';
+                    closeBtn.textContent = 'Close';
+                    closeBtn.style.marginTop = '1rem';
+                    closeBtn.addEventListener('click', () => modal.remove());
+                    modal.appendChild(closeBtn);
                     document.body.appendChild(modal);
-                    
-                    const textarea = modal.querySelector('textarea');
                     textarea.select();
-                    
-                    modal.querySelector('button').addEventListener('click', () => modal.remove());
                 }
+            },
+
+            // Convert trial log to CSV
+            trialLogToCSV() {
+                if (this.state.trialLog.length === 0) return '';
+                // Collect all unique keys across all trials
+                const allKeys = new Set();
+                this.state.trialLog.forEach(t => Object.keys(t).forEach(k => allKeys.add(k)));
+                const headers = Array.from(allKeys);
+                const rows = this.state.trialLog.map(trial =>
+                    headers.map(h => {
+                        const val = trial[h];
+                        if (val === null || val === undefined) return '';
+                        if (typeof val === 'string' && (val.includes(',') || val.includes('"'))) {
+                            return '"' + val.replace(/"/g, '""') + '"';
+                        }
+                        return String(val);
+                    }).join(',')
+                );
+                return headers.join(',') + '\n' + rows.join('\n');
+            },
+
+            exportData() {
+                // Filter history to only include current student's sessions (privacy)
+                const currentName = this.state.user ? this.state.user.name : null;
+                const filteredHistory = currentName
+                    ? this.state.history.filter(h => h.user && h.user.name === currentName)
+                    : [];
+
+                const timestamp = Date.now();
+                const studentSlug = (currentName || 'unknown').replace(/\s+/g, '_').toLowerCase();
+
+                // 1. Summary JSON (game-level scores + metadata)
+                const summaryData = {
+                    exportVersion: 2,
+                    user: this.state.user,
+                    session: {
+                        date: new Date().toISOString(),
+                        scores: this.state.gameScores,
+                        difficulty: this.state.currentDifficulty,
+                        integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
+                    },
+                    history: filteredHistory,
+                    trialCount: this.state.trialLog.length
+                };
+                this.downloadFile(
+                    JSON.stringify(summaryData, null, 2),
+                    `neural-flow-summary-${studentSlug}-${timestamp}.json`,
+                    'application/json'
+                );
+
+                // 2. Trial-level CSV (raw research data)
+                if (this.state.trialLog.length > 0) {
+                    const csv = this.trialLogToCSV();
+                    this.downloadFile(
+                        csv,
+                        `neural-flow-trials-${studentSlug}-${timestamp}.csv`,
+                        'text/csv'
+                    );
+                }
+
+                // 3. Trial-level JSON (full fidelity for programmatic analysis)
+                if (this.state.trialLog.length > 0) {
+                    const trialData = {
+                        exportVersion: 2,
+                        user: this.state.user,
+                        sessionDate: new Date().toISOString(),
+                        trials: this.state.trialLog
+                    };
+                    this.downloadFile(
+                        JSON.stringify(trialData, null, 2),
+                        `neural-flow-trials-${studentSlug}-${timestamp}.json`,
+                        'application/json'
+                    );
+                }
+
+                this.showFeedback(
+                    this.state.trialLog.length > 0
+                        ? 'Exported: summary + trial-level data (JSON + CSV)'
+                        : 'Summary data exported (no trial data yet)',
+                    'success'
+                );
             },
             
             // Reset application
-            reset() {
-                if (confirm('Start a new session? Current progress will be saved.')) {
+            async reset() {
+                if (await this.showConfirm('Start a new session? Current progress will be saved.', 'New Session')) {
                     this.state = {
                         user: null,
                         currentGame: null,
@@ -2602,8 +3184,10 @@
                         gameScores: {},
                         sessionStart: null,
                         history: this.state.history,
+                        gameStart: null,
                         storageAvailable: this.state.storageAvailable,
-                        integrityChecksum: null
+                        integrityChecksum: null,
+                        trialLog: []
                     };
                     
                     this.showScreen('login');
@@ -2615,15 +3199,50 @@
                 }
             },
             
-            // Show screen
+            // Promise-based confirmation modal (replaces browser confirm())
+            showConfirm(message, title = 'Confirm') {
+                return new Promise(resolve => {
+                    const modal = document.getElementById('confirmModal');
+                    const titleEl = document.getElementById('confirmTitle');
+                    const msgEl = document.getElementById('confirmMessage');
+                    const okBtn = document.getElementById('confirmOk');
+                    const cancelBtn = document.getElementById('confirmCancel');
+
+                    titleEl.textContent = title;
+                    msgEl.textContent = message;
+                    modal.classList.add('active');
+                    okBtn.focus();
+
+                    const cleanup = (result) => {
+                        modal.classList.remove('active');
+                        okBtn.removeEventListener('click', onOk);
+                        cancelBtn.removeEventListener('click', onCancel);
+                        resolve(result);
+                    };
+                    const onOk = () => cleanup(true);
+                    const onCancel = () => cleanup(false);
+
+                    okBtn.addEventListener('click', onOk);
+                    cancelBtn.addEventListener('click', onCancel);
+                });
+            },
+
+            // Show screen with focus management
             showScreen(screenId) {
                 Object.values(this.elements.screens).forEach(screen => {
                     screen.classList.remove('active');
+                    screen.setAttribute('aria-hidden', 'true');
                 });
-                
+
                 const screen = this.elements.screens[screenId];
                 if (screen) {
                     screen.classList.add('active');
+                    screen.removeAttribute('aria-hidden');
+                    // Move focus to the first heading or focusable element
+                    requestAnimationFrame(() => {
+                        const focusTarget = screen.querySelector('h2, h3, button, input, [tabindex]');
+                        if (focusTarget) focusTarget.focus();
+                    });
                 }
             },
             
@@ -2635,6 +3254,8 @@
                 
                 const feedback = document.createElement('div');
                 feedback.className = `feedback ${type}`;
+                feedback.setAttribute('role', 'alert');
+                feedback.setAttribute('aria-live', 'assertive');
                 feedback.textContent = message;
                 document.body.appendChild(feedback);
                 
@@ -2654,6 +3275,12 @@
             
             // Cleanup on unload
             cleanup() {
+                // Clear integrity check interval
+                if (this._integrityInterval) {
+                    clearInterval(this._integrityInterval);
+                }
+                // Clear any game timers
+                this.clearTimers();
                 // Remove all event listeners
                 this.listeners.forEach((handlers, element) => {
                     handlers.forEach(({event, handler}) => {
