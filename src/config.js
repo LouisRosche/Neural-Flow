@@ -67,7 +67,6 @@ export const GRADE_CONTENT = {
             { stimulus: 'Campfire', answer: 'hot' }, { stimulus: 'Popsicle', answer: 'cold' }
         ]}
     ], formulas: ['H\u2082O', 'O\u2082', 'CO\u2082', 'NaCl'] },
-    // Fix: use proper subscript characters
     1: { band: 'K-2', inherit: 'K' },
     2: { band: 'K-2', inherit: 'K' },
 

@@ -368,7 +368,7 @@ const App = {
             return;
         }
 
-        this.state.user = { name, age, grade: parseInt(grade), teacher, period };
+        this.state.user = { name, age, grade: grade === 'K' ? 'K' : parseInt(grade), teacher, period };
         this.state.sessionStart = Date.now();
         this.state.integrityChecksum = generateChecksum(this.state);
 
@@ -471,10 +471,6 @@ const App = {
             this.state.currentDifficulty = adaptDifficulty(this.state.currentDifficulty, lastScore);
         }
 
-        if (!this.state.taskScores) {
-            this.state.taskScores = [];
-        }
-
         const area = this.elements.gameArea;
 
         switch (this.state.currentGame) {
@@ -507,6 +503,8 @@ const App = {
     },
 
     endGame() {
+        this.clearTimers();
+
         const scores = this.state.taskScores;
         const average = scores.length > 0
             ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)

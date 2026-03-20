@@ -12,7 +12,7 @@
             --primary: #6366f1;
             --primary-dark: #4f46e5;
             --success: #10b981;
-            --warning: #f59e0b;
+            --warning: #d97706;
             --error: #ef4444;
             --bg: #1e1b4b;
             --surface: #ffffff;
@@ -124,7 +124,7 @@
         .form-input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
         }
 
         .form-input.error {
@@ -1077,7 +1077,6 @@
     </div>
 
     <script>
-    // Production-ready implementation with fixes for all identified issues
     (function() {
         'use strict';
         
@@ -1515,7 +1514,6 @@
                     
                     localStorage.setItem(this.CONFIG.STORAGE_KEY, JSON.stringify(data));
                 } catch (error) {
-                    // REPLACE THIS CATCH BLOCK
                     if (error.name === 'QuotaExceededError') {
                         // Trim history to last 50 items and retry
                         this.state.history = this.state.history.slice(-50);
@@ -1799,7 +1797,7 @@
                 }
 
                 // Set user
-                this.state.user = { name, age, grade: parseInt(grade), teacher, period };
+                this.state.user = { name, age, grade: grade === 'K' ? 'K' : parseInt(grade), teacher, period };
                 this.state.sessionStart = Date.now();
                 this.state.integrityChecksum = this.generateChecksum(this.state);
                 
@@ -2043,11 +2041,6 @@
                     }
                 }
                 
-                // Store task scores at state level to avoid recursion issues
-                if (!this.state.taskScores) {
-                    this.state.taskScores = [];
-                }
-                
                 // Run appropriate task
                 switch (this.state.currentGame) {
                     case 'memory':
@@ -2218,7 +2211,7 @@
                     btn.className = 'number-btn';
                     btn.dataset.num = i;
                     btn.textContent = i;
-                    // Don't disable buttons - let the input handler manage this
+                    btn.setAttribute('aria-label', `Digit ${i}`);
                     pad.appendChild(btn);
                 }
                 area.appendChild(pad);
@@ -2383,7 +2376,10 @@
                 // Stop spawning if game was exited
                 if (!state || this.state.currentGame !== 'attention') return;
                 
+                if (state.completed) return;
+
                 if (state.targetsShown >= state.targets && state.active.length === 0) {
+                    state.completed = true;
                     this.endAttentionTask();
                     return;
                 }
@@ -2701,6 +2697,8 @@
             
             // End game
             endGame() {
+                this.clearTimers();
+
                 const scores = this.state.taskScores;
                 const average = scores.length > 0
                     ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)

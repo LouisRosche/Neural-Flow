@@ -82,7 +82,10 @@ export function spawnTarget(ctx) {
 
     if (!attentionState || ctx.currentGame !== 'attention') return;
 
+    if (attentionState.completed) return;
+
     if (attentionState.targetsShown >= attentionState.targets && attentionState.active.length === 0) {
+        attentionState.completed = true;
         endAttentionTask(ctx);
         return;
     }
