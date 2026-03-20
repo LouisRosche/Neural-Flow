@@ -54,7 +54,11 @@ export function adaptDifficulty(currentDifficulty, lastScore) {
  */
 export function getGradeContent(grade) {
     let content = GRADE_CONTENT[grade];
+    // Follow inheritance chain (with depth limit to prevent cycles)
+    const seen = new Set();
     while (content && content.inherit) {
+        if (seen.has(content.inherit)) break; // circular reference guard
+        seen.add(content.inherit);
         content = GRADE_CONTENT[content.inherit];
     }
     if (!content || !content.rules) {

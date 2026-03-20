@@ -28,8 +28,10 @@ export function runSpeedTrial(ctx) {
     if (!speedState) return; // Guard: timer callback after game exit
 
     if (speedState.current >= speedState.trials) {
-        const accuracy = speedState.correct / speedState.trials;
-        const avgRT = speedState.reactionTimes.reduce((a, b) => a + b, 0) / speedState.reactionTimes.length;
+        const accuracy = speedState.trials > 0 ? speedState.correct / speedState.trials : 0;
+        const avgRT = speedState.reactionTimes.length > 0
+            ? speedState.reactionTimes.reduce((a, b) => a + b, 0) / speedState.reactionTimes.length
+            : SPEED_RT_NORM_MS;
         const rtScore = Math.max(0, 1 - (avgRT / SPEED_RT_NORM_MS));
         const score = Math.round((accuracy * 50) + (rtScore * 50));
 

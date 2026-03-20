@@ -1911,8 +1911,11 @@
             getGradeContent() {
                 const grade = this.state.user ? this.state.user.grade : '6';
                 let content = this.CONFIG.GRADE_CONTENT[grade];
-                // Follow inheritance chain
+                // Follow inheritance chain (with depth limit to prevent cycles)
+                const seen = new Set();
                 while (content && content.inherit) {
+                    if (seen.has(content.inherit)) break; // circular reference guard
+                    seen.add(content.inherit);
                     content = this.CONFIG.GRADE_CONTENT[content.inherit];
                 }
                 // Fallback to grade 6 (middle school default)
@@ -2581,8 +2584,10 @@
                 const area = this.elements.gameArea;
 
                 if (state.current >= state.trials) {
-                    const accuracy = state.correct / state.trials;
-                    const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
+                    const accuracy = state.trials > 0 ? state.correct / state.trials : 0;
+                    const avgRT = state.reactionTimes.length > 0
+                        ? state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length
+                        : this.CONFIG.FLEX_RT_NORM_MS;
                     const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.FLEX_RT_NORM_MS));
                     const score = Math.round((accuracy * 70) + (rtScore * 30));
 
@@ -2651,8 +2656,10 @@
                 const area = this.elements.gameArea;
 
                 if (state.current >= state.trials) {
-                    const accuracy = state.correct / state.trials;
-                    const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
+                    const accuracy = state.trials > 0 ? state.correct / state.trials : 0;
+                    const avgRT = state.reactionTimes.length > 0
+                        ? state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length
+                        : this.CONFIG.SPEED_RT_NORM_MS;
                     const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.SPEED_RT_NORM_MS));
                     const score = Math.round((accuracy * 50) + (rtScore * 50));
 
