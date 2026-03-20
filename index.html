@@ -1125,7 +1125,7 @@
                     }
                 },
                 // Grade-keyed content: maps grade → { rules, formulas }
-                // K-2: basic observations, 3-5: life/earth science, 6-8: physical/chemical (thorough),
+                // K-2: basic observations, 3-5: life/earth science, 6-8: physical/chemical,
                 // 9-12: advanced chemistry/physics
                 GRADE_CONTENT: {
                     // --- K-2: Observable properties and basic classification ---
@@ -1188,7 +1188,7 @@
                     4: { band: '3-5', inherit: '3' },
                     5: { band: '3-5', inherit: '3' },
 
-                    // --- 6-8: Physical/chemical science (thorough — active research grades) ---
+                    // --- 6-8: Physical/chemical science ---
                     6: { band: '6-8', rules: [
                         { key: 'metal/nonmetal', question: 'Is this element a metal or nonmetal?', options: ['Metal', 'Nonmetal'], items: [
                             { stimulus: 'Iron (Fe)', answer: 'metal' }, { stimulus: 'Oxygen (O)', answer: 'nonmetal' },
@@ -1702,13 +1702,12 @@
                 
                 // Response buttons
                 if (target.classList.contains('response-btn')) {
-                    // ADD THIS CHECK to prevent multiple clicks
                     if (target.disabled) return;
-                    
+
                     const response = target.dataset.response;
                     const correct = target.dataset.correct;
-                    
-                    // DISABLE ALL RESPONSE BUTTONS after click
+
+                    // Prevent double-clicks on other response buttons
                     const allButtons = document.querySelectorAll('.response-btn');
                     allButtons.forEach(btn => btn.disabled = true);
                     
@@ -2317,9 +2316,9 @@
                     falsePositives: 0,
                     targetsShown: 0,
                     distractorsShown: 0,
+                    completed: false,
                     startTime: Date.now(),
                     active: [],
-                    // Cached display elements (avoid repeated getElementById)
                     els: {}
                 };
                 

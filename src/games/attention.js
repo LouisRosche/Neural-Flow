@@ -21,6 +21,7 @@ export function createAttentionState(currentDifficulty) {
         falsePositives: 0,
         targetsShown: 0,
         distractorsShown: 0,
+        completed: false,
         startTime: Date.now(),
         active: [],
         els: {}
