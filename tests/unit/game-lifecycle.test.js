@@ -1,17 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getApp } from '../helpers/load-app.js';
+import { setupFull } from '../helpers/setup.js';
 
 describe('Game Lifecycle', () => {
   let App;
 
   beforeEach(() => {
-    App = getApp();
-    App.testStorage();
-    App.cacheElements();
-    App._timers = new Set();
-    App.state.user = { name: 'Test', age: 12, grade: 6, teacher: '', period: '' };
-    App.state.sessionStart = Date.now();
-    App.state.trialLog = [];
+    ({ App } = setupFull({ user: { teacher: '', period: '' } }));
   });
 
   describe('startGame', () => {

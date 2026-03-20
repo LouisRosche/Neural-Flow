@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadApp } from '../helpers/load-app.js';
+import { setupFull } from '../helpers/setup.js';
 
 /**
  * Tests for UI rendering, screen transitions, and game card behavior.
@@ -8,17 +8,7 @@ describe('UI Rendering', () => {
   let App, win;
 
   beforeEach(() => {
-    const result = loadApp();
-    App = result.App;
-    win = result.window;
-    App.testStorage();
-    App.cacheElements();
-    App._timers = new Set();
-    App.state.user = { name: 'Test', age: 12, grade: 6, teacher: 'Dr. Smith', period: '3' };
-    App.state.sessionStart = Date.now();
-    App.state.trialLog = [];
-    App.state.history = [];
-    App.state.gameScores = {};
+    ({ App, window: win } = setupFull({ user: true }));
   });
 
   // ============================================================

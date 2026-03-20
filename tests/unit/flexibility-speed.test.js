@@ -1,21 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadApp } from '../helpers/load-app.js';
+import { setupFull } from '../helpers/setup.js';
 
 describe('Flexibility Game', () => {
   let App, win;
 
   beforeEach(() => {
-    const result = loadApp();
-    App = result.App;
-    win = result.window;
-    App.testStorage();
-    App.cacheElements();
-    App._timers = new Set();
-    App.state.currentGame = 'flexibility';
-    App.state.currentDifficulty = 1;
-    App.state.taskScores = [];
-    App.state.trialLog = [];
-    App.state.user = { name: 'Test', age: 12, grade: 6, teacher: '', period: '' };
+    ({ App, window: win } = setupFull({ gameId: 'flexibility', user: { teacher: '', period: '' } }));
   });
 
   describe('runFlexibilityTask', () => {
@@ -123,17 +113,7 @@ describe('Speed Game', () => {
   let App, win;
 
   beforeEach(() => {
-    const result = loadApp();
-    App = result.App;
-    win = result.window;
-    App.testStorage();
-    App.cacheElements();
-    App._timers = new Set();
-    App.state.currentGame = 'speed';
-    App.state.currentDifficulty = 1;
-    App.state.taskScores = [];
-    App.state.trialLog = [];
-    App.state.user = { name: 'Test', age: 12, grade: 6, teacher: '', period: '' };
+    ({ App, window: win } = setupFull({ gameId: 'speed', user: { teacher: '', period: '' } }));
   });
 
   describe('runSpeedTask', () => {

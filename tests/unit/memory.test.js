@@ -1,19 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getApp } from '../helpers/load-app.js';
+import { setupGame } from '../helpers/setup.js';
 
 describe('Memory Game', () => {
   let App;
 
   beforeEach(() => {
-    App = getApp();
-    App.testStorage();
-    App.cacheElements();
-    App._timers = new Set();
-    App.state.currentGame = 'memory';
-    App.state.currentDifficulty = 1;
-    App.state.currentTask = 0;
-    App.state.taskScores = [];
-    App.state.trialLog = [];
+    ({ App } = setupGame('memory'));
   });
 
   describe('createMemoryState (via runMemoryTask)', () => {

@@ -1,16 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadApp } from '../helpers/load-app.js';
+import { setupFull } from '../helpers/setup.js';
 
 describe('Login and Grade Handling', () => {
   let App, win;
 
   beforeEach(() => {
-    const result = loadApp();
-    App = result.App;
-    win = result.window;
-    App.testStorage();
-    App.cacheElements();
-    App._timers = new Set();
+    ({ App, window: win } = setupFull());
   });
 
   describe('handleLogin grade parsing', () => {

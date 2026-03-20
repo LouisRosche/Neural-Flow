@@ -1,18 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getApp } from '../helpers/load-app.js';
+import { setupFull } from '../helpers/setup.js';
 
 describe('Report Generation', () => {
   let App;
 
   beforeEach(() => {
-    App = getApp();
-    App.testStorage();
-    App.cacheElements();
-    App._timers = new Set();
-    App.state.user = { name: 'Test', age: 12, grade: 6, teacher: 'Dr. Smith', period: '3' };
-    App.state.sessionStart = Date.now() - 300000; // 5 minutes ago
-    App.state.trialLog = [];
-    App.state.history = [];
+    ({ App } = setupFull({ user: true, sessionStart: Date.now() - 300000 }));
   });
 
   describe('showReport', () => {

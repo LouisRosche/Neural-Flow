@@ -1,19 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getApp } from '../helpers/load-app.js';
+import { setupGame } from '../helpers/setup.js';
 import { createAttentionState } from '../../src/games/attention.js';
 
 describe('Attention Game', () => {
   let App;
 
   beforeEach(() => {
-    App = getApp();
-    App.testStorage();
-    App.cacheElements();
-    App._timers = new Set();
-    App.state.currentGame = 'attention';
-    App.state.currentDifficulty = 1;
-    App.state.taskScores = [];
-    App.state.trialLog = [];
+    ({ App } = setupGame('attention'));
   });
 
   describe('createAttentionState', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { loadApp } from '../helpers/load-app.js';
+import { setupFull } from '../helpers/setup.js';
 
 /**
  * Tests for bug fixes identified during debiasing audit.
@@ -10,16 +10,7 @@ describe('Hardening Bug Fixes', () => {
   let App, win;
 
   beforeEach(() => {
-    const result = loadApp();
-    App = result.App;
-    win = result.window;
-    App.testStorage();
-    App.cacheElements();
-    App._timers = new Set();
-    App.state.user = { name: 'Test', age: 12, grade: 6, teacher: 'Dr. Smith', period: '3' };
-    App.state.sessionStart = Date.now() - 300000;
-    App.state.trialLog = [];
-    App.state.history = [];
+    ({ App, window: win } = setupFull({ user: true, sessionStart: Date.now() - 300000 }));
   });
 
   // =============================================

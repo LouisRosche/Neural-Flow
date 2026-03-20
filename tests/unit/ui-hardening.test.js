@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { loadApp } from '../helpers/load-app.js';
+import { setupFull } from '../helpers/setup.js';
 
 /**
  * Hardened UI tests: accessibility, screen transitions, keyboard navigation,
@@ -10,19 +10,7 @@ describe('UI Hardening', () => {
   let App, win, doc;
 
   beforeEach(() => {
-    const result = loadApp();
-    App = result.App;
-    win = result.window;
-    doc = win.document;
-    App.testStorage();
-    App.cacheElements();
-    App._timers = new Set();
-    App.state.user = { name: 'Test', age: 12, grade: 6, teacher: 'Dr. Smith', period: '3' };
-    App.state.sessionStart = Date.now();
-    App.state.trialLog = [];
-    App.state.history = [];
-    App.state.gameScores = {};
-    App.state.taskScores = [];
+    ({ App, window: win, document: doc } = setupFull({ user: true }));
   });
 
   // ============================================================
