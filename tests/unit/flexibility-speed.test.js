@@ -70,10 +70,10 @@ describe('Flexibility Game', () => {
       App.gameTimeout = () => {};
 
       const wrongBtn = App.elements.gameArea.querySelector('.response-btn[data-correct="false"]');
-      if (wrongBtn) {
-        App.handleGameClick({ target: wrongBtn });
-        expect(App.flexState.correct).toBe(0);
-      }
+      // Flexibility rules always have 2 options, so a wrong button must exist
+      expect(wrongBtn).not.toBeNull();
+      App.handleGameClick({ target: wrongBtn });
+      expect(App.flexState.correct).toBe(0);
     });
 
     it('records reaction time', () => {

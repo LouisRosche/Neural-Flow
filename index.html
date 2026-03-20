@@ -2436,6 +2436,8 @@
                     
                     // Auto-remove after timeout
                     this.gameTimeout(() => {
+                        if (dot.dataset.handled === 'true') return; // Already clicked
+                        dot.dataset.handled = 'true';
                         if (dot.parentNode) {
                             if (isTarget) {
                                 state.misses++;
@@ -2467,6 +2469,11 @@
             // Handle target click
             handleTargetClick(target) {
                 const state = this.attentionState;
+                if (!state) return;
+                // Guard: dot already handled by auto-remove timeout
+                if (target.dataset.handled === 'true') return;
+                target.dataset.handled = 'true';
+
                 const isTarget = target.dataset.isTarget === 'true';
                 const reactionTime = Date.now() - parseInt(target.dataset.spawnTime);
 
@@ -2716,7 +2723,7 @@
             
             // End game
             endGame() {
-                this.clearTimers();
+                this.cleanupCurrentGame();
 
                 const scores = this.state.taskScores;
                 const average = scores.length > 0

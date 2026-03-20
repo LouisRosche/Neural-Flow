@@ -2,7 +2,7 @@
   "name": "neural-flow",
   "version": "1.0.0",
   "description": "Neural Flow - Executive Function Training",
-  "main": "index.html",
+  "main": "src/app.js",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",

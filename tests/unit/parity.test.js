@@ -52,7 +52,7 @@ describe('Inline/Module Parity', () => {
     const GRADES = ['K', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
     GRADES.forEach(grade => {
-      it(`grade "${grade}" has same rule keys`, () => {
+      it(`grade "${grade}" has same rule keys and content`, () => {
         const inlineContent = App.CONFIG.GRADE_CONTENT[grade];
         const moduleContent = GRADE_CONTENT[grade];
 
@@ -70,6 +70,29 @@ describe('Inline/Module Parity', () => {
           const inlineKeys = inlineContent.rules.map(r => r.key);
           const moduleKeys = moduleContent.rules.map(r => r.key);
           expect(inlineKeys).toEqual(moduleKeys);
+
+          // Same rule item content (catch stimulus/answer drift)
+          inlineContent.rules.forEach((rule, i) => {
+            const moduleRule = moduleContent.rules[i];
+            expect(rule.items.length).toBe(moduleRule.items.length);
+            rule.items.forEach((item, j) => {
+              expect(item.stimulus).toBe(moduleRule.items[j].stimulus);
+              expect(item.answer).toBe(moduleRule.items[j].answer);
+            });
+          });
+        }
+      });
+
+      it(`grade "${grade}" has same formulas`, () => {
+        const inlineContent = App.CONFIG.GRADE_CONTENT[grade];
+        const moduleContent = GRADE_CONTENT[grade];
+
+        if (inlineContent.formulas && moduleContent.formulas) {
+          expect(inlineContent.formulas).toEqual(moduleContent.formulas);
+        } else if (!inlineContent.inherit) {
+          // Non-inheriting grades should have formulas
+          expect(inlineContent.formulas).toBeDefined();
+          expect(moduleContent.formulas).toBeDefined();
         }
       });
     });

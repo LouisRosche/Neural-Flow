@@ -512,7 +512,7 @@ const App = {
     },
 
     endGame() {
-        this.clearTimers();
+        this.cleanupCurrentGame();
 
         const scores = this.state.taskScores;
         const average = scores.length > 0

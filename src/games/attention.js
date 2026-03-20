@@ -129,6 +129,8 @@ export function spawnTarget(ctx) {
 
         // Auto-remove after timeout
         gameTimeout(() => {
+            if (dot.dataset.handled === 'true') return; // Already clicked
+            dot.dataset.handled = 'true';
             if (dot.parentNode) {
                 if (isTarget) {
                     attentionState.misses++;
@@ -164,6 +166,11 @@ export function spawnTarget(ctx) {
  */
 export function handleTargetClick(target, ctx) {
     const { attentionState, logTrial } = ctx;
+    if (!attentionState) return;
+    // Guard: dot already handled by auto-remove timeout
+    if (target.dataset.handled === 'true') return;
+    target.dataset.handled = 'true';
+
     const isTarget = target.dataset.isTarget === 'true';
     const reactionTime = Date.now() - parseInt(target.dataset.spawnTime);
 

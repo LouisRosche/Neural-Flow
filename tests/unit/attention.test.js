@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getApp } from '../helpers/load-app.js';
+import { createAttentionState } from '../../src/games/attention.js';
 
 describe('Attention Game', () => {
   let App;
@@ -17,22 +18,7 @@ describe('Attention Game', () => {
 
   describe('createAttentionState', () => {
     it('initializes attention state with correct target count based on difficulty', () => {
-      App.state.currentDifficulty = 1;
-
-      // Create state directly without triggering spawning
-      App.attentionState = {
-        targets: 5 + App.state.currentDifficulty,
-        hits: 0,
-        misses: 0,
-        falsePositives: 0,
-        targetsShown: 0,
-        distractorsShown: 0,
-        startTime: Date.now(),
-        active: [],
-        els: {}
-      };
-
-      const state = App.attentionState;
+      const state = createAttentionState(1);
       expect(state).toBeDefined();
       expect(state.targets).toBe(6); // 5 + difficulty(1)
       expect(state.hits).toBe(0);
@@ -40,12 +26,18 @@ describe('Attention Game', () => {
       expect(state.falsePositives).toBe(0);
       expect(state.targetsShown).toBe(0);
       expect(state.distractorsShown).toBe(0);
+      expect(state.completed).toBe(false);
+      expect(state.active).toEqual([]);
     });
 
     it('scales targets with difficulty', () => {
-      App.state.currentDifficulty = 3;
-      const targets = 5 + App.state.currentDifficulty;
-      expect(targets).toBe(8); // 5 + 3
+      const state = createAttentionState(3);
+      expect(state.targets).toBe(8); // 5 + 3
+    });
+
+    it('scales targets at max difficulty', () => {
+      const state = createAttentionState(5);
+      expect(state.targets).toBe(10); // 5 + 5
     });
   });
 
