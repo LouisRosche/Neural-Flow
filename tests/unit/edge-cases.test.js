@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadApp } from '../helpers/load-app.js';
+import { setupFull } from '../helpers/setup.js';
 import { adaptDifficulty, zScore, inverseErf, getGradeContent } from '../../src/scoring.js';
 import { GRADE_CONTENT } from '../../src/config.js';
 
@@ -165,18 +165,7 @@ describe('Inline script edge cases', () => {
   let App, win;
 
   beforeEach(() => {
-    const result = loadApp();
-    App = result.App;
-    win = result.window;
-    App.testStorage();
-    App.cacheElements();
-    App._timers = new Set();
-    App.state.user = { name: 'Test', age: 12, grade: 6, teacher: '', period: '' };
-    App.state.sessionStart = Date.now();
-    App.state.trialLog = [];
-    App.state.history = [];
-    App.state.gameScores = {};
-    App.state.taskScores = [];
+    ({ App, window: win } = setupFull({ user: { teacher: '', period: '' } }));
   });
 
   // ============================================================

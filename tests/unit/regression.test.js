@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadApp } from '../helpers/load-app.js';
+import { setupFull } from '../helpers/setup.js';
 import { adaptDifficulty, zScore, inverseErf, shuffle, getGradeContent } from '../../src/scoring.js';
 import { CONFIG, GAMES, GRADE_CONTENT, RECOMMENDATIONS } from '../../src/config.js';
 import { trialLogToCSV } from '../../src/export.js';
@@ -320,16 +320,7 @@ describe('Full game flow regression', () => {
   let App;
 
   beforeEach(() => {
-    const result = loadApp();
-    App = result.App;
-    App.testStorage();
-    App.cacheElements();
-    App._timers = new Set();
-    App.state.user = { name: 'Test', age: 12, grade: 6, teacher: '', period: '' };
-    App.state.sessionStart = Date.now();
-    App.state.trialLog = [];
-    App.state.history = [];
-    App.state.gameScores = {};
+    ({ App } = setupFull({ user: { teacher: '', period: '' } }));
   });
 
   it('memory game: run → input → score → endGame cycle', () => {
