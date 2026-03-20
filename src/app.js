@@ -8,7 +8,7 @@ import {
 import { adaptDifficulty } from './scoring.js';
 import {
     cacheElements, showScreen as _showScreen, showFeedback, showConfirm,
-    clearGameArea, renderGames, showGameInstructions
+    clearGameArea, renderGames, showGameInstructions, clearFeedbackTimer
 } from './ui.js';
 import { exportData } from './export.js';
 import { syncToSheets, isValidSheetsUrl, updateSyncStatus } from './sync.js';
@@ -255,22 +255,26 @@ const App = {
     // ========================
 
     handleGameClick(e) {
-        const target = e.target;
+        // Use closest() so clicks on child elements still match
+        const numberBtn = e.target.closest('.number-btn');
+        const responseBtn = e.target.closest('.response-btn');
+        const targetDot = e.target.closest('.target');
+        const clearBtnEl = e.target.closest('#clearBtn');
 
         // Number pad buttons
-        if (target.classList.contains('number-btn')) {
-            const num = parseInt(target.dataset.num);
+        if (numberBtn) {
+            const num = parseInt(numberBtn.dataset.num);
             if (!isNaN(num)) {
                 handleMemoryInput(num, this._memoryCtx());
             }
         }
 
         // Response buttons
-        if (target.classList.contains('response-btn')) {
-            if (target.disabled) return;
+        if (responseBtn) {
+            if (responseBtn.disabled) return;
 
-            const response = target.dataset.response;
-            const correct = target.dataset.correct;
+            const response = responseBtn.dataset.response;
+            const correct = responseBtn.dataset.correct;
 
             // Disable all response buttons after click
             const allButtons = document.querySelectorAll('.response-btn');
@@ -279,19 +283,19 @@ const App = {
             if (this.state.currentGame === 'flexibility') {
                 handleFlexResponse(response, correct === 'true', this._flexCtx());
             } else if (this.state.currentGame === 'speed') {
-                const startTime = parseInt(target.dataset.startTime);
-                handleSpeedResponse(response, correct === 'true', startTime, target, this._speedCtx());
+                const startTime = parseInt(responseBtn.dataset.startTime);
+                handleSpeedResponse(response, correct === 'true', startTime, responseBtn, this._speedCtx());
             }
             return;
         }
 
         // Targets in attention game
-        if (target.classList.contains('target')) {
-            _handleTargetClick(target, this._attentionCtx());
+        if (targetDot) {
+            _handleTargetClick(targetDot, this._attentionCtx());
         }
 
         // Clear button
-        if (target.id === 'clearBtn') {
+        if (clearBtnEl) {
             clearMemoryInput(this._memoryCtx());
         }
     },
@@ -396,6 +400,11 @@ const App = {
     // ========================
 
     startGame(gameId) {
+        // Debounce: prevent double-click on game cards
+        if (this._startingGame) return;
+        this._startingGame = true;
+        setTimeout(() => { this._startingGame = false; }, CONFIG.DEBOUNCE_MS);
+
         try {
             this.state.currentGame = gameId;
             this.state.currentTask = 0;
@@ -589,8 +598,9 @@ const App = {
 
     showReport() {
         const scores = this.state.gameScores;
+        const keys = Object.keys(scores);
         const total = Object.values(scores).reduce((a, b) => a + b, 0);
-        const average = Math.round(total / Object.keys(scores).length);
+        const average = keys.length > 0 ? Math.round(total / keys.length) : 0;
 
         // Save to history
         const sessionData = {
@@ -851,6 +861,7 @@ const App = {
 
     async reset() {
         if (await showConfirm('Start a new session? Current progress will be saved.', 'New Session')) {
+            this.cleanupCurrentGame();
             this.state = {
                 user: null,
                 currentGame: null,
@@ -894,6 +905,7 @@ const App = {
         if (this._integrityInterval) {
             clearInterval(this._integrityInterval);
         }
+        clearFeedbackTimer();
         this.clearTimers();
         this.listeners.forEach((handlers, element) => {
             handlers.forEach(({ event, handler }) => {
@@ -925,7 +937,10 @@ window.addEventListener('error', (event) => {
     showFeedback('An error occurred. Please refresh the page.', 'error');
 });
 
-// Cleanup on unload
+// Cleanup on page teardown (pagehide is more reliable than unload)
+window.addEventListener('pagehide', () => {
+    if (App.cleanup) App.cleanup();
+});
 window.addEventListener('unload', () => {
     if (App.cleanup) App.cleanup();
 });

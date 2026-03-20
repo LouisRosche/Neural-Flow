@@ -63,6 +63,12 @@ export function loadApp() {
     '/* global error handler disabled */'
   );
 
+  // Remove pagehide handler
+  modifiedScript = modifiedScript.replace(
+    /window\.addEventListener\(\s*'pagehide'[\s\S]*?\}\s*\)\s*;/,
+    '/* pagehide handler disabled */'
+  );
+
   // Remove unload handler
   modifiedScript = modifiedScript.replace(
     /window\.addEventListener\(\s*'unload'[\s\S]*?\}\s*\)\s*;/,

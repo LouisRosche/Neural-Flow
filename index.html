@@ -671,6 +671,7 @@
         }
 
         .sync-status.connected { background: var(--success); }
+        .sync-status.pending { background: var(--primary); }
         .sync-status.disconnected { background: var(--text-muted); }
         .sync-status.syncing { background: var(--warning); animation: pulse 1s infinite; }
 
@@ -1690,18 +1691,23 @@
             
             // Handle game area clicks (delegation)
             handleGameClick(e) {
-                const target = e.target;
-                
+                // Use closest() so clicks on child elements still match
+                const numberBtn = e.target.closest('.number-btn');
+                const responseBtn = e.target.closest('.response-btn');
+                const targetDot = e.target.closest('.target');
+                const clearBtn = e.target.closest('#clearBtn');
+
                 // Number pad buttons
-                if (target.classList.contains('number-btn')) {
-                    const num = parseInt(target.dataset.num);
+                if (numberBtn) {
+                    const num = parseInt(numberBtn.dataset.num);
                     if (!isNaN(num)) {
                         this.handleMemoryInput(num);
                     }
                 }
-                
+
                 // Response buttons
-                if (target.classList.contains('response-btn')) {
+                if (responseBtn) {
+                    const target = responseBtn;
                     if (target.disabled) return;
 
                     const response = target.dataset.response;
@@ -1761,12 +1767,12 @@
                 }
                 
                 // Targets in attention game
-                if (target.classList.contains('target')) {
-                    this.handleTargetClick(target);
+                if (targetDot) {
+                    this.handleTargetClick(targetDot);
                 }
-                
+
                 // Clear button
-                if (target.id === 'clearBtn') {
+                if (clearBtn) {
                     this.clearMemoryInput();
                 }
             },
@@ -1871,6 +1877,11 @@
             
             // Start a game
             startGame(gameId) {
+                // Debounce: prevent double-click on game cards
+                if (this._startingGame) return;
+                this._startingGame = true;
+                setTimeout(() => { this._startingGame = false; }, this.CONFIG.DEBOUNCE_MS);
+
                 try {
                     this.state.currentGame = gameId;
                     this.state.currentTask = 0;
@@ -2566,6 +2577,7 @@
             // Run flexibility trial with science content
             runFlexTrial() {
                 const state = this.flexState;
+                if (!state) return; // Guard: timer callback after game exit
                 const area = this.elements.gameArea;
 
                 if (state.current >= state.trials) {
@@ -2635,8 +2647,9 @@
             // Run speed trial
             runSpeedTrial() {
                 const state = this.speedState;
+                if (!state) return; // Guard: timer callback after game exit
                 const area = this.elements.gameArea;
-                
+
                 if (state.current >= state.trials) {
                     const accuracy = state.correct / state.trials;
                     const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
@@ -2751,15 +2764,16 @@
 
                 this.updateSyncStatus('syncing');
 
-                // Note: no-cors mode means we can't read the response,
-                // but we can detect network failures
+                // no-cors mode returns an opaque response — .then() fires
+                // even on server errors; only network failures hit .catch().
+                // Use 'pending' (not 'connected') to avoid false confidence.
                 fetch(url, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(payload)
                 }).then(() => {
-                    this.updateSyncStatus('connected');
+                    this.updateSyncStatus('pending');
                     // Queue for retry verification: store last synced game
                     this._lastSyncedGame = gameId;
                 }).catch((err) => {
@@ -2795,8 +2809,9 @@
             // Show report
             showReport() {
                 const scores = this.state.gameScores;
+                const keys = Object.keys(scores);
                 const total = Object.values(scores).reduce((a, b) => a + b, 0);
-                const average = Math.round(total / Object.keys(scores).length);
+                const average = keys.length > 0 ? Math.round(total / keys.length) : 0;
                 
                 // Save to history with integrity check
                 const sessionData = {
@@ -3172,6 +3187,7 @@
             // Reset application
             async reset() {
                 if (await this.showConfirm('Start a new session? Current progress will be saved.', 'New Session')) {
+                    this.cleanupCurrentGame();
                     this.state = {
                         user: null,
                         currentGame: null,
@@ -3248,17 +3264,23 @@
                 // Remove existing feedback
                 const existing = document.querySelector('.feedback');
                 if (existing) existing.remove();
-                
+
+                // Clear any pending feedback dismiss timer
+                if (this._feedbackTimer) {
+                    clearTimeout(this._feedbackTimer);
+                    this._feedbackTimer = null;
+                }
+
                 const feedback = document.createElement('div');
                 feedback.className = `feedback ${type}`;
                 feedback.setAttribute('role', 'alert');
                 feedback.setAttribute('aria-live', 'assertive');
                 feedback.textContent = message;
                 document.body.appendChild(feedback);
-                
-                setTimeout(() => {
+
+                this._feedbackTimer = setTimeout(() => {
                     feedback.style.animation = 'slideIn 0.3s ease reverse';
-                    setTimeout(() => feedback.remove(), 300);
+                    this._feedbackTimer = setTimeout(() => feedback.remove(), 300);
                 }, 3000);
             },
             
@@ -3275,6 +3297,10 @@
                 // Clear integrity check interval
                 if (this._integrityInterval) {
                     clearInterval(this._integrityInterval);
+                }
+                // Clear feedback dismiss timer
+                if (this._feedbackTimer) {
+                    clearTimeout(this._feedbackTimer);
                 }
                 // Clear any game timers
                 this.clearTimers();
@@ -3308,7 +3334,10 @@
             }
         });
         
-        // Cleanup on unload
+        // Cleanup on page teardown (pagehide is more reliable than unload)
+        window.addEventListener('pagehide', () => {
+            if (App.cleanup) App.cleanup();
+        });
         window.addEventListener('unload', () => {
             if (App.cleanup) App.cleanup();
         });

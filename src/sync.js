@@ -76,13 +76,16 @@ export function syncToSheets(options) {
 
     updateSyncStatus(syncStatusEl, 'syncing');
 
+    // no-cors mode returns an opaque response — .then() fires
+    // even on server errors; only network failures hit .catch().
+    // Use 'pending' (not 'connected') to avoid false confidence.
     fetch(sheetsUrl, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(payload)
     }).then(() => {
-        updateSyncStatus(syncStatusEl, 'connected');
+        updateSyncStatus(syncStatusEl, 'pending');
     }).catch((err) => {
         console.warn('Sheets sync failed:', err);
         updateSyncStatus(syncStatusEl, 'disconnected');

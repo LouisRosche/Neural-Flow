@@ -25,6 +25,7 @@ export function createSpeedState(currentDifficulty) {
  */
 export function runSpeedTrial(ctx) {
     const { speedState, gameArea, currentDifficulty, grade, completeTask } = ctx;
+    if (!speedState) return; // Guard: timer callback after game exit
 
     if (speedState.current >= speedState.trials) {
         const accuracy = speedState.correct / speedState.trials;

@@ -41,6 +41,7 @@ export function createFlexState(currentTask, currentDifficulty, grade) {
  */
 export function runFlexTrial(ctx) {
     const { flexState, gameArea, completeTask } = ctx;
+    if (!flexState) return; // Guard: timer callback after game exit
 
     if (flexState.current >= flexState.trials) {
         const accuracy = flexState.correct / flexState.trials;
