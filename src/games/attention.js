@@ -114,8 +114,8 @@ export function spawnTarget(ctx) {
         });
 
         const area = attentionState.els.targetArea;
-        const maxX = area.offsetWidth - 50;
-        const maxY = area.offsetHeight - 50;
+        const maxX = Math.max(0, area.offsetWidth - 50);
+        const maxY = Math.max(0, area.offsetHeight - 50);
 
         dot.style.left = `${Math.random() * maxX}px`;
         dot.style.top = `${Math.random() * maxY}px`;
