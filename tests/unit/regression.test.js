@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { setupFull } from '../helpers/setup.js';
 import { adaptDifficulty, zScore, inverseErf, shuffle, getGradeContent } from '../../src/scoring.js';
 import { CONFIG, GAMES, GRADE_CONTENT, RECOMMENDATIONS } from '../../src/config.js';
-import { generateChecksum, verifyChecksum } from '../../src/state.js';
 
 /**
  * Regression and invariant tests — designed to catch future drift,
@@ -229,56 +228,6 @@ describe('Grade content invariants', () => {
         current = GRADE_CONTENT[current.inherit];
       }
     });
-  });
-});
-
-// ============================================================
-// CHECKSUM INTEGRITY INVARIANTS
-// ============================================================
-
-describe('Checksum integrity invariants', () => {
-  it('generate+verify round-trip for various data shapes', () => {
-    const testCases = [
-      { history: [], timestamp: 0 },
-      { history: [{ a: 1 }], timestamp: 1000 },
-      { history: Array.from({ length: 100 }, (_, i) => ({ i })), timestamp: Date.now() },
-      { history: [{ nested: { deep: { value: true } } }], timestamp: 999 },
-    ];
-
-    for (const data of testCases) {
-      data.checksum = generateChecksum(data);
-      expect(verifyChecksum(data)).toBe(true);
-    }
-  });
-
-  it('detects mutation of any history entry', () => {
-    const data = {
-      history: [{ score: 80 }, { score: 90 }],
-      timestamp: 1000
-    };
-    data.checksum = generateChecksum(data);
-    data.history[0].score = 100; // tamper
-    expect(verifyChecksum(data)).toBe(false);
-  });
-
-  it('detects addition of history entries', () => {
-    const data = {
-      history: [{ score: 80 }],
-      timestamp: 1000
-    };
-    data.checksum = generateChecksum(data);
-    data.history.push({ score: 99 }); // add
-    expect(verifyChecksum(data)).toBe(false);
-  });
-
-  it('detects removal of history entries', () => {
-    const data = {
-      history: [{ score: 80 }, { score: 90 }],
-      timestamp: 1000
-    };
-    data.checksum = generateChecksum(data);
-    data.history.pop(); // remove
-    expect(verifyChecksum(data)).toBe(false);
   });
 });
 

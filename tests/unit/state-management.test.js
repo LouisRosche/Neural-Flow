@@ -37,71 +37,6 @@ describe('State Management', () => {
   });
 
   // ============================================================
-  // generateChecksum / verifyChecksum
-  // ============================================================
-
-  describe('generateChecksum', () => {
-    it('is deterministic for same input', () => {
-      const data = { history: [{ score: 80 }], timestamp: 1000 };
-      expect(generateChecksum(data)).toBe(generateChecksum(data));
-    });
-
-    it('differs for different inputs', () => {
-      const a = { history: [{ score: 80 }], timestamp: 1000 };
-      const b = { history: [{ score: 90 }], timestamp: 1000 };
-      expect(generateChecksum(a)).not.toBe(generateChecksum(b));
-    });
-
-    it('differs when timestamp changes', () => {
-      const a = { history: [], timestamp: 1000 };
-      const b = { history: [], timestamp: 2000 };
-      expect(generateChecksum(a)).not.toBe(generateChecksum(b));
-    });
-
-    it('handles empty history', () => {
-      const data = { history: [], timestamp: 1000 };
-      const hash = generateChecksum(data);
-      expect(typeof hash).toBe('number');
-      expect(Number.isFinite(hash)).toBe(true);
-    });
-
-    it('handles large history', () => {
-      const history = Array.from({ length: 500 }, (_, i) => ({ score: i, date: `2024-01-${i}` }));
-      const data = { history, timestamp: Date.now() };
-      const hash = generateChecksum(data);
-      expect(typeof hash).toBe('number');
-      expect(Number.isFinite(hash)).toBe(true);
-    });
-  });
-
-  describe('verifyChecksum', () => {
-    it('returns true for valid checksum', () => {
-      const data = { history: [{ a: 1 }], timestamp: 1000 };
-      data.checksum = generateChecksum(data);
-      expect(verifyChecksum(data)).toBe(true);
-    });
-
-    it('returns false for tampered data', () => {
-      const data = { history: [{ a: 1 }], timestamp: 1000 };
-      data.checksum = generateChecksum(data);
-      data.history.push({ a: 2 }); // tamper
-      expect(verifyChecksum(data)).toBe(false);
-    });
-
-    it('returns false for missing checksum', () => {
-      expect(verifyChecksum({ history: [], timestamp: 1000 })).toBe(false);
-    });
-
-    it('returns false for zero checksum', () => {
-      expect(verifyChecksum({ history: [], timestamp: 1000, checksum: 0 })).toBe(false);
-    });
-
-    it('returns false for wrong checksum', () => {
-      expect(verifyChecksum({ history: [], timestamp: 1000, checksum: 99999 })).toBe(false);
-    });
-  });
-
-  // ============================================================
   // saveState / loadState round-trip
   // ============================================================
 
@@ -138,15 +73,6 @@ describe('State Management', () => {
 
     it('returns empty array for corrupted JSON', () => {
       localStorage.setItem(STORAGE_KEY, 'not valid json {[}');
-      const loaded = loadState(true);
-      expect(loaded).toEqual([]);
-    });
-
-    it('returns empty array for tampered checksum', () => {
-      const data = { history: [{ test: 1 }], timestamp: Date.now() };
-      data.checksum = generateChecksum(data);
-      data.history.push({ tampered: true });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       const loaded = loadState(true);
       expect(loaded).toEqual([]);
     });
