@@ -1,10 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { downloadFile } from '../../src/export.js';
 
 describe('downloadFile', () => {
   beforeEach(() => {
-    // Clean up any modals left from previous tests
     document.body.innerHTML = '';
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('creates a blob download link and clicks it', () => {
@@ -24,8 +27,6 @@ describe('downloadFile', () => {
 
     expect(mockClick).toHaveBeenCalledOnce();
     expect(revokeURL).toHaveBeenCalledOnce();
-
-    vi.restoreAllMocks();
   });
 
   it('sets correct filename and href on download link', () => {
@@ -46,8 +47,6 @@ describe('downloadFile', () => {
     expect(capturedAnchor).not.toBeNull();
     expect(capturedAnchor.download).toBe('results.csv');
     expect(capturedAnchor.href).toContain('blob:');
-
-    vi.restoreAllMocks();
   });
 
   it('falls back to copy-paste modal when blob creation throws', () => {
@@ -57,14 +56,11 @@ describe('downloadFile', () => {
 
     downloadFile('fallback data', 'test.json', 'application/json');
 
-    // Should have appended a modal to document.body
     const modal = document.body.querySelector('div');
     expect(modal).not.toBeNull();
     expect(modal.querySelector('h3').textContent).toBe('Copy Your Data');
     expect(modal.querySelector('textarea').value).toBe('fallback data');
     expect(modal.querySelector('textarea').readOnly).toBe(true);
-
-    vi.restoreAllMocks();
   });
 
   it('fallback modal close button removes the modal', () => {
@@ -77,13 +73,8 @@ describe('downloadFile', () => {
     const modal = document.body.querySelector('div');
     expect(modal).not.toBeNull();
 
-    // Click the close button
-    const closeBtn = modal.querySelector('button');
-    closeBtn.click();
+    modal.querySelector('button').click();
 
-    // Modal should be removed from DOM
     expect(document.body.querySelector('div')).toBeNull();
-
-    vi.restoreAllMocks();
   });
 });
