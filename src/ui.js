@@ -72,9 +72,17 @@ export function showScreen(elements, screenId) {
 /**
  * Show a transient feedback toast message.
  */
+// Track feedback dismiss timer for cleanup
+let _feedbackTimer = null;
+
 export function showFeedback(message, type = 'info') {
     const existing = document.querySelector('.feedback');
     if (existing) existing.remove();
+
+    if (_feedbackTimer) {
+        clearTimeout(_feedbackTimer);
+        _feedbackTimer = null;
+    }
 
     const feedback = document.createElement('div');
     feedback.className = `feedback ${type}`;
@@ -83,10 +91,17 @@ export function showFeedback(message, type = 'info') {
     feedback.textContent = message;
     document.body.appendChild(feedback);
 
-    setTimeout(() => {
+    _feedbackTimer = setTimeout(() => {
         feedback.style.animation = 'slideIn 0.3s ease reverse';
-        setTimeout(() => feedback.remove(), 300);
+        _feedbackTimer = setTimeout(() => feedback.remove(), 300);
     }, 3000);
+}
+
+export function clearFeedbackTimer() {
+    if (_feedbackTimer) {
+        clearTimeout(_feedbackTimer);
+        _feedbackTimer = null;
+    }
 }
 
 /**

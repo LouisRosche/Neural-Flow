@@ -126,6 +126,7 @@ export function showMemoryInput(ctx) {
         btn.className = 'number-btn';
         btn.dataset.num = i;
         btn.textContent = i;
+        btn.setAttribute('aria-label', `Digit ${i}`);
         pad.appendChild(btn);
     }
     gameArea.appendChild(pad);

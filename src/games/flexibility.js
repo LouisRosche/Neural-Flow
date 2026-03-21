@@ -41,10 +41,13 @@ export function createFlexState(currentTask, currentDifficulty, grade) {
  */
 export function runFlexTrial(ctx) {
     const { flexState, gameArea, completeTask } = ctx;
+    if (!flexState) return; // Guard: timer callback after game exit
 
     if (flexState.current >= flexState.trials) {
-        const accuracy = flexState.correct / flexState.trials;
-        const avgRT = flexState.reactionTimes.reduce((a, b) => a + b, 0) / flexState.reactionTimes.length;
+        const accuracy = flexState.trials > 0 ? flexState.correct / flexState.trials : 0;
+        const avgRT = flexState.reactionTimes.length > 0
+            ? flexState.reactionTimes.reduce((a, b) => a + b, 0) / flexState.reactionTimes.length
+            : FLEX_RT_NORM_MS;
         const rtScore = Math.max(0, 1 - (avgRT / FLEX_RT_NORM_MS));
         const score = Math.round((accuracy * 70) + (rtScore * 30));
 

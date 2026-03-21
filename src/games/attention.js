@@ -21,6 +21,7 @@ export function createAttentionState(currentDifficulty) {
         falsePositives: 0,
         targetsShown: 0,
         distractorsShown: 0,
+        completed: false,
         startTime: Date.now(),
         active: [],
         els: {}
@@ -82,7 +83,10 @@ export function spawnTarget(ctx) {
 
     if (!attentionState || ctx.currentGame !== 'attention') return;
 
+    if (attentionState.completed) return;
+
     if (attentionState.targetsShown >= attentionState.targets && attentionState.active.length === 0) {
+        attentionState.completed = true;
         endAttentionTask(ctx);
         return;
     }
@@ -111,8 +115,8 @@ export function spawnTarget(ctx) {
         });
 
         const area = attentionState.els.targetArea;
-        const maxX = area.offsetWidth - 50;
-        const maxY = area.offsetHeight - 50;
+        const maxX = Math.max(0, area.offsetWidth - 50);
+        const maxY = Math.max(0, area.offsetHeight - 50);
 
         dot.style.left = `${Math.random() * maxX}px`;
         dot.style.top = `${Math.random() * maxY}px`;
@@ -125,6 +129,8 @@ export function spawnTarget(ctx) {
 
         // Auto-remove after timeout
         gameTimeout(() => {
+            if (dot.dataset.handled === 'true') return; // Already clicked
+            dot.dataset.handled = 'true';
             if (dot.parentNode) {
                 if (isTarget) {
                     attentionState.misses++;
@@ -160,6 +166,11 @@ export function spawnTarget(ctx) {
  */
 export function handleTargetClick(target, ctx) {
     const { attentionState, logTrial } = ctx;
+    if (!attentionState) return;
+    // Guard: dot already handled by auto-remove timeout
+    if (target.dataset.handled === 'true') return;
+    target.dataset.handled = 'true';
+
     const isTarget = target.dataset.isTarget === 'true';
     const reactionTime = Date.now() - parseInt(target.dataset.spawnTime);
 

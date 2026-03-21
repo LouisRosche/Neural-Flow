@@ -12,7 +12,7 @@
             --primary: #6366f1;
             --primary-dark: #4f46e5;
             --success: #10b981;
-            --warning: #f59e0b;
+            --warning: #d97706;
             --error: #ef4444;
             --bg: #1e1b4b;
             --surface: #ffffff;
@@ -124,7 +124,7 @@
         .form-input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
         }
 
         .form-input.error {
@@ -671,6 +671,7 @@
         }
 
         .sync-status.connected { background: var(--success); }
+        .sync-status.pending { background: var(--primary); }
         .sync-status.disconnected { background: var(--text-muted); }
         .sync-status.syncing { background: var(--warning); animation: pulse 1s infinite; }
 
@@ -1077,7 +1078,6 @@
     </div>
 
     <script>
-    // Production-ready implementation with fixes for all identified issues
     (function() {
         'use strict';
         
@@ -1126,7 +1126,7 @@
                     }
                 },
                 // Grade-keyed content: maps grade → { rules, formulas }
-                // K-2: basic observations, 3-5: life/earth science, 6-8: physical/chemical (thorough),
+                // K-2: basic observations, 3-5: life/earth science, 6-8: physical/chemical,
                 // 9-12: advanced chemistry/physics
                 GRADE_CONTENT: {
                     // --- K-2: Observable properties and basic classification ---
@@ -1189,7 +1189,7 @@
                     4: { band: '3-5', inherit: '3' },
                     5: { band: '3-5', inherit: '3' },
 
-                    // --- 6-8: Physical/chemical science (thorough — active research grades) ---
+                    // --- 6-8: Physical/chemical science ---
                     6: { band: '6-8', rules: [
                         { key: 'metal/nonmetal', question: 'Is this element a metal or nonmetal?', options: ['Metal', 'Nonmetal'], items: [
                             { stimulus: 'Iron (Fe)', answer: 'metal' }, { stimulus: 'Oxygen (O)', answer: 'nonmetal' },
@@ -1515,7 +1515,6 @@
                     
                     localStorage.setItem(this.CONFIG.STORAGE_KEY, JSON.stringify(data));
                 } catch (error) {
-                    // REPLACE THIS CATCH BLOCK
                     if (error.name === 'QuotaExceededError') {
                         // Trim history to last 50 items and retry
                         this.state.history = this.state.history.slice(-50);
@@ -1692,25 +1691,29 @@
             
             // Handle game area clicks (delegation)
             handleGameClick(e) {
-                const target = e.target;
-                
+                // Use closest() so clicks on child elements still match
+                const numberBtn = e.target.closest('.number-btn');
+                const responseBtn = e.target.closest('.response-btn');
+                const targetDot = e.target.closest('.target');
+                const clearBtn = e.target.closest('#clearBtn');
+
                 // Number pad buttons
-                if (target.classList.contains('number-btn')) {
-                    const num = parseInt(target.dataset.num);
+                if (numberBtn) {
+                    const num = parseInt(numberBtn.dataset.num);
                     if (!isNaN(num)) {
                         this.handleMemoryInput(num);
                     }
                 }
-                
+
                 // Response buttons
-                if (target.classList.contains('response-btn')) {
-                    // ADD THIS CHECK to prevent multiple clicks
+                if (responseBtn) {
+                    const target = responseBtn;
                     if (target.disabled) return;
-                    
+
                     const response = target.dataset.response;
                     const correct = target.dataset.correct;
-                    
-                    // DISABLE ALL RESPONSE BUTTONS after click
+
+                    // Prevent double-clicks on other response buttons
                     const allButtons = document.querySelectorAll('.response-btn');
                     allButtons.forEach(btn => btn.disabled = true);
                     
@@ -1764,12 +1767,12 @@
                 }
                 
                 // Targets in attention game
-                if (target.classList.contains('target')) {
-                    this.handleTargetClick(target);
+                if (targetDot) {
+                    this.handleTargetClick(targetDot);
                 }
-                
+
                 // Clear button
-                if (target.id === 'clearBtn') {
+                if (clearBtn) {
                     this.clearMemoryInput();
                 }
             },
@@ -1799,7 +1802,7 @@
                 }
 
                 // Set user
-                this.state.user = { name, age, grade: parseInt(grade), teacher, period };
+                this.state.user = { name, age, grade: grade === 'K' ? 'K' : parseInt(grade), teacher, period };
                 this.state.sessionStart = Date.now();
                 this.state.integrityChecksum = this.generateChecksum(this.state);
                 
@@ -1874,6 +1877,11 @@
             
             // Start a game
             startGame(gameId) {
+                // Debounce: prevent double-click on game cards
+                if (this._startingGame) return;
+                this._startingGame = true;
+                setTimeout(() => { this._startingGame = false; }, this.CONFIG.DEBOUNCE_MS);
+
                 try {
                     this.state.currentGame = gameId;
                     this.state.currentTask = 0;
@@ -1903,8 +1911,11 @@
             getGradeContent() {
                 const grade = this.state.user ? this.state.user.grade : '6';
                 let content = this.CONFIG.GRADE_CONTENT[grade];
-                // Follow inheritance chain
+                // Follow inheritance chain (with depth limit to prevent cycles)
+                const seen = new Set();
                 while (content && content.inherit) {
+                    if (seen.has(content.inherit)) break; // circular reference guard
+                    seen.add(content.inherit);
                     content = this.CONFIG.GRADE_CONTENT[content.inherit];
                 }
                 // Fallback to grade 6 (middle school default)
@@ -2041,11 +2052,6 @@
                     } else if (lastScore < this.CONFIG.ADAPTIVE_DOWN) {
                         this.state.currentDifficulty = Math.max(this.state.currentDifficulty - 1, 1);
                     }
-                }
-                
-                // Store task scores at state level to avoid recursion issues
-                if (!this.state.taskScores) {
-                    this.state.taskScores = [];
                 }
                 
                 // Run appropriate task
@@ -2218,7 +2224,7 @@
                     btn.className = 'number-btn';
                     btn.dataset.num = i;
                     btn.textContent = i;
-                    // Don't disable buttons - let the input handler manage this
+                    btn.setAttribute('aria-label', `Digit ${i}`);
                     pad.appendChild(btn);
                 }
                 area.appendChild(pad);
@@ -2324,9 +2330,9 @@
                     falsePositives: 0,
                     targetsShown: 0,
                     distractorsShown: 0,
+                    completed: false,
                     startTime: Date.now(),
                     active: [],
-                    // Cached display elements (avoid repeated getElementById)
                     els: {}
                 };
                 
@@ -2383,7 +2389,10 @@
                 // Stop spawning if game was exited
                 if (!state || this.state.currentGame !== 'attention') return;
                 
+                if (state.completed) return;
+
                 if (state.targetsShown >= state.targets && state.active.length === 0) {
+                    state.completed = true;
                     this.endAttentionTask();
                     return;
                 }
@@ -2413,9 +2422,9 @@
                     });
                     
                     const area = state.els.targetArea;
-                    const maxX = area.offsetWidth - 50;
-                    const maxY = area.offsetHeight - 50;
-                    
+                    const maxX = Math.max(0, area.offsetWidth - 50);
+                    const maxY = Math.max(0, area.offsetHeight - 50);
+
                     dot.style.left = `${Math.random() * maxX}px`;
                     dot.style.top = `${Math.random() * maxY}px`;
                     
@@ -2427,6 +2436,8 @@
                     
                     // Auto-remove after timeout
                     this.gameTimeout(() => {
+                        if (dot.dataset.handled === 'true') return; // Already clicked
+                        dot.dataset.handled = 'true';
                         if (dot.parentNode) {
                             if (isTarget) {
                                 state.misses++;
@@ -2458,6 +2469,11 @@
             // Handle target click
             handleTargetClick(target) {
                 const state = this.attentionState;
+                if (!state) return;
+                // Guard: dot already handled by auto-remove timeout
+                if (target.dataset.handled === 'true') return;
+                target.dataset.handled = 'true';
+
                 const isTarget = target.dataset.isTarget === 'true';
                 const reactionTime = Date.now() - parseInt(target.dataset.spawnTime);
 
@@ -2571,11 +2587,14 @@
             // Run flexibility trial with science content
             runFlexTrial() {
                 const state = this.flexState;
+                if (!state) return; // Guard: timer callback after game exit
                 const area = this.elements.gameArea;
 
                 if (state.current >= state.trials) {
-                    const accuracy = state.correct / state.trials;
-                    const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
+                    const accuracy = state.trials > 0 ? state.correct / state.trials : 0;
+                    const avgRT = state.reactionTimes.length > 0
+                        ? state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length
+                        : this.CONFIG.FLEX_RT_NORM_MS;
                     const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.FLEX_RT_NORM_MS));
                     const score = Math.round((accuracy * 70) + (rtScore * 30));
 
@@ -2640,11 +2659,14 @@
             // Run speed trial
             runSpeedTrial() {
                 const state = this.speedState;
+                if (!state) return; // Guard: timer callback after game exit
                 const area = this.elements.gameArea;
-                
+
                 if (state.current >= state.trials) {
-                    const accuracy = state.correct / state.trials;
-                    const avgRT = state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length;
+                    const accuracy = state.trials > 0 ? state.correct / state.trials : 0;
+                    const avgRT = state.reactionTimes.length > 0
+                        ? state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length
+                        : this.CONFIG.SPEED_RT_NORM_MS;
                     const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.SPEED_RT_NORM_MS));
                     const score = Math.round((accuracy * 50) + (rtScore * 50));
 
@@ -2701,6 +2723,8 @@
             
             // End game
             endGame() {
+                this.cleanupCurrentGame();
+
                 const scores = this.state.taskScores;
                 const average = scores.length > 0
                     ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
@@ -2754,15 +2778,16 @@
 
                 this.updateSyncStatus('syncing');
 
-                // Note: no-cors mode means we can't read the response,
-                // but we can detect network failures
+                // no-cors mode returns an opaque response — .then() fires
+                // even on server errors; only network failures hit .catch().
+                // Use 'pending' (not 'connected') to avoid false confidence.
                 fetch(url, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(payload)
                 }).then(() => {
-                    this.updateSyncStatus('connected');
+                    this.updateSyncStatus('pending');
                     // Queue for retry verification: store last synced game
                     this._lastSyncedGame = gameId;
                 }).catch((err) => {
@@ -2798,8 +2823,9 @@
             // Show report
             showReport() {
                 const scores = this.state.gameScores;
+                const keys = Object.keys(scores);
                 const total = Object.values(scores).reduce((a, b) => a + b, 0);
-                const average = Math.round(total / Object.keys(scores).length);
+                const average = keys.length > 0 ? Math.round(total / keys.length) : 0;
                 
                 // Save to history with integrity check
                 const sessionData = {
@@ -3175,6 +3201,7 @@
             // Reset application
             async reset() {
                 if (await this.showConfirm('Start a new session? Current progress will be saved.', 'New Session')) {
+                    this.cleanupCurrentGame();
                     this.state = {
                         user: null,
                         currentGame: null,
@@ -3251,17 +3278,23 @@
                 // Remove existing feedback
                 const existing = document.querySelector('.feedback');
                 if (existing) existing.remove();
-                
+
+                // Clear any pending feedback dismiss timer
+                if (this._feedbackTimer) {
+                    clearTimeout(this._feedbackTimer);
+                    this._feedbackTimer = null;
+                }
+
                 const feedback = document.createElement('div');
                 feedback.className = `feedback ${type}`;
                 feedback.setAttribute('role', 'alert');
                 feedback.setAttribute('aria-live', 'assertive');
                 feedback.textContent = message;
                 document.body.appendChild(feedback);
-                
-                setTimeout(() => {
+
+                this._feedbackTimer = setTimeout(() => {
                     feedback.style.animation = 'slideIn 0.3s ease reverse';
-                    setTimeout(() => feedback.remove(), 300);
+                    this._feedbackTimer = setTimeout(() => feedback.remove(), 300);
                 }, 3000);
             },
             
@@ -3278,6 +3311,10 @@
                 // Clear integrity check interval
                 if (this._integrityInterval) {
                     clearInterval(this._integrityInterval);
+                }
+                // Clear feedback dismiss timer
+                if (this._feedbackTimer) {
+                    clearTimeout(this._feedbackTimer);
                 }
                 // Clear any game timers
                 this.clearTimers();
@@ -3311,7 +3348,10 @@
             }
         });
         
-        // Cleanup on unload
+        // Cleanup on page teardown (pagehide is more reliable than unload)
+        window.addEventListener('pagehide', () => {
+            if (App.cleanup) App.cleanup();
+        });
         window.addEventListener('unload', () => {
             if (App.cleanup) App.cleanup();
         });
