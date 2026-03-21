@@ -3,7 +3,7 @@ import { setupFull } from '../helpers/setup.js';
 
 /**
  * Hardened UI tests: accessibility, screen transitions, keyboard navigation,
- * settings modal, confirm modal, progress bar, game instructions, focus
+ * confirm modal, progress bar, game instructions, focus
  * management, and DOM integrity after rapid interactions.
  */
 describe('UI Hardening', () => {
