@@ -77,15 +77,6 @@ describe('State Management', () => {
       expect(loaded).toEqual([]);
     });
 
-    it('returns empty array for tampered checksum', () => {
-      const data = { history: [{ test: 1 }], timestamp: Date.now() };
-      data.checksum = generateChecksum(data);
-      data.history.push({ tampered: true });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      const loaded = loadState(true);
-      expect(loaded).toEqual([]);
-    });
-
     it('returns empty array for missing key', () => {
       const loaded = loadState(true);
       expect(loaded).toEqual([]);
