@@ -2,16 +2,14 @@
 
 import { CONFIG, GAMES } from './config.js';
 import {
-    createInitialState, testStorage, generateChecksum,
-    loadState, saveState, loadSettings, saveSettings
+    createInitialState, testStorage,
+    loadState, saveState
 } from './state.js';
-import { adaptDifficulty } from './scoring.js';
+import { adaptDifficulty, adjustedAverage, computeSEM } from './scoring.js';
 import {
     cacheElements, showScreen as _showScreen, showFeedback, showConfirm,
     clearGameArea, renderGames, showGameInstructions, clearFeedbackTimer
 } from './ui.js';
-import { exportData } from './export.js';
-import { syncToSheets, isValidSheetsUrl, updateSyncStatus } from './sync.js';
 import {
     createMemoryState, showMemorySequence, showMemoryInput,
     handleMemoryInput, clearMemoryInput
@@ -42,13 +40,6 @@ const App = {
     // Timer registry for cleanup
     _timers: new Set(),
 
-    // Failed sync payloads
-    _unsyncedResults: [],
-    _MAX_UNSYNCED: 20,
-
-    // Settings
-    settings: { sheetsUrl: '' },
-
     // Per-game state holders
     memoryState: null,
     attentionState: null,
@@ -62,11 +53,9 @@ const App = {
     init() {
         try {
             this.state.storageAvailable = testStorage();
-            this.settings = loadSettings(this.state.storageAvailable);
             this.elements = cacheElements();
             this.state.history = loadState(this.state.storageAvailable);
             this.bindEvents();
-            this.setupIntegrityCheck();
             this.render();
         } catch (error) {
             this.handleError('Initialization failed', error);
@@ -115,31 +104,6 @@ const App = {
     },
 
     // ========================
-    // Integrity checking
-    // ========================
-
-    setupIntegrityCheck() {
-        let devtools = { open: false };
-        const threshold = 160;
-
-        this._integrityInterval = setInterval(() => {
-            const devtoolsOpen = window.outerHeight - window.innerHeight > threshold ||
-                window.outerWidth - window.innerWidth > threshold;
-
-            if (devtoolsOpen && !devtools.open) {
-                devtools.open = true;
-                this.state.integrityChecksum = 'unverified';
-                if (this.state.currentGame) {
-                    this.elements.integrityCheck.classList.add('active');
-                }
-            } else if (!devtoolsOpen && devtools.open) {
-                devtools.open = false;
-                this.elements.integrityCheck.classList.remove('active');
-            }
-        }, 500);
-    },
-
-    // ========================
     // Event binding
     // ========================
 
@@ -159,14 +123,8 @@ const App = {
         // Exit game
         this.addEventListener(this.elements.exitGameBtn, 'click', () => this.exitGame());
 
-        // Export
-        this.addEventListener(this.elements.exportBtn, 'click', () => exportData(this.state));
-
         // Reset
         this.addEventListener(this.elements.resetBtn, 'click', () => this.reset());
-
-        // History
-        this.addEventListener(this.elements.historyBtn, 'click', () => this.toggleHistory());
 
         // Enter key on login form
         this.addEventListener(document.getElementById('loginForm'), 'keypress', (e) => {
@@ -190,64 +148,6 @@ const App = {
             }
         });
 
-        // Settings UI
-        this.addEventListener(this.elements.settingsBtn, 'click', () => {
-            this.elements.sheetsUrl.value = this.settings.sheetsUrl || '';
-            this.elements.settingsModal.classList.add('active');
-            this.elements.sheetsUrl.focus();
-        });
-        this.addEventListener(this.elements.closeSettingsBtn, 'click', () => {
-            this.elements.settingsModal.classList.remove('active');
-            this.elements.settingsBtn.focus();
-        });
-        this.addEventListener(this.elements.saveSettingsBtn, 'click', () => {
-            const url = this.elements.sheetsUrl.value.trim();
-            if (url && !isValidSheetsUrl(url)) {
-                showFeedback('Please enter a valid Google Apps Script URL (https://script.google.com/...)', 'error');
-                return;
-            }
-            this.settings.sheetsUrl = url;
-            saveSettings(this.settings, this.state.storageAvailable);
-            updateSyncStatus(this.elements.syncStatus, url ? 'connected' : 'disconnected');
-            this.elements.settingsModal.classList.remove('active');
-            showFeedback(url ? 'Google Sheets sync enabled' : 'Sync disabled', 'success');
-        });
-        this.addEventListener(this.elements.settingsModal, 'click', (e) => {
-            if (e.target === this.elements.settingsModal) {
-                this.elements.settingsModal.classList.remove('active');
-            }
-        });
-        this.addEventListener(this.elements.toggleScript, 'click', () => {
-            this.elements.scriptCode.classList.toggle('open');
-            this.elements.toggleScript.textContent = this.elements.scriptCode.classList.contains('open')
-                ? '\u25BC Hide Apps Script code' : '\u25B6 Show Apps Script code';
-        });
-
-        // Keyboard: Escape closes settings modal + focus trap
-        this.addEventListener(document, 'keydown', (e) => {
-            if (!this.elements.settingsModal.classList.contains('active')) return;
-
-            if (e.key === 'Escape') {
-                this.elements.settingsModal.classList.remove('active');
-                this.elements.settingsBtn.focus();
-                return;
-            }
-
-            if (e.key === 'Tab') {
-                const modal = this.elements.settingsModal.querySelector('.modal');
-                const focusable = modal.querySelectorAll('input, button, [tabindex]:not([tabindex="-1"])');
-                if (focusable.length === 0) return;
-                const first = focusable[0];
-                const last = focusable[focusable.length - 1];
-                if (e.shiftKey && document.activeElement === first) {
-                    e.preventDefault();
-                    last.focus();
-                } else if (!e.shiftKey && document.activeElement === last) {
-                    e.preventDefault();
-                    first.focus();
-                }
-            }
-        });
     },
 
     // ========================
@@ -356,8 +256,6 @@ const App = {
         const name = document.getElementById('name').value.trim();
         const age = parseInt(document.getElementById('age').value);
         const grade = document.getElementById('grade').value;
-        const teacher = document.getElementById('teacher').value.trim();
-        const period = document.getElementById('period').value;
 
         if (!name || name.length > 50) {
             showFeedback('Please enter a valid name', 'error');
@@ -372,9 +270,8 @@ const App = {
             return;
         }
 
-        this.state.user = { name, age, grade: grade === 'K' ? 'K' : parseInt(grade), teacher, period };
+        this.state.user = { name, age, grade: grade === 'K' ? 'K' : parseInt(grade) };
         this.state.sessionStart = Date.now();
-        this.state.integrityChecksum = generateChecksum(this.state);
 
         this.showScreen('menu');
         this._renderGames();
@@ -410,6 +307,7 @@ const App = {
             this.state.currentTask = 0;
             this.state.currentDifficulty = 1;
             this.state.taskScores = [];
+            this.state.taskDifficulties = [];
             this.state.gameStart = Date.now();
 
             this.showScreen('game');
@@ -474,11 +372,16 @@ const App = {
     },
 
     startCurrentTask() {
+        this._taskCompleted = false;
         // Adaptive difficulty adjustment
         if (this.state.taskScores.length > 0) {
             const lastScore = this.state.taskScores[this.state.taskScores.length - 1];
             this.state.currentDifficulty = adaptDifficulty(this.state.currentDifficulty, lastScore);
         }
+
+        // Record difficulty for this task (used for difficulty-weighted scoring)
+        if (!this.state.taskDifficulties) this.state.taskDifficulties = [];
+        this.state.taskDifficulties.push(this.state.currentDifficulty);
 
         const area = this.elements.gameArea;
 
@@ -501,6 +404,9 @@ const App = {
     },
 
     completeTask(score) {
+        // Guard: prevent double-fire from racing timeouts
+        if (this._taskCompleted) return;
+        this._taskCompleted = true;
         this.state.taskScores.push(score);
         showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
         this.gameTimeout(() => this.nextTask(), CONFIG.FEEDBACK_DISPLAY_MS);
@@ -515,25 +421,18 @@ const App = {
         this.cleanupCurrentGame();
 
         const scores = this.state.taskScores;
+        const difficulties = this.state.taskDifficulties || scores.map(() => 1);
         const average = scores.length > 0
-            ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+            ? adjustedAverage(scores, difficulties)
             : 0;
+        const sem = computeSEM(scores);
 
         this.state.gameScores[this.state.currentGame] = average;
-
-        // Auto-sync this game result to Google Sheets
-        syncToSheets({
-            sheetsUrl: this.settings.sheetsUrl,
-            user: this.state.user,
-            gameId: this.state.currentGame,
-            score: average,
-            currentDifficulty: this.state.currentDifficulty,
-            gameStart: this.state.gameStart,
-            integrityChecksum: this.state.integrityChecksum,
-            syncStatusEl: this.elements.syncStatus,
-            unsyncedResults: this._unsyncedResults,
-            maxUnsynced: this._MAX_UNSYNCED
-        });
+        // Store SEM and difficulty info for the report
+        if (!this.state.gameSEMs) this.state.gameSEMs = {};
+        this.state.gameSEMs[this.state.currentGame] = sem;
+        if (!this.state.gameDifficulties) this.state.gameDifficulties = {};
+        this.state.gameDifficulties[this.state.currentGame] = difficulties;
 
         this.showScreen('menu');
         this._renderGames();
@@ -607,9 +506,10 @@ const App = {
             date: new Date().toISOString(),
             user: this.state.user,
             scores: { ...scores },
+            sems: { ...(this.state.gameSEMs || {}) },
+            difficulties: { ...(this.state.gameDifficulties || {}) },
             average,
-            duration: Date.now() - this.state.sessionStart,
-            integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
+            duration: Date.now() - this.state.sessionStart
         };
 
         this.state.history.push(sessionData);
@@ -618,8 +518,6 @@ const App = {
         // Render report info
         const u = this.state.user;
         const infoParts = [u.name, `Age ${u.age}`, `Grade ${u.grade}`];
-        if (u.teacher) infoParts.push(u.teacher);
-        if (u.period) infoParts.push(`Period ${u.period}`);
         infoParts.push(new Date().toLocaleDateString());
         this.elements.reportInfo.textContent = infoParts.join(' | ');
 
@@ -639,7 +537,11 @@ const App = {
 
             const value = document.createElement('div');
             value.className = 'score-value';
-            value.textContent = `${scores[game.id] || 0}%`;
+            const gameScore = scores[game.id] || 0;
+            const gameSEM = this.state.gameSEMs && this.state.gameSEMs[game.id];
+            value.textContent = gameSEM != null
+                ? `${gameScore}% \u00B1${gameSEM}`
+                : `${gameScore}%`;
 
             const label = document.createElement('div');
             label.className = 'score-label';
@@ -792,70 +694,6 @@ const App = {
     },
 
     // ========================
-    // History
-    // ========================
-
-    toggleHistory() {
-        const section = this.elements.historySection;
-        const container = this.elements.historyContainer;
-        const isVisible = section.style.display !== 'none';
-
-        if (isVisible) {
-            section.style.display = 'none';
-            this.elements.historyBtn.textContent = 'View History';
-            return;
-        }
-
-        while (container.firstChild) container.removeChild(container.firstChild);
-
-        const history = this.state.history;
-        if (history.length === 0) {
-            const empty = document.createElement('div');
-            empty.className = 'history-empty';
-            empty.textContent = 'No previous sessions recorded.';
-            container.appendChild(empty);
-        } else {
-            const table = document.createElement('table');
-            table.className = 'history-table';
-
-            const thead = document.createElement('thead');
-            const headerRow = document.createElement('tr');
-            ['Date', 'Student', 'Memory', 'Attention', 'Flexibility', 'Speed', 'Average'].forEach(h => {
-                const th = document.createElement('th');
-                th.textContent = h;
-                headerRow.appendChild(th);
-            });
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-
-            const tbody = document.createElement('tbody');
-            history.slice().reverse().forEach(entry => {
-                const tr = document.createElement('tr');
-                const date = new Date(entry.date).toLocaleDateString();
-                const name = entry.user ? entry.user.name : '\u2014';
-                const sc = entry.scores || {};
-                [date, name,
-                    sc.memory != null ? sc.memory + '%' : '\u2014',
-                    sc.attention != null ? sc.attention + '%' : '\u2014',
-                    sc.flexibility != null ? sc.flexibility + '%' : '\u2014',
-                    sc.speed != null ? sc.speed + '%' : '\u2014',
-                    entry.average != null ? entry.average + '%' : '\u2014'
-                ].forEach(val => {
-                    const td = document.createElement('td');
-                    td.textContent = val;
-                    tr.appendChild(td);
-                });
-                tbody.appendChild(tr);
-            });
-            table.appendChild(tbody);
-            container.appendChild(table);
-        }
-
-        section.style.display = 'block';
-        this.elements.historyBtn.textContent = 'Hide History';
-    },
-
-    // ========================
     // Reset
     // ========================
 
@@ -868,12 +706,14 @@ const App = {
                 currentTask: 0,
                 currentDifficulty: 1,
                 taskScores: [],
+                taskDifficulties: [],
                 gameScores: {},
+                gameSEMs: {},
+                gameDifficulties: {},
                 sessionStart: null,
                 gameStart: null,
                 history: this.state.history,
                 storageAvailable: this.state.storageAvailable,
-                integrityChecksum: null,
                 trialLog: []
             };
 
@@ -881,8 +721,6 @@ const App = {
             document.getElementById('name').value = '';
             document.getElementById('age').value = '';
             document.getElementById('grade').value = '';
-            document.getElementById('teacher').value = '';
-            document.getElementById('period').value = '';
         }
     },
 
@@ -902,9 +740,6 @@ const App = {
     // ========================
 
     cleanup() {
-        if (this._integrityInterval) {
-            clearInterval(this._integrityInterval);
-        }
         clearFeedbackTimer();
         this.clearTimers();
         this.listeners.forEach((handlers, element) => {

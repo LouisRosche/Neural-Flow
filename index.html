@@ -585,51 +585,6 @@
             outline-offset: 2px;
         }
 
-        /* Anti-cheat overlay */
-        .integrity-check {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
-            color: white;
-            display: none;
-            z-index: 9999;
-            padding: 2rem;
-            text-align: center;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .integrity-check.active {
-            display: flex;
-        }
-
-        /* Settings */
-        .header {
-            position: relative;
-        }
-
-        .settings-btn {
-            position: absolute;
-            top: 50%;
-            right: 1.5rem;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            opacity: 0.8;
-            transition: var(--transition);
-        }
-
-        .settings-btn:hover {
-            opacity: 1;
-            transform: translateY(-50%) rotate(90deg);
-        }
-
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -659,59 +614,6 @@
 
         .modal h3 {
             margin-bottom: 1rem;
-        }
-
-        .sync-status {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-left: 0.5rem;
-            vertical-align: middle;
-        }
-
-        .sync-status.connected { background: var(--success); }
-        .sync-status.pending { background: var(--primary); }
-        .sync-status.disconnected { background: var(--text-muted); }
-        .sync-status.syncing { background: var(--warning); animation: pulse 1s infinite; }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        .setup-code {
-            background: #1e1b4b;
-            color: #e0e7ff;
-            padding: 1rem;
-            border-radius: calc(var(--radius) / 2);
-            font-family: monospace;
-            font-size: 0.75rem;
-            white-space: pre-wrap;
-            word-break: break-all;
-            max-height: 200px;
-            overflow-y: auto;
-            margin-top: 0.5rem;
-        }
-
-        .collapsible-header {
-            cursor: pointer;
-            user-select: none;
-            color: var(--primary);
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .collapsible-header:hover {
-            text-decoration: underline;
-        }
-
-        .collapsible-content {
-            display: none;
-        }
-
-        .collapsible-content.open {
-            display: block;
         }
 
         /* Recommendations */
@@ -851,39 +753,6 @@
             color: #374151;
         }
 
-        /* History table */
-        .history-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-        }
-
-        .history-table th,
-        .history-table td {
-            padding: 0.5rem 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .history-table th {
-            background: #f9fafb;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.03em;
-        }
-
-        .history-table tr:hover td {
-            background: #f0f4ff;
-        }
-
-        .history-empty {
-            text-align: center;
-            color: var(--text-muted);
-            padding: 2rem;
-            font-style: italic;
-        }
     </style>
 </head>
 <body>
@@ -891,7 +760,6 @@
     <div class="app-container" role="application" aria-label="Neural Flow Executive Function Training">
         <header class="header">
             <h1>🧠 Neural Flow - Executive Function Training</h1>
-            <button class="settings-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
         </header>
 
         <main class="content" role="main">
@@ -928,28 +796,6 @@
                                     <option value="10">10th</option>
                                     <option value="11">11th</option>
                                     <option value="12">12th</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label" for="teacher">Teacher</label>
-                                <input type="text" id="teacher" class="form-input" placeholder="Teacher name" maxlength="50">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label" for="period">Period</label>
-                                <select id="period" class="form-input">
-                                    <option value="">Select</option>
-                                    <option value="1">1st</option>
-                                    <option value="2">2nd</option>
-                                    <option value="3">3rd</option>
-                                    <option value="4">4th</option>
-                                    <option value="5">5th</option>
-                                    <option value="6">6th</option>
-                                    <option value="7">7th</option>
-                                    <option value="8">8th</option>
                                 </select>
                             </div>
                         </div>
@@ -993,76 +839,12 @@
                     
                     <div id="recommendations" style="margin-top: 2rem; display: none;"></div>
                     
-                    <div id="historySection" style="margin-top: 2rem; display: none;">
-                        <h3 style="margin-bottom: 1rem;">Session History</h3>
-                        <div id="historyContainer"></div>
-                    </div>
-
-                    <div style="text-align: center; margin-top: 2rem; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
-                        <button id="exportBtn" class="btn">Export Results (JSON + CSV)</button>
-                        <button id="historyBtn" class="btn btn-secondary">View History</button>
+                    <div style="text-align: center; margin-top: 2rem;">
                         <button id="resetBtn" class="btn btn-secondary">New Session</button>
                     </div>
                 </div>
             </div>
         </main>
-    </div>
-
-    <!-- Anti-cheat overlay -->
-    <div class="integrity-check" id="integrityCheck">
-        <div>
-            <h2>⚠️ Integrity Check Failed</h2>
-            <p>The developer console was detected. Please close it and refresh the page to continue.</p>
-        </div>
-    </div>
-
-    <!-- Settings modal -->
-    <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-label="Settings">
-        <div class="modal">
-            <h3>⚙ Settings</h3>
-            <div class="form-group">
-                <label class="form-label" for="sheetsUrl">Google Sheets Script URL <span class="sync-status disconnected" id="syncStatus"></span></label>
-                <input type="url" id="sheetsUrl" class="form-input" placeholder="https://script.google.com/macros/s/...">
-                <small style="color: var(--text-muted);">Paste your Google Apps Script web app URL to auto-sync session data after each game.</small>
-            </div>
-            <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 10px; font-size: 0.85rem;">
-                <strong>Quick Setup:</strong>
-                <ol style="margin: 0.5rem 0; padding-left: 1.5rem; color: var(--text-muted);">
-                    <li>Create a new Google Sheet</li>
-                    <li>Add headers in Row 1: <em>Timestamp, Student, Age, Grade, Teacher, Period, Game, Score, Difficulty, Duration, Integrity</em></li>
-                    <li>Go to <strong>Extensions → Apps Script</strong></li>
-                    <li>Replace the code with the script below, then <strong>Deploy → New deployment → Web app</strong> (set access to "Anyone")</li>
-                    <li>Copy the deployment URL and paste it above</li>
-                </ol>
-                <div class="collapsible-header" id="toggleScript">▶ Show Apps Script code</div>
-                <div class="collapsible-content" id="scriptCode">
-                    <div class="setup-code">function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = JSON.parse(e.postData.contents);
-  sheet.appendRow([
-    data.timestamp,
-    data.student,
-    data.age,
-    data.grade,
-    data.teacher,
-    data.period,
-    data.game,
-    data.score,
-    data.difficulty,
-    data.duration,
-    data.integrity
-  ]);
-  return ContentService
-    .createTextOutput(JSON.stringify({status: 'ok'}))
-    .setMimeType(ContentService.MimeType.JSON);
-}</div>
-                </div>
-            </div>
-            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
-                <button id="closeSettingsBtn" class="btn btn-secondary">Close</button>
-                <button id="saveSettingsBtn" class="btn">Save Settings</button>
-            </div>
-        </div>
     </div>
 
     <!-- Confirmation modal (replaces browser confirm()) -->
@@ -1344,12 +1126,11 @@
                     }
                 },
                 STORAGE_KEY: 'neural_flow_data',
-                SETTINGS_KEY: 'neural_flow_settings',
                 MAX_TASKS: 3,
                 MAX_DIFFICULTY: 5,
                 ADAPTIVE_UP: 80,   // score % to increase difficulty
                 ADAPTIVE_DOWN: 50, // score % below which difficulty decreases
-                CHECKSUM_SALT: 'NF2024', // For data integrity
+                CHECKSUM_SALT: 'NF2024',
                 // Timing constants (milliseconds)
                 MEMORY_DISPLAY_MS: 1000,
                 ATTENTION_TARGET_BASE_MS: 2000,
@@ -1359,7 +1140,8 @@
                 FLEX_RT_NORM_MS: 3000,
                 SPEED_RT_NORM_MS: 2000,
                 FEEDBACK_DISPLAY_MS: 1500,
-                DEBOUNCE_MS: 300
+                DEBOUNCE_MS: 300,
+                DIFFICULTY_BONUS_PER_LEVEL: 3
             },
             
             // Application state
@@ -1369,13 +1151,14 @@
                 currentTask: 0,
                 currentDifficulty: 1,
                 taskScores: [],
+                taskDifficulties: [],
                 gameScores: {},
+                gameSEMs: {},
+                gameDifficulties: {},
                 sessionStart: null,
                 history: [],
                 gameStart: null,
                 storageAvailable: false,
-                integrityChecksum: null,
-                // Trial-level research data
                 trialLog: []
             },
             
@@ -1388,19 +1171,13 @@
             // Timer registry for cleanup (Set for O(1) add/delete)
             _timers: new Set(),
 
-            // Failed sync payloads (capped to prevent unbounded growth)
-            _unsyncedResults: [],
-            _MAX_UNSYNCED: 20,
-            
             // Initialize application
             init() {
                 try {
                     this.testStorage();
-                    this.loadSettings();
                     this.cacheElements();
                     this.loadState();
                     this.bindEvents();
-                    this.setupIntegrityCheck();
                     this.render();
                 } catch (error) {
                     this.handleError('Initialization failed', error);
@@ -1436,21 +1213,8 @@
                     reportScores: document.getElementById('reportScores'),
                     reportInfo: document.getElementById('reportInfo'),
                     exitGameBtn: document.getElementById('exitGameBtn'),
-                    exportBtn: document.getElementById('exportBtn'),
                     resetBtn: document.getElementById('resetBtn'),
-                    integrityCheck: document.getElementById('integrityCheck'),
                     recommendations: document.getElementById('recommendations'),
-                    settingsBtn: document.getElementById('settingsBtn'),
-                    settingsModal: document.getElementById('settingsModal'),
-                    sheetsUrl: document.getElementById('sheetsUrl'),
-                    saveSettingsBtn: document.getElementById('saveSettingsBtn'),
-                    closeSettingsBtn: document.getElementById('closeSettingsBtn'),
-                    syncStatus: document.getElementById('syncStatus'),
-                    toggleScript: document.getElementById('toggleScript'),
-                    scriptCode: document.getElementById('scriptCode'),
-                    historyBtn: document.getElementById('historyBtn'),
-                    historySection: document.getElementById('historySection'),
-                    historyContainer: document.getElementById('historyContainer'),
                     progressBarContainer: document.getElementById('progressBarContainer')
                 };
                 
@@ -1462,26 +1226,6 @@
                 });
             },
             
-            // Load settings (Google Sheets URL, etc.)
-            loadSettings() {
-                if (!this.state.storageAvailable) return;
-                try {
-                    const saved = localStorage.getItem(this.CONFIG.SETTINGS_KEY);
-                    if (saved) {
-                        this.settings = JSON.parse(saved);
-                    }
-                } catch (e) {}
-                if (!this.settings) this.settings = { sheetsUrl: '' };
-            },
-
-            // Save settings
-            saveSettings() {
-                if (!this.state.storageAvailable) return;
-                try {
-                    localStorage.setItem(this.CONFIG.SETTINGS_KEY, JSON.stringify(this.settings));
-                } catch (e) {}
-            },
-
             // Load saved state
             loadState() {
                 if (!this.state.storageAvailable) return;
@@ -1551,30 +1295,6 @@
                 return data.checksum === expected;
             },
             
-            // Setup basic integrity check
-            setupIntegrityCheck() {
-                // Detect developer tools (basic check)
-                let devtools = {open: false};
-                const threshold = 160;
-
-                this._integrityInterval = setInterval(() => {
-                    const devtoolsOpen = window.outerHeight - window.innerHeight > threshold ||
-                        window.outerWidth - window.innerWidth > threshold;
-
-                    if (devtoolsOpen && !devtools.open) {
-                        devtools.open = true;
-                        this.state.integrityChecksum = 'unverified';
-                        // Show the integrity overlay if a game is active
-                        if (this.state.currentGame) {
-                            this.elements.integrityCheck.classList.add('active');
-                        }
-                    } else if (!devtoolsOpen && devtools.open) {
-                        devtools.open = false;
-                        this.elements.integrityCheck.classList.remove('active');
-                    }
-                }, 500);
-            },
-            
             // Bind event listeners using event delegation
             bindEvents() {
                 // Login button
@@ -1584,15 +1304,9 @@
                 // Make exit button always accessible
                 this.addEventListener(this.elements.exitGameBtn, 'click', () => this.exitGame());
 
-                
-                // Export button
-                this.addEventListener(this.elements.exportBtn, 'click', () => this.exportData());
-                
+
                 // Reset button
                 this.addEventListener(this.elements.resetBtn, 'click', () => this.reset());
-
-                // History button
-                this.addEventListener(this.elements.historyBtn, 'click', () => this.toggleHistory());
                 
                 // Enter key on login form
                 this.addEventListener(document.getElementById('loginForm'), 'keypress', (e) => {
@@ -1616,65 +1330,6 @@
                     }
                 });
 
-                // Settings UI
-                this.addEventListener(this.elements.settingsBtn, 'click', () => {
-                    this.elements.sheetsUrl.value = this.settings.sheetsUrl || '';
-                    this.elements.settingsModal.classList.add('active');
-                    this.elements.sheetsUrl.focus();
-                });
-                this.addEventListener(this.elements.closeSettingsBtn, 'click', () => {
-                    this.elements.settingsModal.classList.remove('active');
-                    this.elements.settingsBtn.focus();
-                });
-                this.addEventListener(this.elements.saveSettingsBtn, 'click', () => {
-                    const url = this.elements.sheetsUrl.value.trim();
-                    if (url && !this.isValidSheetsUrl(url)) {
-                        this.showFeedback('Please enter a valid Google Apps Script URL (https://script.google.com/...)', 'error');
-                        return;
-                    }
-                    this.settings.sheetsUrl = url;
-                    this.saveSettings();
-                    this.updateSyncStatus(url ? 'connected' : 'disconnected');
-                    this.elements.settingsModal.classList.remove('active');
-                    this.showFeedback(url ? 'Google Sheets sync enabled' : 'Sync disabled', 'success');
-                });
-                this.addEventListener(this.elements.settingsModal, 'click', (e) => {
-                    if (e.target === this.elements.settingsModal) {
-                        this.elements.settingsModal.classList.remove('active');
-                    }
-                });
-                this.addEventListener(this.elements.toggleScript, 'click', () => {
-                    this.elements.scriptCode.classList.toggle('open');
-                    this.elements.toggleScript.textContent = this.elements.scriptCode.classList.contains('open')
-                        ? '▼ Hide Apps Script code' : '▶ Show Apps Script code';
-                });
-
-                // Keyboard: Escape closes settings modal + focus trap
-                this.addEventListener(document, 'keydown', (e) => {
-                    if (!this.elements.settingsModal.classList.contains('active')) return;
-
-                    if (e.key === 'Escape') {
-                        this.elements.settingsModal.classList.remove('active');
-                        this.elements.settingsBtn.focus();
-                        return;
-                    }
-
-                    // Focus trap: Tab cycles within modal
-                    if (e.key === 'Tab') {
-                        const modal = this.elements.settingsModal.querySelector('.modal');
-                        const focusable = modal.querySelectorAll('input, button, [tabindex]:not([tabindex="-1"])');
-                        if (focusable.length === 0) return;
-                        const first = focusable[0];
-                        const last = focusable[focusable.length - 1];
-                        if (e.shiftKey && document.activeElement === first) {
-                            e.preventDefault();
-                            last.focus();
-                        } else if (!e.shiftKey && document.activeElement === last) {
-                            e.preventDefault();
-                            first.focus();
-                        }
-                    }
-                });
             },
             
             // Add event listener with tracking
@@ -1724,7 +1379,10 @@
 
                         state.reactionTimes.push(rt);
                         const isCorrect = correct === 'true';
-                        if (isCorrect) state.correct++;
+                        if (isCorrect) {
+                            state.correct++;
+                            state.correctRTs.push(rt);
+                        }
 
                         // Trial-level logging
                         this.logTrial({
@@ -1782,8 +1440,6 @@
                 const name = document.getElementById('name').value.trim();
                 const age = parseInt(document.getElementById('age').value);
                 const grade = document.getElementById('grade').value;
-                const teacher = document.getElementById('teacher').value.trim();
-                const period = document.getElementById('period').value;
 
                 // Validation
                 if (!name || name.length > 50) {
@@ -1802,9 +1458,8 @@
                 }
 
                 // Set user
-                this.state.user = { name, age, grade: grade === 'K' ? 'K' : parseInt(grade), teacher, period };
+                this.state.user = { name, age, grade: grade === 'K' ? 'K' : parseInt(grade) };
                 this.state.sessionStart = Date.now();
-                this.state.integrityChecksum = this.generateChecksum(this.state);
                 
                 // Navigate to menu
                 this.showScreen('menu');
@@ -1887,6 +1542,7 @@
                     this.state.currentTask = 0;
                     this.state.currentDifficulty = 1;
                     this.state.taskScores = [];
+                    this.state.taskDifficulties = [];
                     this.state.gameStart = Date.now();
                     
                     this.showScreen('game');
@@ -1962,6 +1618,9 @@
 
             // Record a task score, show feedback, and advance to next task
             completeTask(score) {
+                // Guard: prevent double-fire from racing timeouts
+                if (this._taskCompleted) return;
+                this._taskCompleted = true;
                 this.state.taskScores.push(score);
                 this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
                 this.gameTimeout(() => this.nextTask(), this.CONFIG.FEEDBACK_DISPLAY_MS);
@@ -2042,8 +1701,9 @@
             },
             
             startCurrentTask() {
+                this._taskCompleted = false;
                 const area = this.elements.gameArea;
-                
+
                 // Adaptive difficulty adjustment
                 if (this.state.taskScores.length > 0) {
                     const lastScore = this.state.taskScores[this.state.taskScores.length - 1];
@@ -2053,7 +1713,11 @@
                         this.state.currentDifficulty = Math.max(this.state.currentDifficulty - 1, 1);
                     }
                 }
-                
+
+                // Record difficulty for this task (used for difficulty-weighted scoring)
+                if (!this.state.taskDifficulties) this.state.taskDifficulties = [];
+                this.state.taskDifficulties.push(this.state.currentDifficulty);
+
                 // Run appropriate task
                 switch (this.state.currentGame) {
                     case 'memory':
@@ -2124,7 +1788,9 @@
                     userInput: [],
                     length,
                     showIndex: 0,
-                    startTime: Date.now()
+                    startTime: Date.now(),
+                    inputStartTime: null,
+                    lastInputTime: null
                 };
                 
                 // Start showing sequence
@@ -2286,7 +1952,10 @@
                     const time = Date.now() - (state.inputStartTime || state.startTime);
                     const timeBonus = Math.max(0, 1 - (time / (state.length * 2000)));
                     const score = Math.round((accuracy * 90) + (timeBonus * 10));
-                    
+
+                    // Guard: prevent double-scoring
+                    if (this._taskCompleted) return;
+                    this._taskCompleted = true;
                     this.state.taskScores.push(score);
                     
                     // Delay before showing feedback so user can see last input
@@ -2323,8 +1992,21 @@
             
             // Attention task with improved scoring
             runAttentionTask(area) {
+                const targetCount = 5 + this.state.currentDifficulty;
+                const distractorCount = Math.ceil(targetCount * 0.4);
+                // Pre-build deterministic interleaved schedule for test-retest reliability
+                const schedule = [];
+                const total = targetCount + distractorCount;
+                for (let i = 0; i < total; i++) {
+                    const isDistractor = Math.floor((i + 1) * distractorCount / total)
+                        > Math.floor(i * distractorCount / total);
+                    schedule.push(!isDistractor);
+                }
                 const state = {
-                    targets: 5 + this.state.currentDifficulty,
+                    targets: targetCount,
+                    distractorCount,
+                    schedule,
+                    scheduleIndex: 0,
                     hits: 0,
                     misses: 0,
                     falsePositives: 0,
@@ -2391,19 +2073,17 @@
                 
                 if (state.completed) return;
 
-                if (state.targetsShown >= state.targets && state.active.length === 0) {
+                if (state.scheduleIndex >= state.schedule.length && state.active.length === 0) {
                     state.completed = true;
                     this.endAttentionTask();
                     return;
                 }
 
-                // Only spawn if we still have targets to show, or a limited number of extra distractors
-                const maxDistractors = Math.ceil(state.targets * 0.4);
-                const shouldSpawn = state.targetsShown < state.targets ||
-                    (state.distractorsShown < maxDistractors && Math.random() < 0.3);
+                const shouldSpawn = state.scheduleIndex < state.schedule.length;
 
                 if (shouldSpawn) {
-                    const isTarget = state.targetsShown < state.targets && Math.random() > 0.3;
+                    const isTarget = state.schedule[state.scheduleIndex];
+                    state.scheduleIndex++;
                     
                     const dot = document.createElement('div');
                     dot.className = `target ${isTarget ? 'blue' : 'red'}`;
@@ -2525,17 +2205,17 @@
                     return;
                 }
 
-                // Calculate comprehensive score
-                const hitRate = state.targetsShown > 0 ? state.hits / state.targetsShown : 0;
-                const falseAlarmRate = state.distractorsShown > 0 ?
-                    state.falsePositives / state.distractorsShown : 0;
+                // Log-linear correction (Hautus 1995) avoids extreme z-scores
+                const hitRate = this.logLinearRate(state.hits, state.targetsShown);
+                const falseAlarmRate = this.logLinearRate(state.falsePositives, state.distractorsShown);
 
                 // d-prime calculation (signal detection theory)
                 const dPrime = Math.min(4, Math.max(-4,
                     this.zScore(hitRate) - this.zScore(falseAlarmRate)));
 
+                // Recalibrated: d'=0→25, d'=1→50, d'=2→75, d'≥3→100
                 const score = Math.round(Math.max(0, Math.min(100,
-                    50 + (dPrime * 12.5))));
+                    25 + (dPrime * 25))));
 
                 this.completeTask(score);
             },
@@ -2555,7 +2235,44 @@
                 const c = Math.log(1 - x * x) / a;
                 return s * Math.sqrt(Math.sqrt(b * b - c) - b);
             },
-            
+
+            // Log-linear correction for hit/FA rates (Hautus 1995)
+            logLinearRate(count, total) {
+                if (total <= 0) return 0.5;
+                return (count + 0.5) / (total + 1);
+            },
+
+            // Additive difficulty bonus
+            difficultyBonus(difficulty) {
+                return (difficulty - 1) * this.CONFIG.DIFFICULTY_BONUS_PER_LEVEL;
+            },
+
+            // Difficulty-adjusted average
+            adjustedAverage(scores, difficulties) {
+                if (scores.length === 0) return 0;
+                let sum = 0;
+                for (let i = 0; i < scores.length; i++) {
+                    const d = difficulties[i] || 1;
+                    sum += Math.min(100, scores[i] + this.difficultyBonus(d));
+                }
+                return Math.round(sum / scores.length);
+            },
+
+            // Standard Error of Measurement
+            computeSEM(scores) {
+                if (scores.length < 2) return null;
+                const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+                const variance = scores.reduce((sum, s) => sum + (s - mean) ** 2, 0) / (scores.length - 1);
+                return Math.round(Math.sqrt(variance / scores.length));
+            },
+
+            // Chance-corrected accuracy for multiple-choice
+            chanceCorrect(accuracy, numChoices) {
+                if (numChoices <= 1) return accuracy;
+                const chance = 1 / numChoices;
+                return Math.max(0, (accuracy - chance) / (1 - chance));
+            },
+
             // Flexibility task — uses grade-appropriate science classification rules
             runFlexibilityTask(area) {
                 const content = this.getGradeContent();
@@ -2578,6 +2295,7 @@
                     current: 0,
                     correct: 0,
                     reactionTimes: [],
+                    correctRTs: [],
                     startTime: null
                 };
 
@@ -2592,8 +2310,10 @@
 
                 if (state.current >= state.trials) {
                     const accuracy = state.trials > 0 ? state.correct / state.trials : 0;
-                    const avgRT = state.reactionTimes.length > 0
-                        ? state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length
+                    // Use only correct-trial RTs to avoid contamination
+                    const rts = state.correctRTs.length > 0 ? state.correctRTs : state.reactionTimes;
+                    const avgRT = rts.length > 0
+                        ? rts.reduce((a,b) => a+b, 0) / rts.length
                         : this.CONFIG.FLEX_RT_NORM_MS;
                     const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.FLEX_RT_NORM_MS));
                     const score = Math.round((accuracy * 70) + (rtScore * 30));
@@ -2663,11 +2383,15 @@
                 const area = this.elements.gameArea;
 
                 if (state.current >= state.trials) {
-                    const accuracy = state.trials > 0 ? state.correct / state.trials : 0;
+                    const rawAccuracy = state.trials > 0 ? state.correct / state.trials : 0;
+                    const numChoices = state.lastOptionCount || 4;
+                    const accuracy = this.chanceCorrect(rawAccuracy, numChoices);
                     const avgRT = state.reactionTimes.length > 0
                         ? state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length
                         : this.CONFIG.SPEED_RT_NORM_MS;
-                    const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.SPEED_RT_NORM_MS));
+                    const rtScore = rawAccuracy > (1 / numChoices)
+                        ? Math.max(0, 1 - (avgRT / this.CONFIG.SPEED_RT_NORM_MS))
+                        : 0;
                     const score = Math.round((accuracy * 50) + (rtScore * 50));
 
                     this.completeTask(score);
@@ -2678,7 +2402,11 @@
                 const patterns = content.formulas.slice(0, 4 + Math.floor(this.state.currentDifficulty / 2));
                 const correct = patterns[Math.floor(Math.random() * patterns.length)];
                 const options = this.shuffle(patterns);
-                
+
+                // Store patterns on state for trial logging and chance correction
+                state.patterns = patterns;
+                state.lastOptionCount = patterns.length;
+
                 this.clearGameArea();
 
                 // Create UI
@@ -2726,88 +2454,23 @@
                 this.cleanupCurrentGame();
 
                 const scores = this.state.taskScores;
+                const difficulties = this.state.taskDifficulties || scores.map(() => 1);
                 const average = scores.length > 0
-                    ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+                    ? this.adjustedAverage(scores, difficulties)
                     : 0;
+                const sem = this.computeSEM(scores);
 
                 this.state.gameScores[this.state.currentGame] = average;
-
-                // Auto-sync this game result to Google Sheets
-                this.syncToSheets(this.state.currentGame, average);
+                if (!this.state.gameSEMs) this.state.gameSEMs = {};
+                this.state.gameSEMs[this.state.currentGame] = sem;
+                if (!this.state.gameDifficulties) this.state.gameDifficulties = {};
+                this.state.gameDifficulties[this.state.currentGame] = difficulties;
 
                 this.showScreen('menu');
                 this.renderGames();
                 this.showFeedback(`Game complete! Score: ${average}%`, 'success');
             },
 
-            // Validate a Google Apps Script URL
-            isValidSheetsUrl(url) {
-                try {
-                    const parsed = new URL(url);
-                    return parsed.protocol === 'https:' &&
-                        parsed.hostname === 'script.google.com';
-                } catch {
-                    return false;
-                }
-            },
-
-            // Sync a game result to Google Sheets
-            syncToSheets(gameId, score) {
-                const url = this.settings && this.settings.sheetsUrl;
-                if (!url) return;
-
-                if (!this.isValidSheetsUrl(url)) {
-                    this.updateSyncStatus('disconnected');
-                    return;
-                }
-
-                const user = this.state.user || {};
-                const payload = {
-                    timestamp: new Date().toISOString(),
-                    student: user.name || '',
-                    age: user.age || '',
-                    grade: user.grade || '',
-                    teacher: user.teacher || '',
-                    period: user.period || '',
-                    game: gameId,
-                    score: score,
-                    difficulty: this.state.currentDifficulty,
-                    duration: Math.round((Date.now() - this.state.gameStart) / 1000),
-                    integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
-                };
-
-                this.updateSyncStatus('syncing');
-
-                // no-cors mode returns an opaque response — .then() fires
-                // even on server errors; only network failures hit .catch().
-                // Use 'pending' (not 'connected') to avoid false confidence.
-                fetch(url, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(payload)
-                }).then(() => {
-                    this.updateSyncStatus('pending');
-                    // Queue for retry verification: store last synced game
-                    this._lastSyncedGame = gameId;
-                }).catch((err) => {
-                    console.warn('Sheets sync failed:', err);
-                    this.updateSyncStatus('disconnected');
-                    this.showFeedback('Sync failed — data saved locally', 'warning');
-                    // Store unsent data for potential retry (bounded)
-                    if (this._unsyncedResults.length < this._MAX_UNSYNCED) {
-                        this._unsyncedResults.push(payload);
-                    }
-                });
-            },
-
-            // Update sync status indicator
-            updateSyncStatus(status) {
-                const el = this.elements.syncStatus;
-                if (!el) return;
-                el.className = 'sync-status ' + status;
-            },
-            
             // Exit game
             async exitGame() {
                 if (this.state.currentTask === 0 || await this.showConfirm('Exit game? Progress will be lost.', 'Exit Game')) {
@@ -2816,6 +2479,7 @@
                     this.state.currentGame = null;
                     this.state.currentTask = 0;
                     this.state.taskScores = [];
+                    this.state.taskDifficulties = [];
                     this.showScreen('menu');
                 }
             },
@@ -2832,9 +2496,10 @@
                     date: new Date().toISOString(),
                     user: this.state.user,
                     scores: {...scores},
+                    sems: {...(this.state.gameSEMs || {})},
+                    difficulties: {...(this.state.gameDifficulties || {})},
                     average,
-                    duration: Date.now() - this.state.sessionStart,
-                    integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
+                    duration: Date.now() - this.state.sessionStart
                 };
                 
                 this.state.history.push(sessionData);
@@ -2843,8 +2508,6 @@
                 // Render report
                 const u = this.state.user;
                 const infoParts = [u.name, `Age ${u.age}`, `Grade ${u.grade}`];
-                if (u.teacher) infoParts.push(u.teacher);
-                if (u.period) infoParts.push(`Period ${u.period}`);
                 infoParts.push(new Date().toLocaleDateString());
                 this.elements.reportInfo.textContent = infoParts.join(' | ');
                 
@@ -2864,12 +2527,16 @@
                     
                     const value = document.createElement('div');
                     value.className = 'score-value';
-                    value.textContent = `${scores[game.id] || 0}%`;
-                    
+                    const gameScore = scores[game.id] || 0;
+                    const gameSEM = this.state.gameSEMs && this.state.gameSEMs[game.id];
+                    value.textContent = gameSEM != null
+                        ? `${gameScore}% \u00B1${gameSEM}`
+                        : `${gameScore}%`;
+
                     const label = document.createElement('div');
                     label.className = 'score-label';
                     label.textContent = game.name;
-                    
+
                     card.appendChild(icon);
                     card.appendChild(value);
                     card.appendChild(label);
@@ -3020,184 +2687,6 @@
                 container.style.display = 'block';
             },
 
-            // Toggle session history view
-            toggleHistory() {
-                const section = this.elements.historySection;
-                const container = this.elements.historyContainer;
-                const isVisible = section.style.display !== 'none';
-
-                if (isVisible) {
-                    section.style.display = 'none';
-                    this.elements.historyBtn.textContent = 'View History';
-                    return;
-                }
-
-                // Build history table
-                while (container.firstChild) container.removeChild(container.firstChild);
-
-                const history = this.state.history;
-                if (history.length === 0) {
-                    const empty = document.createElement('div');
-                    empty.className = 'history-empty';
-                    empty.textContent = 'No previous sessions recorded.';
-                    container.appendChild(empty);
-                } else {
-                    const table = document.createElement('table');
-                    table.className = 'history-table';
-
-                    const thead = document.createElement('thead');
-                    const headerRow = document.createElement('tr');
-                    ['Date', 'Student', 'Memory', 'Attention', 'Flexibility', 'Speed', 'Average'].forEach(h => {
-                        const th = document.createElement('th');
-                        th.textContent = h;
-                        headerRow.appendChild(th);
-                    });
-                    thead.appendChild(headerRow);
-                    table.appendChild(thead);
-
-                    const tbody = document.createElement('tbody');
-                    history.slice().reverse().forEach(entry => {
-                        const tr = document.createElement('tr');
-                        const date = new Date(entry.date).toLocaleDateString();
-                        const name = entry.user ? entry.user.name : '—';
-                        const scores = entry.scores || {};
-                        [date, name,
-                            scores.memory != null ? scores.memory + '%' : '—',
-                            scores.attention != null ? scores.attention + '%' : '—',
-                            scores.flexibility != null ? scores.flexibility + '%' : '—',
-                            scores.speed != null ? scores.speed + '%' : '—',
-                            entry.average != null ? entry.average + '%' : '—'
-                        ].forEach(val => {
-                            const td = document.createElement('td');
-                            td.textContent = val;
-                            tr.appendChild(td);
-                        });
-                        tbody.appendChild(tr);
-                    });
-                    table.appendChild(tbody);
-                    container.appendChild(table);
-                }
-
-                section.style.display = 'block';
-                this.elements.historyBtn.textContent = 'Hide History';
-            },
-
-            // Export data
-            // Helper: trigger a file download
-            downloadFile(content, filename, type) {
-                try {
-                    const blob = new Blob([content], { type });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                } catch (error) {
-                    // Fallback for sandboxed environments
-                    const modal = document.createElement('div');
-                    modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:10px;box-shadow:0 0 20px rgba(0,0,0,0.3);z-index:9999;max-width:90%;max-height:90%;overflow:auto;';
-                    const heading = document.createElement('h3');
-                    heading.textContent = 'Copy Your Data';
-                    modal.appendChild(heading);
-                    const textarea = document.createElement('textarea');
-                    textarea.style.cssText = 'width:100%;max-width:400px;height:300px;font-family:monospace;';
-                    textarea.readOnly = true;
-                    textarea.value = content;
-                    modal.appendChild(textarea);
-                    const closeBtn = document.createElement('button');
-                    closeBtn.className = 'btn';
-                    closeBtn.textContent = 'Close';
-                    closeBtn.style.marginTop = '1rem';
-                    closeBtn.addEventListener('click', () => modal.remove());
-                    modal.appendChild(closeBtn);
-                    document.body.appendChild(modal);
-                    textarea.select();
-                }
-            },
-
-            // Convert trial log to CSV
-            trialLogToCSV() {
-                if (this.state.trialLog.length === 0) return '';
-                // Collect all unique keys across all trials
-                const allKeys = new Set();
-                this.state.trialLog.forEach(t => Object.keys(t).forEach(k => allKeys.add(k)));
-                const headers = Array.from(allKeys);
-                const rows = this.state.trialLog.map(trial =>
-                    headers.map(h => {
-                        const val = trial[h];
-                        if (val === null || val === undefined) return '';
-                        if (typeof val === 'string' && (val.includes(',') || val.includes('"'))) {
-                            return '"' + val.replace(/"/g, '""') + '"';
-                        }
-                        return String(val);
-                    }).join(',')
-                );
-                return headers.join(',') + '\n' + rows.join('\n');
-            },
-
-            exportData() {
-                // Filter history to only include current student's sessions (privacy)
-                const currentName = this.state.user ? this.state.user.name : null;
-                const filteredHistory = currentName
-                    ? this.state.history.filter(h => h.user && h.user.name === currentName)
-                    : [];
-
-                const timestamp = Date.now();
-                const studentSlug = (currentName || 'unknown').replace(/\s+/g, '_').toLowerCase();
-
-                // 1. Summary JSON (game-level scores + metadata)
-                const summaryData = {
-                    exportVersion: 2,
-                    user: this.state.user,
-                    session: {
-                        date: new Date().toISOString(),
-                        scores: this.state.gameScores,
-                        difficulty: this.state.currentDifficulty,
-                        integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
-                    },
-                    history: filteredHistory,
-                    trialCount: this.state.trialLog.length
-                };
-                this.downloadFile(
-                    JSON.stringify(summaryData, null, 2),
-                    `neural-flow-summary-${studentSlug}-${timestamp}.json`,
-                    'application/json'
-                );
-
-                // 2. Trial-level CSV (raw research data)
-                if (this.state.trialLog.length > 0) {
-                    const csv = this.trialLogToCSV();
-                    this.downloadFile(
-                        csv,
-                        `neural-flow-trials-${studentSlug}-${timestamp}.csv`,
-                        'text/csv'
-                    );
-                }
-
-                // 3. Trial-level JSON (full fidelity for programmatic analysis)
-                if (this.state.trialLog.length > 0) {
-                    const trialData = {
-                        exportVersion: 2,
-                        user: this.state.user,
-                        sessionDate: new Date().toISOString(),
-                        trials: this.state.trialLog
-                    };
-                    this.downloadFile(
-                        JSON.stringify(trialData, null, 2),
-                        `neural-flow-trials-${studentSlug}-${timestamp}.json`,
-                        'application/json'
-                    );
-                }
-
-                this.showFeedback(
-                    this.state.trialLog.length > 0
-                        ? 'Exported: summary + trial-level data (JSON + CSV)'
-                        : 'Summary data exported (no trial data yet)',
-                    'success'
-                );
-            },
-            
             // Reset application
             async reset() {
                 if (await this.showConfirm('Start a new session? Current progress will be saved.', 'New Session')) {
@@ -3208,21 +2697,21 @@
                         currentTask: 0,
                         currentDifficulty: 1,
                         taskScores: [],
+                        taskDifficulties: [],
                         gameScores: {},
+                        gameSEMs: {},
+                        gameDifficulties: {},
                         sessionStart: null,
                         history: this.state.history,
                         gameStart: null,
                         storageAvailable: this.state.storageAvailable,
-                        integrityChecksum: null,
                         trialLog: []
                     };
-                    
+
                     this.showScreen('login');
                     document.getElementById('name').value = '';
                     document.getElementById('age').value = '';
                     document.getElementById('grade').value = '';
-                    document.getElementById('teacher').value = '';
-                    document.getElementById('period').value = '';
                 }
             },
             
@@ -3308,10 +2797,6 @@
             
             // Cleanup on unload
             cleanup() {
-                // Clear integrity check interval
-                if (this._integrityInterval) {
-                    clearInterval(this._integrityInterval);
-                }
                 // Clear feedback dismiss timer
                 if (this._feedbackTimer) {
                     clearTimeout(this._feedbackTimer);

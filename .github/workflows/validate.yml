@@ -47,8 +47,6 @@ jobs:
             src/state.js
             src/scoring.js
             src/ui.js
-            src/export.js
-            src/sync.js
             src/games/memory.js
             src/games/attention.js
             src/games/flexibility.js

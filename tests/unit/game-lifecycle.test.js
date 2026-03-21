@@ -5,7 +5,7 @@ describe('Game Lifecycle', () => {
   let App;
 
   beforeEach(() => {
-    ({ App } = setupFull({ user: { teacher: '', period: '' } }));
+    ({ App } = setupFull({ user: true }));
   });
 
   describe('startGame', () => {
@@ -28,7 +28,7 @@ describe('Game Lifecycle', () => {
       App.state.currentGame = 'memory';
       App.state.taskScores = [80, 90, 70];
       App.state.gameStart = Date.now() - 5000;
-      App.settings = { sheetsUrl: '' };
+
       App.showScreen = () => {};
       App.renderGames = () => {};
 
@@ -41,7 +41,7 @@ describe('Game Lifecycle', () => {
       App.state.currentGame = 'attention';
       App.state.taskScores = [];
       App.state.gameStart = Date.now();
-      App.settings = { sheetsUrl: '' };
+
       App.showScreen = () => {};
       App.renderGames = () => {};
 
@@ -54,7 +54,7 @@ describe('Game Lifecycle', () => {
       App.state.currentGame = 'memory';
       App.state.taskScores = [80];
       App.state.gameStart = Date.now();
-      App.settings = { sheetsUrl: '' };
+
       App.showScreen = () => {};
       App.renderGames = () => {};
 
@@ -100,7 +100,7 @@ describe('Game Lifecycle', () => {
       App.state.currentGame = 'memory';
       App.state.taskScores = [80, 90, 70];
       App.state.gameStart = Date.now();
-      App.settings = { sheetsUrl: '' };
+
 
       let endGameCalled = false;
       App.endGame = () => { endGameCalled = true; };

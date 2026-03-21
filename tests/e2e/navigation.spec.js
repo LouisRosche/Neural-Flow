@@ -2,38 +2,7 @@
 import { test, expect } from '@playwright/test';
 import { login, startGame } from './helpers.js';
 
-test.describe('Navigation & Settings E2E', () => {
-
-  test('settings modal opens and closes', async ({ page }) => {
-    await login(page);
-
-    await page.locator('#settingsBtn').click();
-    await expect(page.locator('#settingsModal')).toHaveClass(/active/);
-    await expect(page.locator('#sheetsUrl')).toBeVisible();
-
-    await page.locator('#closeSettingsBtn').click();
-    await expect(page.locator('#settingsModal')).not.toHaveClass(/active/);
-  });
-
-  test('settings modal closes on backdrop click', async ({ page }) => {
-    await login(page);
-
-    await page.locator('#settingsBtn').click();
-    await expect(page.locator('#settingsModal')).toHaveClass(/active/);
-
-    await page.locator('#settingsModal').click({ position: { x: 5, y: 5 } });
-    await expect(page.locator('#settingsModal')).not.toHaveClass(/active/);
-  });
-
-  test('settings modal closes on Escape', async ({ page }) => {
-    await login(page);
-
-    await page.locator('#settingsBtn').click();
-    await expect(page.locator('#settingsModal')).toHaveClass(/active/);
-
-    await page.keyboard.press('Escape');
-    await expect(page.locator('#settingsModal')).not.toHaveClass(/active/);
-  });
+test.describe('Navigation E2E', () => {
 
   test('exit game button returns to menu via confirmation', async ({ page }) => {
     await login(page);

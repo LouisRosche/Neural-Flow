@@ -105,7 +105,7 @@ test.describe('Full Session E2E', () => {
   test.setTimeout(180000);
 
   test('complete all 4 games and verify report screen', async ({ page }) => {
-    await login(page, { name: 'Full Session Student', age: 14, grade: 9, teacher: 'Ms. Johnson', period: '3' });
+    await login(page, { name: 'Full Session Student', age: 14, grade: 9 });
 
     expect(await page.locator('.game-card').count()).toBe(4);
 
@@ -148,7 +148,5 @@ test.describe('Full Session E2E', () => {
     await expect(page.locator('#recommendations')).toBeVisible();
     expect(await page.locator('.rec-card').count()).toBe(4);
     expect(await page.locator('.rec-tier').count()).toBe(4);
-    await expect(page.locator('#exportBtn')).toBeVisible();
-    await expect(page.locator('#historyBtn')).toBeVisible();
   });
 });

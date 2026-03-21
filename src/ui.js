@@ -21,21 +21,8 @@ export function cacheElements() {
         reportScores: document.getElementById('reportScores'),
         reportInfo: document.getElementById('reportInfo'),
         exitGameBtn: document.getElementById('exitGameBtn'),
-        exportBtn: document.getElementById('exportBtn'),
         resetBtn: document.getElementById('resetBtn'),
-        integrityCheck: document.getElementById('integrityCheck'),
         recommendations: document.getElementById('recommendations'),
-        settingsBtn: document.getElementById('settingsBtn'),
-        settingsModal: document.getElementById('settingsModal'),
-        sheetsUrl: document.getElementById('sheetsUrl'),
-        saveSettingsBtn: document.getElementById('saveSettingsBtn'),
-        closeSettingsBtn: document.getElementById('closeSettingsBtn'),
-        syncStatus: document.getElementById('syncStatus'),
-        toggleScript: document.getElementById('toggleScript'),
-        scriptCode: document.getElementById('scriptCode'),
-        historyBtn: document.getElementById('historyBtn'),
-        historySection: document.getElementById('historySection'),
-        historyContainer: document.getElementById('historyContainer'),
         progressBarContainer: document.getElementById('progressBarContainer')
     };
 

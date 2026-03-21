@@ -261,7 +261,6 @@ export const RECOMMENDATIONS = {
 
 // Timing and scoring constants
 export const STORAGE_KEY = 'neural_flow_data';
-export const SETTINGS_KEY = 'neural_flow_settings';
 export const MAX_TASKS = 3;
 export const MAX_DIFFICULTY = 5;
 export const ADAPTIVE_UP = 80;
@@ -276,6 +275,7 @@ export const FLEX_RT_NORM_MS = 3000;
 export const SPEED_RT_NORM_MS = 2000;
 export const FEEDBACK_DISPLAY_MS = 1500;
 export const DEBOUNCE_MS = 300;
+export const DIFFICULTY_BONUS_PER_LEVEL = 3;
 
 // Bundle all config as a single object too, for convenience
 export const CONFIG = {
@@ -284,7 +284,6 @@ export const CONFIG = {
     GRADE_CONTENT,
     RECOMMENDATIONS,
     STORAGE_KEY,
-    SETTINGS_KEY,
     MAX_TASKS,
     MAX_DIFFICULTY,
     ADAPTIVE_UP,
@@ -298,5 +297,6 @@ export const CONFIG = {
     FLEX_RT_NORM_MS,
     SPEED_RT_NORM_MS,
     FEEDBACK_DISPLAY_MS,
-    DEBOUNCE_MS
+    DEBOUNCE_MS,
+    DIFFICULTY_BONUS_PER_LEVEL
 };

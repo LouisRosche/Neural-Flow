@@ -165,7 +165,7 @@ describe('Inline script edge cases', () => {
   let App, win;
 
   beforeEach(() => {
-    ({ App, window: win } = setupFull({ user: { teacher: '', period: '' } }));
+    ({ App, window: win } = setupFull({ user: true }));
   });
 
   // ============================================================
@@ -204,9 +204,9 @@ describe('Inline script edge cases', () => {
       let scored = null;
       App.completeTask = (s) => { scored = s; };
       App.endAttentionTask();
-      // 60% hit rate, 60% FA rate → d' ≈ 0 → score ≈ 50
-      expect(scored).toBeGreaterThanOrEqual(40);
-      expect(scored).toBeLessThanOrEqual(60);
+      // 60% hit rate, 60% FA rate → d' ≈ 0 → score ≈ 25 (recalibrated)
+      expect(scored).toBeGreaterThanOrEqual(15);
+      expect(scored).toBeLessThanOrEqual(35);
     });
 
     it('handles zero distractorsShown without crashing', () => {
@@ -247,6 +247,7 @@ describe('Inline script edge cases', () => {
         current: 3, // At boundary → triggers scoring
         correct: 0,
         reactionTimes: [], // Empty!
+        correctRTs: [],
         startTime: Date.now()
       };
       let scored = null;
@@ -266,6 +267,7 @@ describe('Inline script edge cases', () => {
         current: 3,
         correct: 2,
         reactionTimes: [500, 600, 400],
+        correctRTs: [500, 400],
         startTime: Date.now()
       };
       let scored = null;
@@ -330,8 +332,6 @@ describe('Inline script edge cases', () => {
       if (fields.name !== undefined) doc.getElementById('name').value = fields.name;
       if (fields.age !== undefined) doc.getElementById('age').value = fields.age;
       if (fields.grade !== undefined) doc.getElementById('grade').value = fields.grade;
-      if (fields.teacher !== undefined) doc.getElementById('teacher').value = fields.teacher;
-      if (fields.period !== undefined) doc.getElementById('period').value = fields.period;
     }
 
     // Reset user to null before each login test
@@ -397,13 +397,6 @@ describe('Inline script edge cases', () => {
       expect(App.state.user.name).toBe('<script>alert(1)</script>');
     });
 
-    it('allows empty teacher and period fields', () => {
-      const doc = win.document;
-      setLoginFields(doc, { name: 'Alice', age: '12', grade: '6', teacher: '', period: '' });
-      App.handleLogin();
-      expect(App.state.user).not.toBeNull();
-      expect(App.state.user.teacher).toBe('');
-    });
   });
 
   // ============================================================
@@ -458,26 +451,6 @@ describe('Inline script edge cases', () => {
   // ============================================================
   // HISTORY EDGE CASES
   // ============================================================
-
-  describe('toggleHistory edge cases', () => {
-    it('handles history entries with null user', () => {
-      App.state.history = [
-        { date: new Date().toISOString(), user: null, scores: { memory: 80 }, average: 80 }
-      ];
-      App.state.gameScores = { memory: 70 };
-      App.showReport();
-      expect(() => App.toggleHistory()).not.toThrow();
-    });
-
-    it('handles history entries with missing scores', () => {
-      App.state.history = [
-        { date: new Date().toISOString(), user: { name: 'Bob' }, scores: {}, average: 0 }
-      ];
-      App.state.gameScores = { memory: 70 };
-      App.showReport();
-      expect(() => App.toggleHistory()).not.toThrow();
-    });
-  });
 
   // ============================================================
   // CLEANUP IDEMPOTENCY
@@ -568,21 +541,4 @@ describe('Inline script edge cases', () => {
     });
   });
 
-  // ============================================================
-  // EXPORT EDGE CASES
-  // ============================================================
-
-  describe('export edge cases', () => {
-    it('exportData does not throw with empty trialLog', () => {
-      App.state.trialLog = [];
-      App.state.gameScores = { memory: 80 };
-      expect(() => App.exportData()).not.toThrow();
-    });
-
-    it('exportData does not throw with missing gameScores', () => {
-      App.state.gameScores = {};
-      App.state.trialLog = [];
-      expect(() => App.exportData()).not.toThrow();
-    });
-  });
 });
