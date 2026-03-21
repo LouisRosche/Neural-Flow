@@ -192,87 +192,10 @@ describe('UI Hardening', () => {
   });
 
   // ============================================================
-  // SETTINGS MODAL
-  // ============================================================
-
-  describe('settings modal', () => {
-    it('opens settings modal on settings button click', () => {
-      App.bindEvents();
-      App.settings = { sheetsUrl: 'https://script.google.com/test' };
-      App.elements.settingsBtn.click();
-
-      expect(App.elements.settingsModal.classList.contains('active')).toBe(true);
-      expect(App.elements.sheetsUrl.value).toBe('https://script.google.com/test');
-    });
-
-    it('closes settings modal on close button click', () => {
-      App.bindEvents();
-      App.elements.settingsModal.classList.add('active');
-      App.elements.closeSettingsBtn.click();
-
-      expect(App.elements.settingsModal.classList.contains('active')).toBe(false);
-    });
-
-    it('rejects invalid sheets URL on save', () => {
-      App.bindEvents();
-      App.elements.settingsModal.classList.add('active');
-      App.elements.sheetsUrl.value = 'http://evil.com/hack';
-      App.elements.saveSettingsBtn.click();
-
-      // Should show error feedback, modal stays open
-      const feedback = doc.querySelector('.feedback.error');
-      expect(feedback).not.toBeNull();
-    });
-
-    it('saves valid sheets URL and closes modal', () => {
-      App.bindEvents();
-      App.settings = { sheetsUrl: '' };
-      App.elements.settingsModal.classList.add('active');
-      App.elements.sheetsUrl.value = 'https://script.google.com/macros/s/test/exec';
-      App.elements.saveSettingsBtn.click();
-
-      expect(App.settings.sheetsUrl).toBe('https://script.google.com/macros/s/test/exec');
-      expect(App.elements.settingsModal.classList.contains('active')).toBe(false);
-    });
-
-    it('saves empty URL to disable sync', () => {
-      App.bindEvents();
-      App.settings = { sheetsUrl: 'https://script.google.com/old' };
-      App.elements.settingsModal.classList.add('active');
-      App.elements.sheetsUrl.value = '';
-      App.elements.saveSettingsBtn.click();
-
-      expect(App.settings.sheetsUrl).toBe('');
-    });
-
-    it('closes modal when clicking backdrop', () => {
-      App.bindEvents();
-      App.elements.settingsModal.classList.add('active');
-
-      // Simulate clicking the modal backdrop (the modal element itself, not its child)
-      const clickEvent = new win.MouseEvent('click', { bubbles: true });
-      Object.defineProperty(clickEvent, 'target', { value: App.elements.settingsModal });
-      App.elements.settingsModal.dispatchEvent(clickEvent);
-
-      expect(App.elements.settingsModal.classList.contains('active')).toBe(false);
-    });
-  });
-
-  // ============================================================
   // KEYBOARD NAVIGATION
   // ============================================================
 
   describe('keyboard navigation', () => {
-    it('Escape closes settings modal', () => {
-      App.bindEvents();
-      App.elements.settingsModal.classList.add('active');
-
-      const event = new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
-      doc.dispatchEvent(event);
-
-      expect(App.elements.settingsModal.classList.contains('active')).toBe(false);
-    });
-
     it('game card responds to Enter key', () => {
       App.state.gameScores = {};
       App.renderGames();
@@ -905,7 +828,6 @@ describe('UI Hardening', () => {
       App.state.currentGame = 'memory';
       App.state.taskScores = [80, 70, 90];
       App.state.gameStart = Date.now() - 5000;
-      App.settings = { sheetsUrl: '' };
 
       App.endGame();
 
@@ -917,7 +839,6 @@ describe('UI Hardening', () => {
       App.state.currentGame = 'memory';
       App.state.taskScores = [80, 70, 90];
       App.state.gameStart = Date.now();
-      App.settings = { sheetsUrl: '' };
 
       App.endGame();
 

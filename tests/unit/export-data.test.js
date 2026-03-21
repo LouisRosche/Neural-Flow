@@ -43,7 +43,6 @@ describe('exportData', () => {
       user: { name: 'Alice', age: 12, grade: 6 },
       gameScores: { memory: 80, attention: 70 },
       currentDifficulty: 2,
-      integrityChecksum: 'verified',
       history: [],
       trialLog: []
     };
@@ -67,7 +66,6 @@ describe('exportData', () => {
       user: { name: 'Bob Smith', age: 14, grade: 9 },
       gameScores: { memory: 85, attention: 90, flexibility: 75, speed: 80 },
       currentDifficulty: 3,
-      integrityChecksum: 'unverified',
       history: [],
       trialLog: [
         { game: 'memory', correct: true, rt: 500 },
@@ -99,7 +97,6 @@ describe('exportData', () => {
       user: { name: 'Alice', age: 12, grade: 6 },
       gameScores: { memory: 80 },
       currentDifficulty: 1,
-      integrityChecksum: 'unverified',
       history: [
         { user: { name: 'Alice' }, scores: { memory: 70 } },
         { user: { name: 'Bob' }, scores: { memory: 60 } },
@@ -118,7 +115,6 @@ describe('exportData', () => {
       user: null,
       gameScores: { memory: 80 },
       currentDifficulty: 1,
-      integrityChecksum: 'unverified',
       history: [],
       trialLog: []
     };

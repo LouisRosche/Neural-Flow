@@ -2,8 +2,8 @@
 
 import { CONFIG, GAMES } from './config.js';
 import {
-    createInitialState, testStorage, generateChecksum,
-    loadState, saveState, loadSettings, saveSettings
+    createInitialState, testStorage,
+    loadState, saveState
 } from './state.js';
 import { adaptDifficulty } from './scoring.js';
 import {
@@ -11,7 +11,6 @@ import {
     clearGameArea, renderGames, showGameInstructions, clearFeedbackTimer
 } from './ui.js';
 import { exportData } from './export.js';
-import { syncToSheets, isValidSheetsUrl, updateSyncStatus } from './sync.js';
 import {
     createMemoryState, showMemorySequence, showMemoryInput,
     handleMemoryInput, clearMemoryInput
@@ -42,13 +41,6 @@ const App = {
     // Timer registry for cleanup
     _timers: new Set(),
 
-    // Failed sync payloads
-    _unsyncedResults: [],
-    _MAX_UNSYNCED: 20,
-
-    // Settings
-    settings: { sheetsUrl: '' },
-
     // Per-game state holders
     memoryState: null,
     attentionState: null,
@@ -62,11 +54,9 @@ const App = {
     init() {
         try {
             this.state.storageAvailable = testStorage();
-            this.settings = loadSettings(this.state.storageAvailable);
             this.elements = cacheElements();
             this.state.history = loadState(this.state.storageAvailable);
             this.bindEvents();
-            this.setupIntegrityCheck();
             this.render();
         } catch (error) {
             this.handleError('Initialization failed', error);
@@ -112,31 +102,6 @@ const App = {
             grade: this.state.user ? this.state.user.grade : null,
             ...data
         });
-    },
-
-    // ========================
-    // Integrity checking
-    // ========================
-
-    setupIntegrityCheck() {
-        let devtools = { open: false };
-        const threshold = 160;
-
-        this._integrityInterval = setInterval(() => {
-            const devtoolsOpen = window.outerHeight - window.innerHeight > threshold ||
-                window.outerWidth - window.innerWidth > threshold;
-
-            if (devtoolsOpen && !devtools.open) {
-                devtools.open = true;
-                this.state.integrityChecksum = 'unverified';
-                if (this.state.currentGame) {
-                    this.elements.integrityCheck.classList.add('active');
-                }
-            } else if (!devtoolsOpen && devtools.open) {
-                devtools.open = false;
-                this.elements.integrityCheck.classList.remove('active');
-            }
-        }, 500);
     },
 
     // ========================
@@ -190,64 +155,6 @@ const App = {
             }
         });
 
-        // Settings UI
-        this.addEventListener(this.elements.settingsBtn, 'click', () => {
-            this.elements.sheetsUrl.value = this.settings.sheetsUrl || '';
-            this.elements.settingsModal.classList.add('active');
-            this.elements.sheetsUrl.focus();
-        });
-        this.addEventListener(this.elements.closeSettingsBtn, 'click', () => {
-            this.elements.settingsModal.classList.remove('active');
-            this.elements.settingsBtn.focus();
-        });
-        this.addEventListener(this.elements.saveSettingsBtn, 'click', () => {
-            const url = this.elements.sheetsUrl.value.trim();
-            if (url && !isValidSheetsUrl(url)) {
-                showFeedback('Please enter a valid Google Apps Script URL (https://script.google.com/...)', 'error');
-                return;
-            }
-            this.settings.sheetsUrl = url;
-            saveSettings(this.settings, this.state.storageAvailable);
-            updateSyncStatus(this.elements.syncStatus, url ? 'connected' : 'disconnected');
-            this.elements.settingsModal.classList.remove('active');
-            showFeedback(url ? 'Google Sheets sync enabled' : 'Sync disabled', 'success');
-        });
-        this.addEventListener(this.elements.settingsModal, 'click', (e) => {
-            if (e.target === this.elements.settingsModal) {
-                this.elements.settingsModal.classList.remove('active');
-            }
-        });
-        this.addEventListener(this.elements.toggleScript, 'click', () => {
-            this.elements.scriptCode.classList.toggle('open');
-            this.elements.toggleScript.textContent = this.elements.scriptCode.classList.contains('open')
-                ? '\u25BC Hide Apps Script code' : '\u25B6 Show Apps Script code';
-        });
-
-        // Keyboard: Escape closes settings modal + focus trap
-        this.addEventListener(document, 'keydown', (e) => {
-            if (!this.elements.settingsModal.classList.contains('active')) return;
-
-            if (e.key === 'Escape') {
-                this.elements.settingsModal.classList.remove('active');
-                this.elements.settingsBtn.focus();
-                return;
-            }
-
-            if (e.key === 'Tab') {
-                const modal = this.elements.settingsModal.querySelector('.modal');
-                const focusable = modal.querySelectorAll('input, button, [tabindex]:not([tabindex="-1"])');
-                if (focusable.length === 0) return;
-                const first = focusable[0];
-                const last = focusable[focusable.length - 1];
-                if (e.shiftKey && document.activeElement === first) {
-                    e.preventDefault();
-                    last.focus();
-                } else if (!e.shiftKey && document.activeElement === last) {
-                    e.preventDefault();
-                    first.focus();
-                }
-            }
-        });
     },
 
     // ========================
@@ -374,7 +281,6 @@ const App = {
 
         this.state.user = { name, age, grade: grade === 'K' ? 'K' : parseInt(grade), teacher, period };
         this.state.sessionStart = Date.now();
-        this.state.integrityChecksum = generateChecksum(this.state);
 
         this.showScreen('menu');
         this._renderGames();
@@ -521,20 +427,6 @@ const App = {
 
         this.state.gameScores[this.state.currentGame] = average;
 
-        // Auto-sync this game result to Google Sheets
-        syncToSheets({
-            sheetsUrl: this.settings.sheetsUrl,
-            user: this.state.user,
-            gameId: this.state.currentGame,
-            score: average,
-            currentDifficulty: this.state.currentDifficulty,
-            gameStart: this.state.gameStart,
-            integrityChecksum: this.state.integrityChecksum,
-            syncStatusEl: this.elements.syncStatus,
-            unsyncedResults: this._unsyncedResults,
-            maxUnsynced: this._MAX_UNSYNCED
-        });
-
         this.showScreen('menu');
         this._renderGames();
         showFeedback(`Game complete! Score: ${average}%`, 'success');
@@ -608,8 +500,7 @@ const App = {
             user: this.state.user,
             scores: { ...scores },
             average,
-            duration: Date.now() - this.state.sessionStart,
-            integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
+            duration: Date.now() - this.state.sessionStart
         };
 
         this.state.history.push(sessionData);
@@ -873,7 +764,6 @@ const App = {
                 gameStart: null,
                 history: this.state.history,
                 storageAvailable: this.state.storageAvailable,
-                integrityChecksum: null,
                 trialLog: []
             };
 
@@ -902,9 +792,6 @@ const App = {
     // ========================
 
     cleanup() {
-        if (this._integrityInterval) {
-            clearInterval(this._integrityInterval);
-        }
         clearFeedbackTimer();
         this.clearTimers();
         this.listeners.forEach((handlers, element) => {

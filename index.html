@@ -585,51 +585,6 @@
             outline-offset: 2px;
         }
 
-        /* Anti-cheat overlay */
-        .integrity-check {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
-            color: white;
-            display: none;
-            z-index: 9999;
-            padding: 2rem;
-            text-align: center;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .integrity-check.active {
-            display: flex;
-        }
-
-        /* Settings */
-        .header {
-            position: relative;
-        }
-
-        .settings-btn {
-            position: absolute;
-            top: 50%;
-            right: 1.5rem;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            opacity: 0.8;
-            transition: var(--transition);
-        }
-
-        .settings-btn:hover {
-            opacity: 1;
-            transform: translateY(-50%) rotate(90deg);
-        }
-
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -659,59 +614,6 @@
 
         .modal h3 {
             margin-bottom: 1rem;
-        }
-
-        .sync-status {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-left: 0.5rem;
-            vertical-align: middle;
-        }
-
-        .sync-status.connected { background: var(--success); }
-        .sync-status.pending { background: var(--primary); }
-        .sync-status.disconnected { background: var(--text-muted); }
-        .sync-status.syncing { background: var(--warning); animation: pulse 1s infinite; }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        .setup-code {
-            background: #1e1b4b;
-            color: #e0e7ff;
-            padding: 1rem;
-            border-radius: calc(var(--radius) / 2);
-            font-family: monospace;
-            font-size: 0.75rem;
-            white-space: pre-wrap;
-            word-break: break-all;
-            max-height: 200px;
-            overflow-y: auto;
-            margin-top: 0.5rem;
-        }
-
-        .collapsible-header {
-            cursor: pointer;
-            user-select: none;
-            color: var(--primary);
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .collapsible-header:hover {
-            text-decoration: underline;
-        }
-
-        .collapsible-content {
-            display: none;
-        }
-
-        .collapsible-content.open {
-            display: block;
         }
 
         /* Recommendations */
@@ -891,7 +793,6 @@
     <div class="app-container" role="application" aria-label="Neural Flow Executive Function Training">
         <header class="header">
             <h1>🧠 Neural Flow - Executive Function Training</h1>
-            <button class="settings-btn" id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
         </header>
 
         <main class="content" role="main">
@@ -1006,63 +907,6 @@
                 </div>
             </div>
         </main>
-    </div>
-
-    <!-- Anti-cheat overlay -->
-    <div class="integrity-check" id="integrityCheck">
-        <div>
-            <h2>⚠️ Integrity Check Failed</h2>
-            <p>The developer console was detected. Please close it and refresh the page to continue.</p>
-        </div>
-    </div>
-
-    <!-- Settings modal -->
-    <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-label="Settings">
-        <div class="modal">
-            <h3>⚙ Settings</h3>
-            <div class="form-group">
-                <label class="form-label" for="sheetsUrl">Google Sheets Script URL <span class="sync-status disconnected" id="syncStatus"></span></label>
-                <input type="url" id="sheetsUrl" class="form-input" placeholder="https://script.google.com/macros/s/...">
-                <small style="color: var(--text-muted);">Paste your Google Apps Script web app URL to auto-sync session data after each game.</small>
-            </div>
-            <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 10px; font-size: 0.85rem;">
-                <strong>Quick Setup:</strong>
-                <ol style="margin: 0.5rem 0; padding-left: 1.5rem; color: var(--text-muted);">
-                    <li>Create a new Google Sheet</li>
-                    <li>Add headers in Row 1: <em>Timestamp, Student, Age, Grade, Teacher, Period, Game, Score, Difficulty, Duration, Integrity</em></li>
-                    <li>Go to <strong>Extensions → Apps Script</strong></li>
-                    <li>Replace the code with the script below, then <strong>Deploy → New deployment → Web app</strong> (set access to "Anyone")</li>
-                    <li>Copy the deployment URL and paste it above</li>
-                </ol>
-                <div class="collapsible-header" id="toggleScript">▶ Show Apps Script code</div>
-                <div class="collapsible-content" id="scriptCode">
-                    <div class="setup-code">function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = JSON.parse(e.postData.contents);
-  sheet.appendRow([
-    data.timestamp,
-    data.student,
-    data.age,
-    data.grade,
-    data.teacher,
-    data.period,
-    data.game,
-    data.score,
-    data.difficulty,
-    data.duration,
-    data.integrity
-  ]);
-  return ContentService
-    .createTextOutput(JSON.stringify({status: 'ok'}))
-    .setMimeType(ContentService.MimeType.JSON);
-}</div>
-                </div>
-            </div>
-            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
-                <button id="closeSettingsBtn" class="btn btn-secondary">Close</button>
-                <button id="saveSettingsBtn" class="btn">Save Settings</button>
-            </div>
-        </div>
     </div>
 
     <!-- Confirmation modal (replaces browser confirm()) -->
@@ -1344,7 +1188,6 @@
                     }
                 },
                 STORAGE_KEY: 'neural_flow_data',
-                SETTINGS_KEY: 'neural_flow_settings',
                 MAX_TASKS: 3,
                 MAX_DIFFICULTY: 5,
                 ADAPTIVE_UP: 80,   // score % to increase difficulty
@@ -1374,7 +1217,6 @@
                 history: [],
                 gameStart: null,
                 storageAvailable: false,
-                integrityChecksum: null,
                 // Trial-level research data
                 trialLog: []
             },
@@ -1388,19 +1230,13 @@
             // Timer registry for cleanup (Set for O(1) add/delete)
             _timers: new Set(),
 
-            // Failed sync payloads (capped to prevent unbounded growth)
-            _unsyncedResults: [],
-            _MAX_UNSYNCED: 20,
-            
             // Initialize application
             init() {
                 try {
                     this.testStorage();
-                    this.loadSettings();
                     this.cacheElements();
                     this.loadState();
                     this.bindEvents();
-                    this.setupIntegrityCheck();
                     this.render();
                 } catch (error) {
                     this.handleError('Initialization failed', error);
@@ -1438,16 +1274,7 @@
                     exitGameBtn: document.getElementById('exitGameBtn'),
                     exportBtn: document.getElementById('exportBtn'),
                     resetBtn: document.getElementById('resetBtn'),
-                    integrityCheck: document.getElementById('integrityCheck'),
                     recommendations: document.getElementById('recommendations'),
-                    settingsBtn: document.getElementById('settingsBtn'),
-                    settingsModal: document.getElementById('settingsModal'),
-                    sheetsUrl: document.getElementById('sheetsUrl'),
-                    saveSettingsBtn: document.getElementById('saveSettingsBtn'),
-                    closeSettingsBtn: document.getElementById('closeSettingsBtn'),
-                    syncStatus: document.getElementById('syncStatus'),
-                    toggleScript: document.getElementById('toggleScript'),
-                    scriptCode: document.getElementById('scriptCode'),
                     historyBtn: document.getElementById('historyBtn'),
                     historySection: document.getElementById('historySection'),
                     historyContainer: document.getElementById('historyContainer'),
@@ -1462,26 +1289,6 @@
                 });
             },
             
-            // Load settings (Google Sheets URL, etc.)
-            loadSettings() {
-                if (!this.state.storageAvailable) return;
-                try {
-                    const saved = localStorage.getItem(this.CONFIG.SETTINGS_KEY);
-                    if (saved) {
-                        this.settings = JSON.parse(saved);
-                    }
-                } catch (e) {}
-                if (!this.settings) this.settings = { sheetsUrl: '' };
-            },
-
-            // Save settings
-            saveSettings() {
-                if (!this.state.storageAvailable) return;
-                try {
-                    localStorage.setItem(this.CONFIG.SETTINGS_KEY, JSON.stringify(this.settings));
-                } catch (e) {}
-            },
-
             // Load saved state
             loadState() {
                 if (!this.state.storageAvailable) return;
@@ -1551,30 +1358,6 @@
                 return data.checksum === expected;
             },
             
-            // Setup basic integrity check
-            setupIntegrityCheck() {
-                // Detect developer tools (basic check)
-                let devtools = {open: false};
-                const threshold = 160;
-
-                this._integrityInterval = setInterval(() => {
-                    const devtoolsOpen = window.outerHeight - window.innerHeight > threshold ||
-                        window.outerWidth - window.innerWidth > threshold;
-
-                    if (devtoolsOpen && !devtools.open) {
-                        devtools.open = true;
-                        this.state.integrityChecksum = 'unverified';
-                        // Show the integrity overlay if a game is active
-                        if (this.state.currentGame) {
-                            this.elements.integrityCheck.classList.add('active');
-                        }
-                    } else if (!devtoolsOpen && devtools.open) {
-                        devtools.open = false;
-                        this.elements.integrityCheck.classList.remove('active');
-                    }
-                }, 500);
-            },
-            
             // Bind event listeners using event delegation
             bindEvents() {
                 // Login button
@@ -1616,65 +1399,6 @@
                     }
                 });
 
-                // Settings UI
-                this.addEventListener(this.elements.settingsBtn, 'click', () => {
-                    this.elements.sheetsUrl.value = this.settings.sheetsUrl || '';
-                    this.elements.settingsModal.classList.add('active');
-                    this.elements.sheetsUrl.focus();
-                });
-                this.addEventListener(this.elements.closeSettingsBtn, 'click', () => {
-                    this.elements.settingsModal.classList.remove('active');
-                    this.elements.settingsBtn.focus();
-                });
-                this.addEventListener(this.elements.saveSettingsBtn, 'click', () => {
-                    const url = this.elements.sheetsUrl.value.trim();
-                    if (url && !this.isValidSheetsUrl(url)) {
-                        this.showFeedback('Please enter a valid Google Apps Script URL (https://script.google.com/...)', 'error');
-                        return;
-                    }
-                    this.settings.sheetsUrl = url;
-                    this.saveSettings();
-                    this.updateSyncStatus(url ? 'connected' : 'disconnected');
-                    this.elements.settingsModal.classList.remove('active');
-                    this.showFeedback(url ? 'Google Sheets sync enabled' : 'Sync disabled', 'success');
-                });
-                this.addEventListener(this.elements.settingsModal, 'click', (e) => {
-                    if (e.target === this.elements.settingsModal) {
-                        this.elements.settingsModal.classList.remove('active');
-                    }
-                });
-                this.addEventListener(this.elements.toggleScript, 'click', () => {
-                    this.elements.scriptCode.classList.toggle('open');
-                    this.elements.toggleScript.textContent = this.elements.scriptCode.classList.contains('open')
-                        ? '▼ Hide Apps Script code' : '▶ Show Apps Script code';
-                });
-
-                // Keyboard: Escape closes settings modal + focus trap
-                this.addEventListener(document, 'keydown', (e) => {
-                    if (!this.elements.settingsModal.classList.contains('active')) return;
-
-                    if (e.key === 'Escape') {
-                        this.elements.settingsModal.classList.remove('active');
-                        this.elements.settingsBtn.focus();
-                        return;
-                    }
-
-                    // Focus trap: Tab cycles within modal
-                    if (e.key === 'Tab') {
-                        const modal = this.elements.settingsModal.querySelector('.modal');
-                        const focusable = modal.querySelectorAll('input, button, [tabindex]:not([tabindex="-1"])');
-                        if (focusable.length === 0) return;
-                        const first = focusable[0];
-                        const last = focusable[focusable.length - 1];
-                        if (e.shiftKey && document.activeElement === first) {
-                            e.preventDefault();
-                            last.focus();
-                        } else if (!e.shiftKey && document.activeElement === last) {
-                            e.preventDefault();
-                            first.focus();
-                        }
-                    }
-                });
             },
             
             // Add event listener with tracking
@@ -1804,7 +1528,6 @@
                 // Set user
                 this.state.user = { name, age, grade: grade === 'K' ? 'K' : parseInt(grade), teacher, period };
                 this.state.sessionStart = Date.now();
-                this.state.integrityChecksum = this.generateChecksum(this.state);
                 
                 // Navigate to menu
                 this.showScreen('menu');
@@ -2732,82 +2455,11 @@
 
                 this.state.gameScores[this.state.currentGame] = average;
 
-                // Auto-sync this game result to Google Sheets
-                this.syncToSheets(this.state.currentGame, average);
-
                 this.showScreen('menu');
                 this.renderGames();
                 this.showFeedback(`Game complete! Score: ${average}%`, 'success');
             },
 
-            // Validate a Google Apps Script URL
-            isValidSheetsUrl(url) {
-                try {
-                    const parsed = new URL(url);
-                    return parsed.protocol === 'https:' &&
-                        parsed.hostname === 'script.google.com';
-                } catch {
-                    return false;
-                }
-            },
-
-            // Sync a game result to Google Sheets
-            syncToSheets(gameId, score) {
-                const url = this.settings && this.settings.sheetsUrl;
-                if (!url) return;
-
-                if (!this.isValidSheetsUrl(url)) {
-                    this.updateSyncStatus('disconnected');
-                    return;
-                }
-
-                const user = this.state.user || {};
-                const payload = {
-                    timestamp: new Date().toISOString(),
-                    student: user.name || '',
-                    age: user.age || '',
-                    grade: user.grade || '',
-                    teacher: user.teacher || '',
-                    period: user.period || '',
-                    game: gameId,
-                    score: score,
-                    difficulty: this.state.currentDifficulty,
-                    duration: Math.round((Date.now() - this.state.gameStart) / 1000),
-                    integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
-                };
-
-                this.updateSyncStatus('syncing');
-
-                // no-cors mode returns an opaque response — .then() fires
-                // even on server errors; only network failures hit .catch().
-                // Use 'pending' (not 'connected') to avoid false confidence.
-                fetch(url, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(payload)
-                }).then(() => {
-                    this.updateSyncStatus('pending');
-                    // Queue for retry verification: store last synced game
-                    this._lastSyncedGame = gameId;
-                }).catch((err) => {
-                    console.warn('Sheets sync failed:', err);
-                    this.updateSyncStatus('disconnected');
-                    this.showFeedback('Sync failed — data saved locally', 'warning');
-                    // Store unsent data for potential retry (bounded)
-                    if (this._unsyncedResults.length < this._MAX_UNSYNCED) {
-                        this._unsyncedResults.push(payload);
-                    }
-                });
-            },
-
-            // Update sync status indicator
-            updateSyncStatus(status) {
-                const el = this.elements.syncStatus;
-                if (!el) return;
-                el.className = 'sync-status ' + status;
-            },
-            
             // Exit game
             async exitGame() {
                 if (this.state.currentTask === 0 || await this.showConfirm('Exit game? Progress will be lost.', 'Exit Game')) {
@@ -2833,10 +2485,9 @@
                     user: this.state.user,
                     scores: {...scores},
                     average,
-                    duration: Date.now() - this.state.sessionStart,
-                    integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
+                    duration: Date.now() - this.state.sessionStart
                 };
-                
+
                 this.state.history.push(sessionData);
                 this.saveState();
                 
@@ -3153,8 +2804,7 @@
                     session: {
                         date: new Date().toISOString(),
                         scores: this.state.gameScores,
-                        difficulty: this.state.currentDifficulty,
-                        integrity: this.state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
+                        difficulty: this.state.currentDifficulty
                     },
                     history: filteredHistory,
                     trialCount: this.state.trialLog.length
@@ -3213,7 +2863,6 @@
                         history: this.state.history,
                         gameStart: null,
                         storageAvailable: this.state.storageAvailable,
-                        integrityChecksum: null,
                         trialLog: []
                     };
                     
@@ -3308,10 +2957,6 @@
             
             // Cleanup on unload
             cleanup() {
-                // Clear integrity check interval
-                if (this._integrityInterval) {
-                    clearInterval(this._integrityInterval);
-                }
                 // Clear feedback dismiss timer
                 if (this._feedbackTimer) {
                     clearTimeout(this._feedbackTimer);

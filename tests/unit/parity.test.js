@@ -3,8 +3,6 @@ import { getApp } from '../helpers/load-app.js';
 import { CONFIG, GAMES, GRADE_CONTENT, RECOMMENDATIONS } from '../../src/config.js';
 import { adaptDifficulty, shuffle, zScore, inverseErf, getGradeContent } from '../../src/scoring.js';
 import { trialLogToCSV } from '../../src/export.js';
-import { isValidSheetsUrl } from '../../src/sync.js';
-
 /**
  * Drift-detection tests: verify that the inline script (index.html)
  * and the modular src/ extraction produce equivalent behaviors.
@@ -129,23 +127,6 @@ describe('Inline/Module Parity', () => {
       expect(inverseErf(0)).toBeCloseTo(App.inverseErf(0), 5);
       expect(inverseErf(0.5)).toBeCloseTo(App.inverseErf(0.5), 5);
       expect(inverseErf(-0.5)).toBeCloseTo(App.inverseErf(-0.5), 5);
-    });
-  });
-
-  describe('isValidSheetsUrl produces same results', () => {
-    const urls = [
-      'https://script.google.com/macros/s/abc/exec',
-      'http://script.google.com/macros/s/abc/exec',
-      'https://evil.com/macros',
-      '',
-      'not-a-url',
-      'javascript:alert(1)'
-    ];
-
-    urls.forEach(url => {
-      it(`"${url.slice(0, 40)}..." matches`, () => {
-        expect(App.isValidSheetsUrl(url)).toBe(isValidSheetsUrl(url));
-      });
     });
   });
 

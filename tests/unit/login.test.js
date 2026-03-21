@@ -108,7 +108,6 @@ describe('Login and Grade Handling', () => {
 
       expect(App.state.user).not.toBeNull();
       expect(App.state.sessionStart).toBeGreaterThan(0);
-      expect(App.state.integrityChecksum).not.toBeNull();
     });
   });
 });

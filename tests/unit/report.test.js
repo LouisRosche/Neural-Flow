@@ -47,21 +47,6 @@ describe('Report Generation', () => {
       expect(info).toContain('Period 3');
     });
 
-    it('marks integrity as verified when checksum is valid', () => {
-      App.state.gameScores = { memory: 80 };
-      App.state.integrityChecksum = 12345;
-      App.showReport();
-
-      expect(App.state.history[0].integrity).toBe('verified');
-    });
-
-    it('marks integrity as unverified when checksum says so', () => {
-      App.state.gameScores = { memory: 80 };
-      App.state.integrityChecksum = 'unverified';
-      App.showReport();
-
-      expect(App.state.history[0].integrity).toBe('unverified');
-    });
   });
 
   describe('buildRecommendations', () => {

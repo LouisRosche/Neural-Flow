@@ -79,8 +79,7 @@ export function exportData(state) {
         session: {
             date: new Date().toISOString(),
             scores: state.gameScores,
-            difficulty: state.currentDifficulty,
-            integrity: state.integrityChecksum === 'unverified' ? 'unverified' : 'verified'
+            difficulty: state.currentDifficulty
         },
         history: filteredHistory,
         trialCount: state.trialLog.length
