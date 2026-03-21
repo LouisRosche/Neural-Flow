@@ -1,0 +1,79 @@
+name: Validate
+
+on:
+  push:
+    branches: [main, claude/**]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-html:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate index.html exists and is non-empty
+        run: |
+          test -f index.html || { echo "ERROR: index.html missing"; exit 1; }
+          test -s index.html || { echo "ERROR: index.html is empty"; exit 1; }
+          echo "index.html exists and is non-empty"
+
+      - name: Check HTML structure
+        run: |
+          # Verify essential HTML elements exist
+          grep -q '<!DOCTYPE html>' index.html || { echo "ERROR: missing DOCTYPE"; exit 1; }
+          grep -q '<html' index.html || { echo "ERROR: missing <html> tag"; exit 1; }
+          grep -q '</html>' index.html || { echo "ERROR: missing closing </html>"; exit 1; }
+          grep -q '<script>' index.html || { echo "ERROR: missing <script> tag"; exit 1; }
+          echo "HTML structure validated"
+
+      - name: Verify critical app markers
+        run: |
+          # Ensure the inline script contains the App object
+          grep -q 'const App' index.html || { echo "ERROR: App object not found"; exit 1; }
+          grep -q "'use strict'" index.html || { echo "ERROR: strict mode not found"; exit 1; }
+          echo "Critical app markers present"
+
+  validate-src-modules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify all source modules exist
+        run: |
+          modules=(
+            src/app.js
+            src/config.js
+            src/state.js
+            src/scoring.js
+            src/ui.js
+            src/export.js
+            src/sync.js
+            src/games/memory.js
+            src/games/attention.js
+            src/games/flexibility.js
+            src/games/speed.js
+          )
+          missing=0
+          for mod in "${modules[@]}"; do
+            if [ ! -f "$mod" ]; then
+              echo "ERROR: Missing module $mod"
+              missing=1
+            fi
+          done
+          if [ $missing -eq 1 ]; then exit 1; fi
+          echo "All source modules present"
+
+      - name: Check for syntax errors in source modules
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate JS syntax
+        run: |
+          errors=0
+          for f in src/*.js src/games/*.js; do
+            node --check "$f" 2>&1 || { echo "Syntax error in $f"; errors=1; }
+          done
+          if [ $errors -eq 1 ]; then exit 1; fi
+          echo "All modules have valid syntax"

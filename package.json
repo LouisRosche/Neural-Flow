@@ -2,13 +2,17 @@
   "name": "neural-flow",
   "version": "1.0.0",
   "description": "Neural Flow - Executive Function Training",
+  "type": "module",
   "main": "src/app.js",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
-    "test:all": "vitest run && playwright test"
+    "test:coverage": "vitest run --coverage",
+    "test:all": "vitest run && playwright test",
+    "validate": "node scripts/validate.js && vitest run",
+    "validate:full": "node scripts/validate.js && vitest run --coverage && playwright test"
   },
   "repository": {
     "type": "git",
@@ -19,6 +23,7 @@
   "license": "ISC",
   "devDependencies": {
     "@playwright/test": "^1.58.2",
+    "@vitest/coverage-v8": "^4.1.0",
     "@vitest/ui": "^4.1.0",
     "jsdom": "^29.0.0",
     "vitest": "^4.1.0"
