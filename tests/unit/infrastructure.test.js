@@ -228,12 +228,4 @@ describe('Method Inventory Parity', () => {
     });
   });
 
-  describe('Export', () => {
-    it.each([
-      'trialLogToCSV',
-      'exportData',
-    ])('%s exists on App', (method) => {
-      expect(typeof App[method]).toBe('function');
-    });
-  });
 });

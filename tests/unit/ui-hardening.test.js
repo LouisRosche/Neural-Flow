@@ -3,7 +3,7 @@ import { setupFull } from '../helpers/setup.js';
 
 /**
  * Hardened UI tests: accessibility, screen transitions, keyboard navigation,
- * settings modal, confirm modal, progress bar, game instructions, focus
+ * confirm modal, progress bar, game instructions, focus
  * management, and DOM integrity after rapid interactions.
  */
 describe('UI Hardening', () => {
@@ -192,87 +192,10 @@ describe('UI Hardening', () => {
   });
 
   // ============================================================
-  // SETTINGS MODAL
-  // ============================================================
-
-  describe('settings modal', () => {
-    it('opens settings modal on settings button click', () => {
-      App.bindEvents();
-      App.settings = { sheetsUrl: 'https://script.google.com/test' };
-      App.elements.settingsBtn.click();
-
-      expect(App.elements.settingsModal.classList.contains('active')).toBe(true);
-      expect(App.elements.sheetsUrl.value).toBe('https://script.google.com/test');
-    });
-
-    it('closes settings modal on close button click', () => {
-      App.bindEvents();
-      App.elements.settingsModal.classList.add('active');
-      App.elements.closeSettingsBtn.click();
-
-      expect(App.elements.settingsModal.classList.contains('active')).toBe(false);
-    });
-
-    it('rejects invalid sheets URL on save', () => {
-      App.bindEvents();
-      App.elements.settingsModal.classList.add('active');
-      App.elements.sheetsUrl.value = 'http://evil.com/hack';
-      App.elements.saveSettingsBtn.click();
-
-      // Should show error feedback, modal stays open
-      const feedback = doc.querySelector('.feedback.error');
-      expect(feedback).not.toBeNull();
-    });
-
-    it('saves valid sheets URL and closes modal', () => {
-      App.bindEvents();
-      App.settings = { sheetsUrl: '' };
-      App.elements.settingsModal.classList.add('active');
-      App.elements.sheetsUrl.value = 'https://script.google.com/macros/s/test/exec';
-      App.elements.saveSettingsBtn.click();
-
-      expect(App.settings.sheetsUrl).toBe('https://script.google.com/macros/s/test/exec');
-      expect(App.elements.settingsModal.classList.contains('active')).toBe(false);
-    });
-
-    it('saves empty URL to disable sync', () => {
-      App.bindEvents();
-      App.settings = { sheetsUrl: 'https://script.google.com/old' };
-      App.elements.settingsModal.classList.add('active');
-      App.elements.sheetsUrl.value = '';
-      App.elements.saveSettingsBtn.click();
-
-      expect(App.settings.sheetsUrl).toBe('');
-    });
-
-    it('closes modal when clicking backdrop', () => {
-      App.bindEvents();
-      App.elements.settingsModal.classList.add('active');
-
-      // Simulate clicking the modal backdrop (the modal element itself, not its child)
-      const clickEvent = new win.MouseEvent('click', { bubbles: true });
-      Object.defineProperty(clickEvent, 'target', { value: App.elements.settingsModal });
-      App.elements.settingsModal.dispatchEvent(clickEvent);
-
-      expect(App.elements.settingsModal.classList.contains('active')).toBe(false);
-    });
-  });
-
-  // ============================================================
   // KEYBOARD NAVIGATION
   // ============================================================
 
   describe('keyboard navigation', () => {
-    it('Escape closes settings modal', () => {
-      App.bindEvents();
-      App.elements.settingsModal.classList.add('active');
-
-      const event = new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
-      doc.dispatchEvent(event);
-
-      expect(App.elements.settingsModal.classList.contains('active')).toBe(false);
-    });
-
     it('game card responds to Enter key', () => {
       App.state.gameScores = {};
       App.renderGames();
@@ -439,25 +362,14 @@ describe('UI Hardening', () => {
   // ============================================================
 
   describe('report info formatting', () => {
-    it('omits teacher and period when empty', () => {
-      App.state.user = { name: 'Alice', age: 10, grade: 'K', teacher: '', period: '' };
+    it('displays student name and grade', () => {
+      App.state.user = { name: 'Alice', age: 10, grade: 'K' };
       App.state.gameScores = { memory: 80 };
       App.showReport();
 
       const info = App.elements.reportInfo.textContent;
       expect(info).toContain('Alice');
       expect(info).toContain('Grade K');
-      expect(info).not.toContain('Period');
-    });
-
-    it('includes teacher and period when present', () => {
-      App.state.user = { name: 'Bob', age: 14, grade: 8, teacher: 'Ms. Jones', period: '5' };
-      App.state.gameScores = { memory: 80 };
-      App.showReport();
-
-      const info = App.elements.reportInfo.textContent;
-      expect(info).toContain('Ms. Jones');
-      expect(info).toContain('Period 5');
     });
   });
 
@@ -547,78 +459,6 @@ describe('UI Hardening', () => {
   });
 
   // ============================================================
-  // HISTORY TABLE — DOM INTEGRITY
-  // ============================================================
-
-  describe('history table DOM integrity', () => {
-    it('table has 7 column headers', () => {
-      App.state.gameScores = { memory: 80 };
-      App.showReport();
-      App.toggleHistory();
-
-      const headers = App.elements.historyContainer.querySelectorAll('thead th');
-      expect(headers.length).toBe(7);
-    });
-
-    it('each row has 7 cells', () => {
-      App.state.history = [
-        { date: '2024-01-01T00:00:00Z', user: { name: 'A' }, scores: { memory: 80 }, average: 80 }
-      ];
-      App.state.gameScores = { memory: 70 };
-      App.showReport();
-      App.toggleHistory();
-
-      const rows = App.elements.historyContainer.querySelectorAll('tbody tr');
-      rows.forEach(row => {
-        expect(row.querySelectorAll('td').length).toBe(7);
-      });
-    });
-
-    it('displays em dash for missing game scores', () => {
-      App.state.history = [
-        { date: '2024-06-01T00:00:00Z', user: { name: 'X' }, scores: {}, average: 0 }
-      ];
-      App.state.gameScores = { memory: 80 };
-      App.showReport();
-      App.toggleHistory();
-
-      const cells = App.elements.historyContainer.querySelectorAll('tbody td');
-      const texts = Array.from(cells).map(c => c.textContent);
-      // scores for memory, attention, flexibility, speed should be em dash
-      expect(texts.filter(t => t === '\u2014').length).toBeGreaterThanOrEqual(4);
-    });
-
-    it('displays empty message when no history', () => {
-      App.state.history = [];
-      App.state.gameScores = {};
-      // Don't call showReport (would add to history); manually toggle
-      App.elements.historySection.style.display = 'none';
-      App.toggleHistory();
-
-      // History was empty before showReport
-      const emptyMsg = App.elements.historyContainer.querySelector('.history-empty');
-      expect(emptyMsg).not.toBeNull();
-      expect(emptyMsg.textContent).toContain('No previous sessions');
-    });
-
-    it('history is shown in reverse chronological order', () => {
-      App.state.history = [
-        { date: '2024-01-01T00:00:00Z', user: { name: 'First' }, scores: {}, average: 50 },
-        { date: '2024-06-01T00:00:00Z', user: { name: 'Second' }, scores: {}, average: 70 }
-      ];
-      App.state.gameScores = { memory: 80 };
-      App.showReport();
-      App.toggleHistory();
-
-      const rows = App.elements.historyContainer.querySelectorAll('tbody tr');
-      // Most recent entry (the one just added by showReport) should be first
-      expect(rows.length).toBe(3);
-      const firstRowName = rows[0].querySelectorAll('td')[1].textContent;
-      expect(firstRowName).toBe('Test'); // Current user from beforeEach
-    });
-  });
-
-  // ============================================================
   // RESET FLOW
   // ============================================================
 
@@ -627,8 +467,6 @@ describe('UI Hardening', () => {
       doc.getElementById('name').value = 'Alice';
       doc.getElementById('age').value = '12';
       doc.getElementById('grade').value = '6';
-      doc.getElementById('teacher').value = 'Dr. X';
-      doc.getElementById('period').value = '2';
 
       App.showConfirm = async () => true;
       await App.reset();
@@ -636,8 +474,6 @@ describe('UI Hardening', () => {
       expect(doc.getElementById('name').value).toBe('');
       expect(doc.getElementById('age').value).toBe('');
       expect(doc.getElementById('grade').value).toBe('');
-      expect(doc.getElementById('teacher').value).toBe('');
-      expect(doc.getElementById('period').value).toBe('');
     });
 
     it('preserves history through reset', async () => {
@@ -897,15 +733,14 @@ describe('UI Hardening', () => {
   });
 
   // ============================================================
-  // ENDGAME — SYNC INTEGRATION
+  // ENDGAME — NAVIGATION
   // ============================================================
 
-  describe('endGame sync and navigation', () => {
+  describe('endGame and navigation', () => {
     it('returns to menu screen after endGame', () => {
       App.state.currentGame = 'memory';
       App.state.taskScores = [80, 70, 90];
       App.state.gameStart = Date.now() - 5000;
-      App.settings = { sheetsUrl: '' };
 
       App.endGame();
 
@@ -917,7 +752,6 @@ describe('UI Hardening', () => {
       App.state.currentGame = 'memory';
       App.state.taskScores = [80, 70, 90];
       App.state.gameStart = Date.now();
-      App.settings = { sheetsUrl: '' };
 
       App.endGame();
 

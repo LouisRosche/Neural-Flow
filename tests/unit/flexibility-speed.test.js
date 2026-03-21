@@ -5,7 +5,7 @@ describe('Flexibility Game', () => {
   let App, win;
 
   beforeEach(() => {
-    ({ App, window: win } = setupFull({ gameId: 'flexibility', user: { teacher: '', period: '' } }));
+    ({ App, window: win } = setupFull({ gameId: 'flexibility', user: true }));
   });
 
   describe('runFlexibilityTask', () => {
@@ -113,7 +113,7 @@ describe('Speed Game', () => {
   let App, win;
 
   beforeEach(() => {
-    ({ App, window: win } = setupFull({ gameId: 'speed', user: { teacher: '', period: '' } }));
+    ({ App, window: win } = setupFull({ gameId: 'speed', user: true }));
   });
 
   describe('runSpeedTask', () => {

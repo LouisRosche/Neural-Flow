@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { setupFull } from '../helpers/setup.js';
 import { adaptDifficulty, zScore, inverseErf, shuffle, getGradeContent } from '../../src/scoring.js';
 import { CONFIG, GAMES, GRADE_CONTENT, RECOMMENDATIONS } from '../../src/config.js';
-import { trialLogToCSV } from '../../src/export.js';
 import { generateChecksum, verifyChecksum } from '../../src/state.js';
 
 /**
@@ -284,35 +283,6 @@ describe('Checksum integrity invariants', () => {
 });
 
 // ============================================================
-// CSV EXPORT INVARIANTS
-// ============================================================
-
-describe('CSV export invariants', () => {
-  it('CSV header count matches column count in every row', () => {
-    const trials = [
-      { a: 1, b: 'x', c: true },
-      { a: 2, b: 'y', c: false },
-      { a: 3, b: 'z', c: true }
-    ];
-    const csv = trialLogToCSV(trials);
-    const lines = csv.split('\n');
-    const headerCount = lines[0].split(',').length;
-
-    for (let i = 1; i < lines.length; i++) {
-      // Simple count — doesn't handle quoted commas but our test data is clean
-      expect(lines[i].split(',').length).toBe(headerCount);
-    }
-  });
-
-  it('CSV row count = trial count + 1 (header)', () => {
-    const n = 50;
-    const trials = Array.from({ length: n }, (_, i) => ({ index: i }));
-    const csv = trialLogToCSV(trials);
-    expect(csv.split('\n').length).toBe(n + 1);
-  });
-});
-
-// ============================================================
 // FULL GAME FLOW REGRESSION
 // ============================================================
 
@@ -320,7 +290,7 @@ describe('Full game flow regression', () => {
   let App;
 
   beforeEach(() => {
-    ({ App } = setupFull({ user: { teacher: '', period: '' } }));
+    ({ App } = setupFull({ user: true }));
   });
 
   it('memory game: run → input → score → endGame cycle', () => {

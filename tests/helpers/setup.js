@@ -14,8 +14,6 @@ const DEFAULT_USER = Object.freeze({
   name: 'Test',
   age: 12,
   grade: 6,
-  teacher: 'Dr. Smith',
-  period: '3',
 });
 
 /**

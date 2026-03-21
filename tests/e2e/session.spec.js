@@ -12,8 +12,6 @@ test.describe('Neural Flow E2E Session', () => {
     await page.fill('#name', 'Test Student');
     await page.fill('#age', '12');
     await page.selectOption('#grade', '6');
-    await page.fill('#teacher', 'Dr. Smith');
-    await page.selectOption('#period', '1');
 
     // 3. Click Begin Training
     await page.click('#beginBtn');

@@ -261,7 +261,6 @@ export const RECOMMENDATIONS = {
 
 // Timing and scoring constants
 export const STORAGE_KEY = 'neural_flow_data';
-export const SETTINGS_KEY = 'neural_flow_settings';
 export const MAX_TASKS = 3;
 export const MAX_DIFFICULTY = 5;
 export const ADAPTIVE_UP = 80;
@@ -284,7 +283,6 @@ export const CONFIG = {
     GRADE_CONTENT,
     RECOMMENDATIONS,
     STORAGE_KEY,
-    SETTINGS_KEY,
     MAX_TASKS,
     MAX_DIFFICULTY,
     ADAPTIVE_UP,

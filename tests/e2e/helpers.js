@@ -9,16 +9,12 @@ export async function login(page, opts = {}) {
     name = 'E2E Student',
     age = '12',
     grade = '6',
-    teacher = 'Dr. Smith',
-    period = '1'
   } = opts;
 
   await page.goto('/');
   await page.fill('#name', name);
   await page.fill('#age', String(age));
   await page.selectOption('#grade', String(grade));
-  await page.fill('#teacher', teacher);
-  await page.selectOption('#period', String(period));
   await page.click('#beginBtn');
   await expect(page.locator('#menuScreen')).toHaveClass(/active/);
 }

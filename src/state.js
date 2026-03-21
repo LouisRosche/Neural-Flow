@@ -1,6 +1,6 @@
 // state.js — State management for Neural Flow
 
-import { STORAGE_KEY, SETTINGS_KEY, CHECKSUM_SALT } from './config.js';
+import { STORAGE_KEY, CHECKSUM_SALT } from './config.js';
 
 /**
  * Create the initial application state.
@@ -17,7 +17,6 @@ export function createInitialState() {
         gameStart: null,
         history: [],
         storageAvailable: false,
-        integrityChecksum: null,
         trialLog: []
     };
 }
@@ -110,30 +109,3 @@ export function saveState(history, storageAvailable) {
     }
 }
 
-/**
- * Load settings from localStorage.
- */
-export function loadSettings(storageAvailable) {
-    if (!storageAvailable) return { sheetsUrl: '' };
-    try {
-        const saved = localStorage.getItem(SETTINGS_KEY);
-        if (saved) {
-            return JSON.parse(saved);
-        }
-    } catch (e) {
-        // Silently fail
-    }
-    return { sheetsUrl: '' };
-}
-
-/**
- * Save settings to localStorage.
- */
-export function saveSettings(settings, storageAvailable) {
-    if (!storageAvailable) return;
-    try {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    } catch (e) {
-        // Silently fail
-    }
-}

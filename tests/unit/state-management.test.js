@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   createInitialState, testStorage, generateChecksum, verifyChecksum,
-  loadState, saveState, loadSettings, saveSettings
+  loadState, saveState
 } from '../../src/state.js';
-import { STORAGE_KEY, SETTINGS_KEY } from '../../src/config.js';
+import { STORAGE_KEY } from '../../src/config.js';
 
 describe('State Management', () => {
   beforeEach(() => {
@@ -163,33 +163,4 @@ describe('State Management', () => {
     });
   });
 
-  // ============================================================
-  // loadSettings / saveSettings
-  // ============================================================
-
-  describe('loadSettings / saveSettings', () => {
-    it('returns default when storage unavailable', () => {
-      expect(loadSettings(false)).toEqual({ sheetsUrl: '' });
-    });
-
-    it('returns default when nothing saved', () => {
-      expect(loadSettings(true)).toEqual({ sheetsUrl: '' });
-    });
-
-    it('round-trips settings', () => {
-      const settings = { sheetsUrl: 'https://script.google.com/macros/s/abc/exec' };
-      saveSettings(settings, true);
-      expect(loadSettings(true)).toEqual(settings);
-    });
-
-    it('does not save when storage unavailable', () => {
-      saveSettings({ sheetsUrl: 'test' }, false);
-      expect(loadSettings(true)).toEqual({ sheetsUrl: '' });
-    });
-
-    it('handles corrupted settings JSON', () => {
-      localStorage.setItem(SETTINGS_KEY, '{invalid json');
-      expect(loadSettings(true)).toEqual({ sheetsUrl: '' });
-    });
-  });
 });

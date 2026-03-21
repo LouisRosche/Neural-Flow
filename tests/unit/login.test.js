@@ -9,12 +9,10 @@ describe('Login and Grade Handling', () => {
   });
 
   describe('handleLogin grade parsing', () => {
-    function setLoginFields(name, age, grade, teacher = '', period = '') {
+    function setLoginFields(name, age, grade) {
       win.document.getElementById('name').value = name;
       win.document.getElementById('age').value = age;
       win.document.getElementById('grade').value = grade;
-      win.document.getElementById('teacher').value = teacher;
-      win.document.getElementById('period').value = period;
     }
 
     it('preserves grade "K" as string (not parsed to NaN)', () => {
@@ -108,7 +106,6 @@ describe('Login and Grade Handling', () => {
 
       expect(App.state.user).not.toBeNull();
       expect(App.state.sessionStart).toBeGreaterThan(0);
-      expect(App.state.integrityChecksum).not.toBeNull();
     });
   });
 });
