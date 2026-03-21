@@ -371,6 +371,7 @@ const App = {
     },
 
     startCurrentTask() {
+        this._taskCompleted = false;
         // Adaptive difficulty adjustment
         if (this.state.taskScores.length > 0) {
             const lastScore = this.state.taskScores[this.state.taskScores.length - 1];
@@ -398,6 +399,9 @@ const App = {
     },
 
     completeTask(score) {
+        // Guard: prevent double-fire from racing timeouts
+        if (this._taskCompleted) return;
+        this._taskCompleted = true;
         this.state.taskScores.push(score);
         showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
         this.gameTimeout(() => this.nextTask(), CONFIG.FEEDBACK_DISPLAY_MS);

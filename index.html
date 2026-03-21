@@ -1610,6 +1610,9 @@
 
             // Record a task score, show feedback, and advance to next task
             completeTask(score) {
+                // Guard: prevent double-fire from racing timeouts
+                if (this._taskCompleted) return;
+                this._taskCompleted = true;
                 this.state.taskScores.push(score);
                 this.showFeedback(`Score: ${score}%`, score >= 70 ? 'success' : 'warning');
                 this.gameTimeout(() => this.nextTask(), this.CONFIG.FEEDBACK_DISPLAY_MS);
@@ -1690,8 +1693,9 @@
             },
             
             startCurrentTask() {
+                this._taskCompleted = false;
                 const area = this.elements.gameArea;
-                
+
                 // Adaptive difficulty adjustment
                 if (this.state.taskScores.length > 0) {
                     const lastScore = this.state.taskScores[this.state.taskScores.length - 1];
@@ -1772,7 +1776,9 @@
                     userInput: [],
                     length,
                     showIndex: 0,
-                    startTime: Date.now()
+                    startTime: Date.now(),
+                    inputStartTime: null,
+                    lastInputTime: null
                 };
                 
                 // Start showing sequence
@@ -1934,7 +1940,10 @@
                     const time = Date.now() - (state.inputStartTime || state.startTime);
                     const timeBonus = Math.max(0, 1 - (time / (state.length * 2000)));
                     const score = Math.round((accuracy * 90) + (timeBonus * 10));
-                    
+
+                    // Guard: prevent double-scoring
+                    if (this._taskCompleted) return;
+                    this._taskCompleted = true;
                     this.state.taskScores.push(score);
                     
                     // Delay before showing feedback so user can see last input
@@ -2326,7 +2335,10 @@
                 const patterns = content.formulas.slice(0, 4 + Math.floor(this.state.currentDifficulty / 2));
                 const correct = patterns[Math.floor(Math.random() * patterns.length)];
                 const options = this.shuffle(patterns);
-                
+
+                // Store patterns on state for trial logging
+                state.patterns = patterns;
+
                 this.clearGameArea();
 
                 // Create UI

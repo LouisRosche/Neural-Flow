@@ -224,6 +224,7 @@ describe('Scoring Logic', () => {
       // Stub showFeedback and gameTimeout to avoid DOM access
       App.showFeedback = () => {};
       App.gameTimeout = () => {};
+      App._taskCompleted = false;
 
       App.completeTask(85);
       expect(App.state.taskScores).toEqual([85]);
@@ -235,10 +236,25 @@ describe('Scoring Logic', () => {
       App.showFeedback = () => {};
       App.gameTimeout = () => {};
 
+      App._taskCompleted = false;
       App.completeTask(60);
+      App._taskCompleted = false;
       App.completeTask(90);
+      App._taskCompleted = false;
       App.completeTask(75);
       expect(App.state.taskScores).toEqual([60, 90, 75]);
+    });
+
+    it('blocks double-fire within same task', () => {
+      App.state.taskScores = [];
+      App._timers = new Set();
+      App.showFeedback = () => {};
+      App.gameTimeout = () => {};
+
+      App._taskCompleted = false;
+      App.completeTask(60);
+      App.completeTask(90); // blocked by guard
+      expect(App.state.taskScores).toEqual([60]);
     });
   });
 });
