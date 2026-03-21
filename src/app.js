@@ -5,7 +5,7 @@ import {
     createInitialState, testStorage,
     loadState, saveState
 } from './state.js';
-import { adaptDifficulty } from './scoring.js';
+import { adaptDifficulty, adjustedAverage, computeSEM } from './scoring.js';
 import {
     cacheElements, showScreen as _showScreen, showFeedback, showConfirm,
     clearGameArea, renderGames, showGameInstructions, clearFeedbackTimer
@@ -307,6 +307,7 @@ const App = {
             this.state.currentTask = 0;
             this.state.currentDifficulty = 1;
             this.state.taskScores = [];
+            this.state.taskDifficulties = [];
             this.state.gameStart = Date.now();
 
             this.showScreen('game');
@@ -378,6 +379,10 @@ const App = {
             this.state.currentDifficulty = adaptDifficulty(this.state.currentDifficulty, lastScore);
         }
 
+        // Record difficulty for this task (used for difficulty-weighted scoring)
+        if (!this.state.taskDifficulties) this.state.taskDifficulties = [];
+        this.state.taskDifficulties.push(this.state.currentDifficulty);
+
         const area = this.elements.gameArea;
 
         switch (this.state.currentGame) {
@@ -416,11 +421,18 @@ const App = {
         this.cleanupCurrentGame();
 
         const scores = this.state.taskScores;
+        const difficulties = this.state.taskDifficulties || scores.map(() => 1);
         const average = scores.length > 0
-            ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+            ? adjustedAverage(scores, difficulties)
             : 0;
+        const sem = computeSEM(scores);
 
         this.state.gameScores[this.state.currentGame] = average;
+        // Store SEM and difficulty info for the report
+        if (!this.state.gameSEMs) this.state.gameSEMs = {};
+        this.state.gameSEMs[this.state.currentGame] = sem;
+        if (!this.state.gameDifficulties) this.state.gameDifficulties = {};
+        this.state.gameDifficulties[this.state.currentGame] = difficulties;
 
         this.showScreen('menu');
         this._renderGames();
@@ -494,6 +506,8 @@ const App = {
             date: new Date().toISOString(),
             user: this.state.user,
             scores: { ...scores },
+            sems: { ...(this.state.gameSEMs || {}) },
+            difficulties: { ...(this.state.gameDifficulties || {}) },
             average,
             duration: Date.now() - this.state.sessionStart
         };
@@ -523,7 +537,11 @@ const App = {
 
             const value = document.createElement('div');
             value.className = 'score-value';
-            value.textContent = `${scores[game.id] || 0}%`;
+            const gameScore = scores[game.id] || 0;
+            const gameSEM = this.state.gameSEMs && this.state.gameSEMs[game.id];
+            value.textContent = gameSEM != null
+                ? `${gameScore}% \u00B1${gameSEM}`
+                : `${gameScore}%`;
 
             const label = document.createElement('div');
             label.className = 'score-label';
@@ -688,7 +706,10 @@ const App = {
                 currentTask: 0,
                 currentDifficulty: 1,
                 taskScores: [],
+                taskDifficulties: [],
                 gameScores: {},
+                gameSEMs: {},
+                gameDifficulties: {},
                 sessionStart: null,
                 gameStart: null,
                 history: this.state.history,

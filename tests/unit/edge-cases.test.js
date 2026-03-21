@@ -204,9 +204,9 @@ describe('Inline script edge cases', () => {
       let scored = null;
       App.completeTask = (s) => { scored = s; };
       App.endAttentionTask();
-      // 60% hit rate, 60% FA rate → d' ≈ 0 → score ≈ 50
-      expect(scored).toBeGreaterThanOrEqual(40);
-      expect(scored).toBeLessThanOrEqual(60);
+      // 60% hit rate, 60% FA rate → d' ≈ 0 → score ≈ 25 (recalibrated)
+      expect(scored).toBeGreaterThanOrEqual(15);
+      expect(scored).toBeLessThanOrEqual(35);
     });
 
     it('handles zero distractorsShown without crashing', () => {
@@ -247,6 +247,7 @@ describe('Inline script edge cases', () => {
         current: 3, // At boundary → triggers scoring
         correct: 0,
         reactionTimes: [], // Empty!
+        correctRTs: [],
         startTime: Date.now()
       };
       let scored = null;
@@ -266,6 +267,7 @@ describe('Inline script edge cases', () => {
         current: 3,
         correct: 2,
         reactionTimes: [500, 600, 400],
+        correctRTs: [500, 400],
         startTime: Date.now()
       };
       let scored = null;

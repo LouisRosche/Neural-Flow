@@ -1,7 +1,7 @@
 // games/speed.js — Processing Speed game logic
 
 import { SPEED_RT_NORM_MS } from '../config.js';
-import { shuffle, getGradeContent } from '../scoring.js';
+import { shuffle, getGradeContent, chanceCorrect } from '../scoring.js';
 import { clearGameArea } from '../ui.js';
 
 /**
@@ -28,11 +28,19 @@ export function runSpeedTrial(ctx) {
     if (!speedState) return; // Guard: timer callback after game exit
 
     if (speedState.current >= speedState.trials) {
-        const accuracy = speedState.trials > 0 ? speedState.correct / speedState.trials : 0;
+        const rawAccuracy = speedState.trials > 0 ? speedState.correct / speedState.trials : 0;
+        const numChoices = speedState.lastOptionCount || 4;
+        // Chance-correct accuracy: removes guessing baseline so the accuracy
+        // component reflects genuine knowledge, not lucky clicks.
+        const accuracy = chanceCorrect(rawAccuracy, numChoices);
         const avgRT = speedState.reactionTimes.length > 0
             ? speedState.reactionTimes.reduce((a, b) => a + b, 0) / speedState.reactionTimes.length
             : SPEED_RT_NORM_MS;
-        const rtScore = Math.max(0, 1 - (avgRT / SPEED_RT_NORM_MS));
+        // Gate RT bonus on above-chance accuracy to prevent fast guessing
+        // from inflating scores (0% accuracy + instant RT used to yield 50%).
+        const rtScore = rawAccuracy > (1 / numChoices)
+            ? Math.max(0, 1 - (avgRT / SPEED_RT_NORM_MS))
+            : 0;
         const score = Math.round((accuracy * 50) + (rtScore * 50));
 
         completeTask(score);
@@ -44,8 +52,9 @@ export function runSpeedTrial(ctx) {
     const correct = patterns[Math.floor(Math.random() * patterns.length)];
     const options = shuffle(patterns);
 
-    // Store patterns on state for trial logging
+    // Store patterns on state for trial logging and chance correction
     speedState.patterns = patterns;
+    speedState.lastOptionCount = patterns.length;
 
     clearGameArea(gameArea);
 

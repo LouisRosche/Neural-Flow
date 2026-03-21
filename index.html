@@ -1140,7 +1140,8 @@
                 FLEX_RT_NORM_MS: 3000,
                 SPEED_RT_NORM_MS: 2000,
                 FEEDBACK_DISPLAY_MS: 1500,
-                DEBOUNCE_MS: 300
+                DEBOUNCE_MS: 300,
+                DIFFICULTY_BONUS_PER_LEVEL: 3
             },
             
             // Application state
@@ -1150,7 +1151,10 @@
                 currentTask: 0,
                 currentDifficulty: 1,
                 taskScores: [],
+                taskDifficulties: [],
                 gameScores: {},
+                gameSEMs: {},
+                gameDifficulties: {},
                 sessionStart: null,
                 history: [],
                 gameStart: null,
@@ -1375,7 +1379,10 @@
 
                         state.reactionTimes.push(rt);
                         const isCorrect = correct === 'true';
-                        if (isCorrect) state.correct++;
+                        if (isCorrect) {
+                            state.correct++;
+                            state.correctRTs.push(rt);
+                        }
 
                         // Trial-level logging
                         this.logTrial({
@@ -1535,6 +1542,7 @@
                     this.state.currentTask = 0;
                     this.state.currentDifficulty = 1;
                     this.state.taskScores = [];
+                    this.state.taskDifficulties = [];
                     this.state.gameStart = Date.now();
                     
                     this.showScreen('game');
@@ -1705,7 +1713,11 @@
                         this.state.currentDifficulty = Math.max(this.state.currentDifficulty - 1, 1);
                     }
                 }
-                
+
+                // Record difficulty for this task (used for difficulty-weighted scoring)
+                if (!this.state.taskDifficulties) this.state.taskDifficulties = [];
+                this.state.taskDifficulties.push(this.state.currentDifficulty);
+
                 // Run appropriate task
                 switch (this.state.currentGame) {
                     case 'memory':
@@ -1980,8 +1992,21 @@
             
             // Attention task with improved scoring
             runAttentionTask(area) {
+                const targetCount = 5 + this.state.currentDifficulty;
+                const distractorCount = Math.ceil(targetCount * 0.4);
+                // Pre-build deterministic interleaved schedule for test-retest reliability
+                const schedule = [];
+                const total = targetCount + distractorCount;
+                for (let i = 0; i < total; i++) {
+                    const isDistractor = Math.floor((i + 1) * distractorCount / total)
+                        > Math.floor(i * distractorCount / total);
+                    schedule.push(!isDistractor);
+                }
                 const state = {
-                    targets: 5 + this.state.currentDifficulty,
+                    targets: targetCount,
+                    distractorCount,
+                    schedule,
+                    scheduleIndex: 0,
                     hits: 0,
                     misses: 0,
                     falsePositives: 0,
@@ -2048,19 +2073,17 @@
                 
                 if (state.completed) return;
 
-                if (state.targetsShown >= state.targets && state.active.length === 0) {
+                if (state.scheduleIndex >= state.schedule.length && state.active.length === 0) {
                     state.completed = true;
                     this.endAttentionTask();
                     return;
                 }
 
-                // Only spawn if we still have targets to show, or a limited number of extra distractors
-                const maxDistractors = Math.ceil(state.targets * 0.4);
-                const shouldSpawn = state.targetsShown < state.targets ||
-                    (state.distractorsShown < maxDistractors && Math.random() < 0.3);
+                const shouldSpawn = state.scheduleIndex < state.schedule.length;
 
                 if (shouldSpawn) {
-                    const isTarget = state.targetsShown < state.targets && Math.random() > 0.3;
+                    const isTarget = state.schedule[state.scheduleIndex];
+                    state.scheduleIndex++;
                     
                     const dot = document.createElement('div');
                     dot.className = `target ${isTarget ? 'blue' : 'red'}`;
@@ -2182,17 +2205,17 @@
                     return;
                 }
 
-                // Calculate comprehensive score
-                const hitRate = state.targetsShown > 0 ? state.hits / state.targetsShown : 0;
-                const falseAlarmRate = state.distractorsShown > 0 ?
-                    state.falsePositives / state.distractorsShown : 0;
+                // Log-linear correction (Hautus 1995) avoids extreme z-scores
+                const hitRate = this.logLinearRate(state.hits, state.targetsShown);
+                const falseAlarmRate = this.logLinearRate(state.falsePositives, state.distractorsShown);
 
                 // d-prime calculation (signal detection theory)
                 const dPrime = Math.min(4, Math.max(-4,
                     this.zScore(hitRate) - this.zScore(falseAlarmRate)));
 
+                // Recalibrated: d'=0→25, d'=1→50, d'=2→75, d'≥3→100
                 const score = Math.round(Math.max(0, Math.min(100,
-                    50 + (dPrime * 12.5))));
+                    25 + (dPrime * 25))));
 
                 this.completeTask(score);
             },
@@ -2212,7 +2235,44 @@
                 const c = Math.log(1 - x * x) / a;
                 return s * Math.sqrt(Math.sqrt(b * b - c) - b);
             },
-            
+
+            // Log-linear correction for hit/FA rates (Hautus 1995)
+            logLinearRate(count, total) {
+                if (total <= 0) return 0.5;
+                return (count + 0.5) / (total + 1);
+            },
+
+            // Additive difficulty bonus
+            difficultyBonus(difficulty) {
+                return (difficulty - 1) * this.CONFIG.DIFFICULTY_BONUS_PER_LEVEL;
+            },
+
+            // Difficulty-adjusted average
+            adjustedAverage(scores, difficulties) {
+                if (scores.length === 0) return 0;
+                let sum = 0;
+                for (let i = 0; i < scores.length; i++) {
+                    const d = difficulties[i] || 1;
+                    sum += Math.min(100, scores[i] + this.difficultyBonus(d));
+                }
+                return Math.round(sum / scores.length);
+            },
+
+            // Standard Error of Measurement
+            computeSEM(scores) {
+                if (scores.length < 2) return null;
+                const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+                const variance = scores.reduce((sum, s) => sum + (s - mean) ** 2, 0) / (scores.length - 1);
+                return Math.round(Math.sqrt(variance / scores.length));
+            },
+
+            // Chance-corrected accuracy for multiple-choice
+            chanceCorrect(accuracy, numChoices) {
+                if (numChoices <= 1) return accuracy;
+                const chance = 1 / numChoices;
+                return Math.max(0, (accuracy - chance) / (1 - chance));
+            },
+
             // Flexibility task — uses grade-appropriate science classification rules
             runFlexibilityTask(area) {
                 const content = this.getGradeContent();
@@ -2235,6 +2295,7 @@
                     current: 0,
                     correct: 0,
                     reactionTimes: [],
+                    correctRTs: [],
                     startTime: null
                 };
 
@@ -2249,8 +2310,10 @@
 
                 if (state.current >= state.trials) {
                     const accuracy = state.trials > 0 ? state.correct / state.trials : 0;
-                    const avgRT = state.reactionTimes.length > 0
-                        ? state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length
+                    // Use only correct-trial RTs to avoid contamination
+                    const rts = state.correctRTs.length > 0 ? state.correctRTs : state.reactionTimes;
+                    const avgRT = rts.length > 0
+                        ? rts.reduce((a,b) => a+b, 0) / rts.length
                         : this.CONFIG.FLEX_RT_NORM_MS;
                     const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.FLEX_RT_NORM_MS));
                     const score = Math.round((accuracy * 70) + (rtScore * 30));
@@ -2320,11 +2383,15 @@
                 const area = this.elements.gameArea;
 
                 if (state.current >= state.trials) {
-                    const accuracy = state.trials > 0 ? state.correct / state.trials : 0;
+                    const rawAccuracy = state.trials > 0 ? state.correct / state.trials : 0;
+                    const numChoices = state.lastOptionCount || 4;
+                    const accuracy = this.chanceCorrect(rawAccuracy, numChoices);
                     const avgRT = state.reactionTimes.length > 0
                         ? state.reactionTimes.reduce((a,b) => a+b, 0) / state.reactionTimes.length
                         : this.CONFIG.SPEED_RT_NORM_MS;
-                    const rtScore = Math.max(0, 1 - (avgRT / this.CONFIG.SPEED_RT_NORM_MS));
+                    const rtScore = rawAccuracy > (1 / numChoices)
+                        ? Math.max(0, 1 - (avgRT / this.CONFIG.SPEED_RT_NORM_MS))
+                        : 0;
                     const score = Math.round((accuracy * 50) + (rtScore * 50));
 
                     this.completeTask(score);
@@ -2336,8 +2403,9 @@
                 const correct = patterns[Math.floor(Math.random() * patterns.length)];
                 const options = this.shuffle(patterns);
 
-                // Store patterns on state for trial logging
+                // Store patterns on state for trial logging and chance correction
                 state.patterns = patterns;
+                state.lastOptionCount = patterns.length;
 
                 this.clearGameArea();
 
@@ -2386,11 +2454,17 @@
                 this.cleanupCurrentGame();
 
                 const scores = this.state.taskScores;
+                const difficulties = this.state.taskDifficulties || scores.map(() => 1);
                 const average = scores.length > 0
-                    ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+                    ? this.adjustedAverage(scores, difficulties)
                     : 0;
+                const sem = this.computeSEM(scores);
 
                 this.state.gameScores[this.state.currentGame] = average;
+                if (!this.state.gameSEMs) this.state.gameSEMs = {};
+                this.state.gameSEMs[this.state.currentGame] = sem;
+                if (!this.state.gameDifficulties) this.state.gameDifficulties = {};
+                this.state.gameDifficulties[this.state.currentGame] = difficulties;
 
                 this.showScreen('menu');
                 this.renderGames();
@@ -2405,6 +2479,7 @@
                     this.state.currentGame = null;
                     this.state.currentTask = 0;
                     this.state.taskScores = [];
+                    this.state.taskDifficulties = [];
                     this.showScreen('menu');
                 }
             },
@@ -2421,6 +2496,8 @@
                     date: new Date().toISOString(),
                     user: this.state.user,
                     scores: {...scores},
+                    sems: {...(this.state.gameSEMs || {})},
+                    difficulties: {...(this.state.gameDifficulties || {})},
                     average,
                     duration: Date.now() - this.state.sessionStart
                 };
@@ -2450,12 +2527,16 @@
                     
                     const value = document.createElement('div');
                     value.className = 'score-value';
-                    value.textContent = `${scores[game.id] || 0}%`;
-                    
+                    const gameScore = scores[game.id] || 0;
+                    const gameSEM = this.state.gameSEMs && this.state.gameSEMs[game.id];
+                    value.textContent = gameSEM != null
+                        ? `${gameScore}% \u00B1${gameSEM}`
+                        : `${gameScore}%`;
+
                     const label = document.createElement('div');
                     label.className = 'score-label';
                     label.textContent = game.name;
-                    
+
                     card.appendChild(icon);
                     card.appendChild(value);
                     card.appendChild(label);
@@ -2616,7 +2697,10 @@
                         currentTask: 0,
                         currentDifficulty: 1,
                         taskScores: [],
+                        taskDifficulties: [],
                         gameScores: {},
+                        gameSEMs: {},
+                        gameDifficulties: {},
                         sessionStart: null,
                         history: this.state.history,
                         gameStart: null,

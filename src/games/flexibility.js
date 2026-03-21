@@ -31,6 +31,7 @@ export function createFlexState(currentTask, currentDifficulty, grade) {
         current: 0,
         correct: 0,
         reactionTimes: [],
+        correctRTs: [],
         startTime: null
     };
 }
@@ -45,8 +46,11 @@ export function runFlexTrial(ctx) {
 
     if (flexState.current >= flexState.trials) {
         const accuracy = flexState.trials > 0 ? flexState.correct / flexState.trials : 0;
-        const avgRT = flexState.reactionTimes.length > 0
-            ? flexState.reactionTimes.reduce((a, b) => a + b, 0) / flexState.reactionTimes.length
+        // Use only correct-trial RTs to avoid contamination from incorrect
+        // responses (which tend to be either very fast guesses or slow errors).
+        const rts = flexState.correctRTs.length > 0 ? flexState.correctRTs : flexState.reactionTimes;
+        const avgRT = rts.length > 0
+            ? rts.reduce((a, b) => a + b, 0) / rts.length
             : FLEX_RT_NORM_MS;
         const rtScore = Math.max(0, 1 - (avgRT / FLEX_RT_NORM_MS));
         const score = Math.round((accuracy * 70) + (rtScore * 30));
@@ -104,7 +108,10 @@ export function handleFlexResponse(response, isCorrect, ctx) {
     const trialItem = flexState.trialItems[flexState.current - 1];
 
     flexState.reactionTimes.push(rt);
-    if (isCorrect) flexState.correct++;
+    if (isCorrect) {
+        flexState.correct++;
+        flexState.correctRTs.push(rt);
+    }
 
     logTrial({
         trialType: 'flexibility_classification',

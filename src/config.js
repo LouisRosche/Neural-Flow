@@ -275,6 +275,7 @@ export const FLEX_RT_NORM_MS = 3000;
 export const SPEED_RT_NORM_MS = 2000;
 export const FEEDBACK_DISPLAY_MS = 1500;
 export const DEBOUNCE_MS = 300;
+export const DIFFICULTY_BONUS_PER_LEVEL = 3;
 
 // Bundle all config as a single object too, for convenience
 export const CONFIG = {
@@ -296,5 +297,6 @@ export const CONFIG = {
     FLEX_RT_NORM_MS,
     SPEED_RT_NORM_MS,
     FEEDBACK_DISPLAY_MS,
-    DEBOUNCE_MS
+    DEBOUNCE_MS,
+    DIFFICULTY_BONUS_PER_LEVEL
 };

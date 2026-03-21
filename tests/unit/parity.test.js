@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getApp } from '../helpers/load-app.js';
 import { CONFIG, GAMES, GRADE_CONTENT, RECOMMENDATIONS } from '../../src/config.js';
-import { adaptDifficulty, shuffle, zScore, inverseErf, getGradeContent } from '../../src/scoring.js';
+import {
+  adaptDifficulty, shuffle, zScore, inverseErf, getGradeContent,
+  logLinearRate, difficultyBonus, adjustedAverage, computeSEM, chanceCorrect
+} from '../../src/scoring.js';
 
 /**
  * Drift-detection tests: verify that the inline script (index.html)
@@ -26,6 +29,7 @@ describe('Inline/Module Parity', () => {
     it('SPEED_RT_NORM_MS', () => expect(App.CONFIG.SPEED_RT_NORM_MS).toBe(CONFIG.SPEED_RT_NORM_MS));
     it('FEEDBACK_DISPLAY_MS', () => expect(App.CONFIG.FEEDBACK_DISPLAY_MS).toBe(CONFIG.FEEDBACK_DISPLAY_MS));
     it('DEBOUNCE_MS', () => expect(App.CONFIG.DEBOUNCE_MS).toBe(CONFIG.DEBOUNCE_MS));
+    it('DIFFICULTY_BONUS_PER_LEVEL', () => expect(App.CONFIG.DIFFICULTY_BONUS_PER_LEVEL).toBe(CONFIG.DIFFICULTY_BONUS_PER_LEVEL));
   });
 
   describe('GAMES array matches', () => {
@@ -127,6 +131,38 @@ describe('Inline/Module Parity', () => {
       expect(inverseErf(0)).toBeCloseTo(App.inverseErf(0), 5);
       expect(inverseErf(0.5)).toBeCloseTo(App.inverseErf(0.5), 5);
       expect(inverseErf(-0.5)).toBeCloseTo(App.inverseErf(-0.5), 5);
+    });
+
+    it('logLinearRate produces same results', () => {
+      expect(logLinearRate(5, 10)).toBeCloseTo(App.logLinearRate(5, 10), 5);
+      expect(logLinearRate(0, 10)).toBeCloseTo(App.logLinearRate(0, 10), 5);
+      expect(logLinearRate(10, 10)).toBeCloseTo(App.logLinearRate(10, 10), 5);
+      expect(logLinearRate(0, 0)).toBeCloseTo(App.logLinearRate(0, 0), 5);
+    });
+
+    it('difficultyBonus produces same results', () => {
+      for (let d = 1; d <= 5; d++) {
+        expect(difficultyBonus(d)).toBe(App.difficultyBonus(d));
+      }
+    });
+
+    it('adjustedAverage produces same results', () => {
+      expect(adjustedAverage([80, 70, 60], [1, 2, 3])).toBe(
+        App.adjustedAverage([80, 70, 60], [1, 2, 3])
+      );
+      expect(adjustedAverage([], [])).toBe(App.adjustedAverage([], []));
+    });
+
+    it('computeSEM produces same results', () => {
+      expect(computeSEM([60, 80])).toBe(App.computeSEM([60, 80]));
+      expect(computeSEM([70, 70, 70])).toBe(App.computeSEM([70, 70, 70]));
+      expect(computeSEM([80])).toBe(App.computeSEM([80]));
+    });
+
+    it('chanceCorrect produces same results', () => {
+      expect(chanceCorrect(0.75, 4)).toBeCloseTo(App.chanceCorrect(0.75, 4), 5);
+      expect(chanceCorrect(0.25, 4)).toBeCloseTo(App.chanceCorrect(0.25, 4), 5);
+      expect(chanceCorrect(1, 2)).toBeCloseTo(App.chanceCorrect(1, 2), 5);
     });
   });
 

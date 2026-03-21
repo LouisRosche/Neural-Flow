@@ -6,7 +6,7 @@ import {
     ATTENTION_SPAWN_BASE_MS,
     ATTENTION_SPAWN_DIFF_MS
 } from '../config.js';
-import { zScore } from '../scoring.js';
+import { zScore, logLinearRate } from '../scoring.js';
 
 /**
  * Create the initial attention game state.
@@ -14,8 +14,26 @@ import { zScore } from '../scoring.js';
  * @returns {Object} attentionState
  */
 export function createAttentionState(currentDifficulty) {
+    const targetCount = 5 + currentDifficulty;
+    const distractorCount = Math.ceil(targetCount * 0.4);
+
+    // Pre-build a deterministic interleaved schedule for test-retest reliability.
+    // Targets and distractors are interleaved rather than randomly assigned,
+    // ensuring a consistent ratio across runs at the same difficulty.
+    const schedule = [];
+    const total = targetCount + distractorCount;
+    for (let i = 0; i < total; i++) {
+        // Distribute distractors evenly using Bresenham-style interleaving
+        const isDistractor = Math.floor((i + 1) * distractorCount / total)
+            > Math.floor(i * distractorCount / total);
+        schedule.push(!isDistractor);
+    }
+
     return {
-        targets: 5 + currentDifficulty,
+        targets: targetCount,
+        distractorCount,
+        schedule,
+        scheduleIndex: 0,
         hits: 0,
         misses: 0,
         falsePositives: 0,
@@ -85,18 +103,17 @@ export function spawnTarget(ctx) {
 
     if (attentionState.completed) return;
 
-    if (attentionState.targetsShown >= attentionState.targets && attentionState.active.length === 0) {
+    if (attentionState.scheduleIndex >= attentionState.schedule.length && attentionState.active.length === 0) {
         attentionState.completed = true;
         endAttentionTask(ctx);
         return;
     }
 
-    const maxDistractors = Math.ceil(attentionState.targets * 0.4);
-    const shouldSpawn = attentionState.targetsShown < attentionState.targets ||
-        (attentionState.distractorsShown < maxDistractors && Math.random() < 0.3);
+    const shouldSpawn = attentionState.scheduleIndex < attentionState.schedule.length;
 
     if (shouldSpawn) {
-        const isTarget = attentionState.targetsShown < attentionState.targets && Math.random() > 0.3;
+        const isTarget = attentionState.schedule[attentionState.scheduleIndex];
+        attentionState.scheduleIndex++;
 
         const dot = document.createElement('div');
         dot.className = `target ${isTarget ? 'blue' : 'red'}`;
@@ -223,16 +240,19 @@ export function endAttentionTask(ctx) {
         return;
     }
 
-    const hitRate = attentionState.targetsShown > 0
-        ? attentionState.hits / attentionState.targetsShown : 0;
-    const falseAlarmRate = attentionState.distractorsShown > 0
-        ? attentionState.falsePositives / attentionState.distractorsShown : 0;
+    // Log-linear correction (Hautus 1995) avoids extreme z-scores from
+    // perfect hit rates or zero false-alarm rates with small sample sizes.
+    const hitRate = logLinearRate(attentionState.hits, attentionState.targetsShown);
+    const falseAlarmRate = logLinearRate(attentionState.falsePositives, attentionState.distractorsShown);
 
     const dPrime = Math.min(4, Math.max(-4,
         zScore(hitRate) - zScore(falseAlarmRate)));
 
+    // Recalibrated mapping: d'=0 (chance discrimination) → 25,
+    // d'=1 (moderate) → 50, d'=2 (good) → 75, d'≥3 (excellent) → 100.
+    // The old mapping (50 + d'*12.5) was too generous at chance level.
     const score = Math.round(Math.max(0, Math.min(100,
-        50 + (dPrime * 12.5))));
+        25 + (dPrime * 25))));
 
     completeTask(score);
 }

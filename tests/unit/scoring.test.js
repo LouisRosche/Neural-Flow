@@ -139,9 +139,9 @@ describe('Scoring Logic', () => {
     });
   });
 
-  // ── Flexibility score formula ─────────────────────────────────────
+  // ── Flexibility score formula (correct-only RT) ──────────────────
   // score = round(accuracy * 70 + rtScore * 30)
-  // rtScore = max(0, 1 - (avgRT / FLEX_RT_NORM_MS))  where FLEX_RT_NORM_MS = 3000
+  // rtScore = max(0, 1 - (avgCorrectRT / FLEX_RT_NORM_MS))  where FLEX_RT_NORM_MS = 3000
 
   describe('Flexibility score formula', () => {
     it('perfect accuracy + instant RT → 100', () => {
@@ -176,39 +176,159 @@ describe('Scoring Logic', () => {
     });
   });
 
-  // ── Speed score formula ───────────────────────────────────────────
+  // ── Speed score formula (chance-corrected, RT-gated) ─────────────
+  // rawAccuracy: raw proportion correct
+  // accuracy = chanceCorrect(rawAccuracy, numChoices)
+  // rtScore = rawAccuracy > chance ? max(0, 1 - avgRT/2000) : 0
   // score = round(accuracy * 50 + rtScore * 50)
-  // rtScore = max(0, 1 - (avgRT / SPEED_RT_NORM_MS))  where SPEED_RT_NORM_MS = 2000
 
-  describe('Speed score formula', () => {
+  describe('Speed score formula (with chance correction & RT gating)', () => {
     it('perfect accuracy + instant RT → 100', () => {
-      const accuracy = 1;
-      const rtScore = 1;
+      const rawAccuracy = 1;
+      const numChoices = 4;
+      const chance = 1 / numChoices;
+      const accuracy = Math.max(0, (rawAccuracy - chance) / (1 - chance));
+      const rtScore = 1; // instant
       const score = Math.round((accuracy * 50) + (rtScore * 50));
       expect(score).toBe(100);
     });
 
     it('perfect accuracy + RT at norm → 50', () => {
-      const accuracy = 1;
-      const avgRT = 2000;
-      const rtScore = Math.max(0, 1 - (avgRT / 2000));
-      expect(rtScore).toBe(0);
+      const rawAccuracy = 1;
+      const numChoices = 4;
+      const chance = 1 / numChoices;
+      const accuracy = Math.max(0, (rawAccuracy - chance) / (1 - chance));
+      const rtScore = 0; // RT = norm
       const score = Math.round((accuracy * 50) + (rtScore * 50));
       expect(score).toBe(50);
     });
 
-    it('0% accuracy + instant RT → 50', () => {
-      const accuracy = 0;
-      const rtScore = 1;
-      const score = Math.round((accuracy * 50) + (rtScore * 50));
-      expect(score).toBe(50);
-    });
-
-    it('0% accuracy + slow RT → 0', () => {
-      const accuracy = 0;
+    it('0% accuracy + instant RT → 0 (RT gated off by below-chance accuracy)', () => {
+      const rawAccuracy = 0;
+      const numChoices = 4;
+      const chance = 1 / numChoices;
+      const accuracy = Math.max(0, (rawAccuracy - chance) / (1 - chance));
+      // RT bonus gated: rawAccuracy <= chance → rtScore = 0
       const rtScore = 0;
       const score = Math.round((accuracy * 50) + (rtScore * 50));
       expect(score).toBe(0);
+    });
+
+    it('at-chance accuracy (25% with 4 choices) → 0 score', () => {
+      const rawAccuracy = 0.25;
+      const numChoices = 4;
+      const chance = 1 / numChoices;
+      const accuracy = Math.max(0, (rawAccuracy - chance) / (1 - chance));
+      expect(accuracy).toBeCloseTo(0, 5);
+      // RT bonus also gated off at exactly chance level
+      const rtScore = 0;
+      const score = Math.round((accuracy * 50) + (rtScore * 50));
+      expect(score).toBe(0);
+    });
+  });
+
+  // ── Psychometric utilities ──────────────────────────────────────
+
+  describe('logLinearRate (Hautus 1995)', () => {
+    it('returns 0.5 when total is 0', () => {
+      expect(App.logLinearRate(0, 0)).toBe(0.5);
+    });
+
+    it('corrects perfect hit rate away from 1.0', () => {
+      const rate = App.logLinearRate(10, 10);
+      expect(rate).toBeLessThan(1);
+      expect(rate).toBeGreaterThan(0.9);
+    });
+
+    it('corrects zero false-alarm rate away from 0.0', () => {
+      const rate = App.logLinearRate(0, 10);
+      expect(rate).toBeGreaterThan(0);
+      expect(rate).toBeLessThan(0.1);
+    });
+
+    it('produces (count + 0.5) / (total + 1)', () => {
+      expect(App.logLinearRate(5, 10)).toBeCloseTo(5.5 / 11, 5);
+      expect(App.logLinearRate(0, 5)).toBeCloseTo(0.5 / 6, 5);
+      expect(App.logLinearRate(5, 5)).toBeCloseTo(5.5 / 6, 5);
+    });
+  });
+
+  describe('difficultyBonus', () => {
+    it('returns 0 at difficulty 1', () => {
+      expect(App.difficultyBonus(1)).toBe(0);
+    });
+
+    it('returns 3 at difficulty 2', () => {
+      expect(App.difficultyBonus(2)).toBe(3);
+    });
+
+    it('returns 12 at difficulty 5', () => {
+      expect(App.difficultyBonus(5)).toBe(12);
+    });
+  });
+
+  describe('adjustedAverage', () => {
+    it('returns 0 for empty arrays', () => {
+      expect(App.adjustedAverage([], [])).toBe(0);
+    });
+
+    it('equals raw average when all difficulties are 1', () => {
+      expect(App.adjustedAverage([80, 70, 90], [1, 1, 1])).toBe(80);
+    });
+
+    it('adds difficulty bonus per task', () => {
+      // scores [70, 70, 70] at difficulties [1, 2, 3]
+      // adjusted: [70+0, 70+3, 70+6] = [70, 73, 76] → avg = 73
+      expect(App.adjustedAverage([70, 70, 70], [1, 2, 3])).toBe(73);
+    });
+
+    it('caps individual adjusted scores at 100', () => {
+      // score 95 at difficulty 5 → 95+12 = 107 → capped at 100
+      expect(App.adjustedAverage([95], [5])).toBe(100);
+    });
+  });
+
+  describe('computeSEM', () => {
+    it('returns null for fewer than 2 scores', () => {
+      expect(App.computeSEM([])).toBeNull();
+      expect(App.computeSEM([80])).toBeNull();
+    });
+
+    it('returns 0 when all scores are identical', () => {
+      expect(App.computeSEM([70, 70, 70])).toBe(0);
+    });
+
+    it('returns a positive value for varied scores', () => {
+      const sem = App.computeSEM([60, 80, 100]);
+      expect(sem).toBeGreaterThan(0);
+    });
+
+    it('computes SEM = SD/sqrt(N) correctly', () => {
+      // scores [60, 80]: mean=70, SD=√((100+100)/1)=√200≈14.14, SEM=14.14/√2≈10
+      const sem = App.computeSEM([60, 80]);
+      expect(sem).toBe(10);
+    });
+  });
+
+  describe('chanceCorrect', () => {
+    it('returns 0 at chance level', () => {
+      expect(App.chanceCorrect(0.25, 4)).toBeCloseTo(0, 5);
+    });
+
+    it('returns 1 at perfect accuracy', () => {
+      expect(App.chanceCorrect(1, 4)).toBeCloseTo(1, 5);
+    });
+
+    it('returns 0 below chance', () => {
+      expect(App.chanceCorrect(0.1, 4)).toBe(0);
+    });
+
+    it('returns raw accuracy when numChoices is 1', () => {
+      expect(App.chanceCorrect(0.8, 1)).toBe(0.8);
+    });
+
+    it('returns (acc - 0.5) / 0.5 for 2-choice', () => {
+      expect(App.chanceCorrect(0.75, 2)).toBeCloseTo(0.5, 5);
     });
   });
 

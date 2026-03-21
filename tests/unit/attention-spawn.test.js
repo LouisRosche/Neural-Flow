@@ -86,13 +86,18 @@ describe('spawnTarget logic', () => {
     expect(state.targetsShown).toBe(1);
   });
 
-  it('spawns distractor (red) when random <= 0.3', () => {
+  it('spawns distractor (red) when schedule dictates', () => {
     buildAttentionUI(area, state);
-    // First call: shouldSpawn check (targetsShown < targets, so always spawn)
-    // Second call: isTarget check (random > 0.3 → false means distractor)
-    // Third/fourth calls: position
+    // Advance scheduleIndex to a distractor slot.
+    // The schedule interleaves targets and distractors deterministically.
+    // Find the first distractor index in the schedule.
+    const distractorIdx = state.schedule.findIndex(isTarget => !isTarget);
+    expect(distractorIdx).toBeGreaterThanOrEqual(0);
+
+    // Skip ahead to the distractor slot
+    state.scheduleIndex = distractorIdx;
+
     vi.spyOn(Math, 'random')
-      .mockReturnValueOnce(0.2) // isTarget check: 0.2 > 0.3 is false → distractor
       .mockReturnValueOnce(0.5) // x position
       .mockReturnValueOnce(0.5); // y position
 
