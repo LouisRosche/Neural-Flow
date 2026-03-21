@@ -76,7 +76,7 @@ export function buildAttentionUI(area, attentionState) {
 
 /**
  * Spawn a target or distractor in the attention game.
- * @param {Object} ctx - Context: { attentionState, currentDifficulty, currentGame, gameTimeout, logTrial, endAttentionTask, handleTargetClick }
+ * @param {Object} ctx - Context: { attentionState, currentDifficulty, currentGame, gameTimeout, logTrial, completeTask }
  */
 export function spawnTarget(ctx) {
     const { attentionState, currentDifficulty, gameTimeout, logTrial } = ctx;
