@@ -50,7 +50,7 @@ console.log('\n\u25B6 Validating source modules');
 
 const modules = [
   'src/app.js', 'src/config.js', 'src/state.js', 'src/scoring.js',
-  'src/ui.js', 'src/export.js', 'src/sync.js',
+  'src/ui.js',
   'src/games/memory.js', 'src/games/attention.js',
   'src/games/flexibility.js', 'src/games/speed.js'
 ];
